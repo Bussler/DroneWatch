@@ -216,3 +216,21 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.github/
+.vscode/
+outputs/
+artifacts/
+
+# DroneWatch generated outputs
+outputs/*
+!outputs/.gitkeep
+artifacts/checkpoints/*
+artifacts/gifs/*
+artifacts/reports/*
+!artifacts/checkpoints/.gitkeep
+!artifacts/gifs/.gitkeep
+!artifacts/reports/.gitkeep
+
+# Local experiment tracking
+mlruns/

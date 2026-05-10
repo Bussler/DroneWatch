@@ -1,0 +1,13 @@
+[package]
+name = "swarm_sim"
+version = "0.1.0"
+edition = "2021"
+description = "Rust simulation extension for DroneWatch."
+license = "MIT"
+
+[lib]
+name = "swarm_sim"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+pyo3 = { version = "0.22.6", features = ["extension-module"] }
