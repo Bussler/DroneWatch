@@ -14,7 +14,7 @@ def rust_version() -> str:
 
 
 class SwarmSimulation:
-    """Small Python wrapper around the Phase 1 Rust simulation world."""
+    """Small Python wrapper around the Rust simulation world."""
 
     def __init__(self, seed: int | None = None) -> None:
         self._world = env.SwarmWorld(seed)

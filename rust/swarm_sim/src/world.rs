@@ -1,4 +1,4 @@
-//! Core world state and step orchestration for the Phase 1 simulator.
+//! Core world state and step orchestration for the simulator.
 
 use crate::{
     agent::Agent,

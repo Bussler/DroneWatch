@@ -1,4 +1,4 @@
-//! Agent state for homogeneous drones in the Phase 1 simulator.
+//! Agent state for homogeneous drones.
 
 use crate::geometry::Vec2;
 

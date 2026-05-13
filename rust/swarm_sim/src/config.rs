@@ -1,6 +1,6 @@
 //! Configuration types and validation for the Rust simulation core.
 
-/// String-backed result type used by the Phase 1 simulator API.
+/// String-backed result type used simulator API.
 pub type SimResult<T> = Result<T, String>;
 
 /// Continuous world bounds and timestep settings.
@@ -60,7 +60,7 @@ pub struct CoverageConfig {
     pub sensing_radius: f64,
 }
 
-/// Full simulator configuration for the Phase 1 Rust core.
+/// Full simulator configuration for the Rust core.
 #[derive(Clone, Copy, Debug)]
 pub struct SimulationConfig {
     /// Maximum number of successful steps in one episode.
