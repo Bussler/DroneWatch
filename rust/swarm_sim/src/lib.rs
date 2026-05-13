@@ -1,3 +1,5 @@
+//! PyO3 bindings and public Rust modules for the DroneWatch simulation core.
+
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
 
@@ -7,11 +9,13 @@ pub mod coverage;
 pub mod geometry;
 pub mod metrics;
 pub mod obstacle;
+pub mod scenario;
 pub mod target;
 pub mod world;
 
 use crate::{config::SimulationConfig, geometry::Vec2, metrics::SimulationMetrics, world::World};
 
+/// Returns the Rust crate version compiled into the extension.
 pub fn crate_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
@@ -22,6 +26,7 @@ fn version() -> &'static str {
 }
 
 #[pyclass]
+/// Python-owned wrapper around the Rust `World` simulation state.
 struct SwarmWorld {
     world: World,
 }

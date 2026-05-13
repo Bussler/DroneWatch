@@ -1,5 +1,8 @@
+//! Coverage grid tracking for swarm area-coverage metrics.
+
 use crate::{agent::Agent, config::SimulationConfig, geometry::Vec2};
 
+/// Fixed grid that records which world cells have been sensed by any agent.
 #[derive(Clone, Debug)]
 pub struct CoverageGrid {
     grid_width: usize,
@@ -8,6 +11,7 @@ pub struct CoverageGrid {
 }
 
 impl CoverageGrid {
+    /// Creates an empty coverage grid.
     pub fn new(grid_width: usize, grid_height: usize) -> Self {
         Self {
             grid_width,
@@ -16,10 +20,12 @@ impl CoverageGrid {
         }
     }
 
+    /// Clears all covered-cell flags.
     pub fn reset(&mut self) {
         self.covered.fill(false);
     }
 
+    /// Marks cells within coverage sensing radius of any agent and returns newly covered cells.
     pub fn mark_from_agents(&mut self, agents: &[Agent], config: &SimulationConfig) -> usize {
         let mut newly_covered = 0;
         let cell_width = config.world.width / self.grid_width as f64;
@@ -50,6 +56,7 @@ impl CoverageGrid {
         newly_covered
     }
 
+    /// Returns the fraction of covered cells in `[0.0, 1.0]`.
     pub fn ratio(&self) -> f64 {
         if self.covered.is_empty() {
             return 0.0;
@@ -58,10 +65,12 @@ impl CoverageGrid {
         self.covered.iter().filter(|covered| **covered).count() as f64 / self.covered.len() as f64
     }
 
+    /// Returns the number of covered cells.
     pub fn covered_cells(&self) -> usize {
         self.covered.iter().filter(|covered| **covered).count()
     }
 
+    /// Returns the total number of cells in the grid.
     pub fn total_cells(&self) -> usize {
         self.covered.len()
     }
