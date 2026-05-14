@@ -2,6 +2,7 @@
 
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
+use rand::random;
 
 pub mod agent;
 pub mod config;
@@ -25,6 +26,10 @@ pub fn crate_version() -> &'static str {
     env!("CARGO_PKG_VERSION")
 }
 
+fn resolve_seed(seed: Option<u64>) -> u64 {
+    seed.unwrap_or_else(random)
+}
+
 #[pyfunction]
 fn version() -> &'static str {
     crate_version()
@@ -41,7 +46,7 @@ impl SwarmWorld {
     #[new]
     #[pyo3(signature = (seed=None))]
     fn new(seed: Option<u64>) -> PyResult<Self> {
-        let world = World::new(SimulationConfig::default(), seed.unwrap_or(42))
+        let world = World::new(SimulationConfig::default(), resolve_seed(seed))
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
         Ok(Self { world })
     }
@@ -49,7 +54,7 @@ impl SwarmWorld {
     #[pyo3(signature = (seed=None))]
     fn reset(&mut self, seed: Option<u64>, py: Python<'_>) -> PyResult<Py<PyDict>> {
         self.world
-            .reset(seed.unwrap_or(42))
+            .reset(resolve_seed(seed))
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
         metrics_to_py(py, &self.world.metrics())
     }
@@ -170,7 +175,7 @@ fn swarm_sim(module: &Bound<'_, PyModule>) -> PyResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::crate_version;
+    use super::{crate_version, resolve_seed};
 
     #[test]
     fn crate_version_matches_package_version() {
