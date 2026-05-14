@@ -2,11 +2,11 @@
 
 DroneWatch is a MARL engineering showcase where 16 cooperative drones learn, via RLlib PPO and later MAPPO-style centralized critic training, to discover targets in a partially observable continuous 2D environment with obstacles, collisions, local sensing, and short-range communication.
 
-The repository is currently implementing Phase 1 of the project plan: a Rust simulation core with Python access through PyO3, building on the Phase 0 package skeleton.
+The repository is currently implementing Phase 2 of the project plan: a Python multi-agent environment wrapper around the completed Rust simulation core.
 
 ## Current Phase
 
-Phase 1 establishes the first working simulator slice before RLlib environment, reward, rendering, and training logic are added.
+Phase 2 establishes the RLlib/Gymnasium-facing environment layer before PPO training, OmegaConf configuration, and MLflow logging are added.
 
 Implemented in this slice:
 
@@ -21,6 +21,11 @@ Implemented in this slice:
 - coverage grid tracking
 - communication connectivity metrics
 - deterministic scripted rollout
+- RLlib `MultiAgentEnv` wrapper: `SwarmSearchEnv`
+- fixed-size local observations for all agents
+- cooperative team reward calculation
+- random policy baseline
+- random rollout JSON report and GIF rendering
 - uv dependency management
 - PyO3/maturin build path
 - Rust and Python tests
@@ -52,17 +57,22 @@ uv run maturin develop -m rust/swarm_sim/Cargo.toml
 
 ## Smoke Check
 
-Verify that Python can import the package, call into Rust, and run a scripted simulator rollout:
+Verify that Python can import the package, call into Rust, run a scripted simulator rollout, and run the random policy baseline:
 
 ```bash
 uv run python -c "import dronewatch; print(dronewatch.__version__)"
 uv run python -c "from dronewatch.sim import rust_version; print(rust_version())"
 make rollout-rust
+make rollout-random
+make render-random
 ```
+
+`make rollout-random` writes a random policy report to `artifacts/reports/random_policy_report.json`.
+`make render-random` writes the same report plus `artifacts/gifs/random_policy_episode.gif`.
 
 ## Tests
 
-Run the full Phase 1 test suite:
+Run the full Phase 2 test suite:
 
 ```bash
 make test
