@@ -55,15 +55,19 @@ fn sample_agents(
     obstacles: &[Obstacle],
     rng: &mut StdRng,
 ) -> SimResult<Vec<Agent>> {
-    let mut agents = Vec::with_capacity(config.agents.count);
+    let mut agents: Vec<Agent> = Vec::with_capacity(config.agents.count);
+    let mut reserved_positions: Vec<Vec2> = Vec::with_capacity(config.agents.count);
     for id in 0..config.agents.count {
-        let position = sample_point_away_from_obstacles(
+        let position = sample_point_with_clearance(
             config,
             obstacles,
+            &reserved_positions,
             rng,
             config.agents.collision_radius,
             config.agents.collision_radius,
+            config.agents.collision_radius * 2.0,
         )?;
+        reserved_positions.push(position);
         agents.push(Agent::new(id, position));
     }
     Ok(agents)
@@ -74,15 +78,19 @@ fn sample_targets(
     obstacles: &[Obstacle],
     rng: &mut StdRng,
 ) -> SimResult<Vec<Target>> {
-    let mut targets = Vec::with_capacity(config.targets.count);
+    let mut targets: Vec<Target> = Vec::with_capacity(config.targets.count);
+    let mut reserved_positions: Vec<Vec2> = Vec::with_capacity(config.targets.count);
     for id in 0..config.targets.count {
-        let position = sample_point_away_from_obstacles(
+        let position = sample_point_with_clearance(
             config,
             obstacles,
+            &reserved_positions,
             rng,
             config.targets.discovery_radius,
             config.targets.discovery_radius,
+            config.targets.discovery_radius,
         )?;
+        reserved_positions.push(position);
         targets.push(Target::new(id, position));
     }
     Ok(targets)
@@ -102,24 +110,30 @@ fn sample_bounded_point(
     ))
 }
 
-fn sample_point_away_from_obstacles(
+fn sample_point_with_clearance(
     config: &SimulationConfig,
     obstacles: &[Obstacle],
+    reserved_positions: &[Vec2],
     rng: &mut StdRng,
     margin: f64,
-    clearance: f64,
+    obstacle_clearance: f64,
+    point_clearance: f64,
 ) -> SimResult<Vec2> {
     for _ in 0..10_000 {
         let position = sample_bounded_point(config, rng, margin)?;
-        if obstacles
+        let clear_of_obstacles = obstacles.iter().all(|obstacle| {
+            position.distance(obstacle.position) > obstacle.radius + obstacle_clearance
+        });
+        let clear_of_reserved_points = reserved_positions
             .iter()
-            .all(|obstacle| position.distance(obstacle.position) > obstacle.radius + clearance)
-        {
+            .all(|reserved_position| position.distance(*reserved_position) > point_clearance);
+
+        if clear_of_obstacles && clear_of_reserved_points {
             return Ok(position);
         }
     }
 
-    Err("could not place entity away from obstacles after 10000 attempts".to_string())
+    Err("could not place entity with required clearance after 10000 attempts".to_string())
 }
 
 #[cfg(test)]
@@ -162,6 +176,37 @@ mod tests {
             (0.0..=config.world.width).contains(&target.position.x)
                 && (0.0..=config.world.height).contains(&target.position.y)
         }));
+    }
+
+    #[test]
+    fn generated_agents_do_not_spawn_overlapping() {
+        let config = SimulationConfig::default();
+        let scenario = ScenarioSampler::generate(&config, 7).unwrap();
+        let minimum_distance = config.agents.collision_radius * 2.0;
+
+        for left_index in 0..scenario.agents.len() {
+            for right_index in (left_index + 1)..scenario.agents.len() {
+                let distance = scenario.agents[left_index]
+                    .position
+                    .distance(scenario.agents[right_index].position);
+                assert!(distance > minimum_distance);
+            }
+        }
+    }
+
+    #[test]
+    fn generated_targets_do_not_spawn_inside_other_target_discovery_radii() {
+        let config = SimulationConfig::default();
+        let scenario = ScenarioSampler::generate(&config, 7).unwrap();
+
+        for left_index in 0..scenario.targets.len() {
+            for right_index in (left_index + 1)..scenario.targets.len() {
+                let distance = scenario.targets[left_index]
+                    .position
+                    .distance(scenario.targets[right_index].position);
+                assert!(distance > config.targets.discovery_radius);
+            }
+        }
     }
 
     #[test]
