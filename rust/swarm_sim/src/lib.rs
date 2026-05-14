@@ -176,7 +176,7 @@ fn swarm_sim(module: &Bound<'_, PyModule>) -> PyResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::{crate_version};
+    use super::crate_version;
 
     #[test]
     fn crate_version_matches_package_version() {

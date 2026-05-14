@@ -180,7 +180,8 @@ impl World {
 
     /// Returns whether this episode has reached a terminal or truncated state.
     pub fn is_done(&self) -> bool {
-        return EventCollector::all_targets_discovered(&self.targets) || self.timestep >= self.config.max_episode_steps;
+        return EventCollector::all_targets_discovered(&self.targets)
+            || self.timestep >= self.config.max_episode_steps;
     }
 
     fn apply_actions(&mut self, actions: &[Vec2]) {
