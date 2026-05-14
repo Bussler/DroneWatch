@@ -2,20 +2,28 @@
 
 DroneWatch is a MARL engineering showcase where 16 cooperative drones learn, via RLlib PPO and later MAPPO-style centralized critic training, to discover targets in a partially observable continuous 2D environment with obstacles, collisions, local sensing, and short-range communication.
 
-The repository is currently implementing Phase 0 of the project plan: a uv-managed Python package, a Rust PyO3 extension crate, maturin-based local builds, and smoke tests that prove Python can call Rust.
+The repository is currently implementing Phase 1 of the project plan: a Rust simulation core with Python access through PyO3, building on the Phase 0 package skeleton.
 
 ## Current Phase
 
-Phase 0 establishes the project skeleton before simulator or training logic is added.
+Phase 1 establishes the first working simulator slice before RLlib environment, reward, rendering, and training logic are added.
 
 Implemented in this slice:
 
 - Python package: `dronewatch`
 - Rust extension module: `swarm_sim`
 - Python wrapper: `dronewatch.sim`
+- Rust world reset and step loop
+- 16 default agents with continuous 2D movement
+- bounded 100x100 world and fixed 200-step horizon
+- static targets and circular no-fly obstacles
+- target discovery, collision counts, obstacle violation counts
+- coverage grid tracking
+- communication connectivity metrics
+- deterministic scripted rollout
 - uv dependency management
 - PyO3/maturin build path
-- Rust and Python smoke tests
+- Rust and Python tests
 - Makefile and Docker skeleton
 
 See [PROJECT_PLAN.md](PROJECT_PLAN.md) for the full roadmap.
@@ -44,16 +52,17 @@ uv run maturin develop -m rust/swarm_sim/Cargo.toml
 
 ## Smoke Check
 
-Verify that Python can import the package and call into Rust:
+Verify that Python can import the package, call into Rust, and run a scripted simulator rollout:
 
 ```bash
 uv run python -c "import dronewatch; print(dronewatch.__version__)"
 uv run python -c "from dronewatch.sim import rust_version; print(rust_version())"
+make rollout-rust
 ```
 
 ## Tests
 
-Run the full Phase 0 test suite:
+Run the full Phase 1 test suite:
 
 ```bash
 make test
