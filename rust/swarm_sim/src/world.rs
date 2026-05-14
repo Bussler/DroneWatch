@@ -178,6 +178,11 @@ impl World {
         }
     }
 
+    /// Returns the current episode timestep without recomputing metrics.
+    pub fn timestep(&self) -> usize {
+        self.timestep
+    }
+
     /// Returns whether this episode has reached a terminal or truncated state.
     pub fn is_done(&self) -> bool {
         self.done
@@ -226,6 +231,7 @@ mod tests {
         assert_eq!(world.targets.len(), 20);
         assert_eq!(world.obstacles.len(), 8);
         assert_eq!(world.metrics().timestep, 0);
+        assert_eq!(world.timestep(), 0);
     }
 
     #[test]
@@ -237,6 +243,7 @@ mod tests {
         let result = world.step(&actions).unwrap();
 
         assert_eq!(result.metrics.timestep, 1);
+        assert_eq!(world.timestep(), 1);
         assert!(world.agents[0].position.x >= previous_position.x);
         assert!(world.agents.iter().all(|agent| agent.position.is_finite()));
     }

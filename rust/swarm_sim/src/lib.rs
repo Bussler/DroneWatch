@@ -13,7 +13,12 @@ pub mod scenario;
 pub mod target;
 pub mod world;
 
-use crate::{config::SimulationConfig, geometry::Vec2, metrics::SimulationMetrics, world::World};
+use crate::{
+    config::SimulationConfig,
+    geometry::Vec2,
+    metrics::{SimulationMetrics, StepEvents},
+    world::World,
+};
 
 /// Returns the Rust crate version compiled into the extension.
 pub fn crate_version() -> &'static str {
@@ -57,13 +62,7 @@ impl SwarmWorld {
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
 
         let dict = PyDict::new_bound(py);
-        let events = PyDict::new_bound(py);
-        events.set_item("targets_discovered", result.events.targets_discovered)?;
-        events.set_item("agent_collisions", result.events.agent_collisions)?;
-        events.set_item("obstacle_violations", result.events.obstacle_violations)?;
-        events.set_item("new_coverage_cells", result.events.new_coverage_cells)?;
-
-        dict.set_item("events", events)?;
+        dict.set_item("events", step_events_to_py_bound(py, &result.events)?)?;
         dict.set_item("metrics", metrics_to_py_bound(py, &result.metrics)?)?;
         dict.set_item("state", self.state(py)?)?;
         Ok(dict.into())
@@ -71,7 +70,7 @@ impl SwarmWorld {
 
     fn state(&self, py: Python<'_>) -> PyResult<Py<PyDict>> {
         let dict = PyDict::new_bound(py);
-        dict.set_item("timestep", self.world.metrics().timestep)?;
+        dict.set_item("timestep", self.world.timestep())?;
 
         let agents = PyList::empty_bound(py);
         for agent in &self.world.agents {
@@ -117,6 +116,18 @@ impl SwarmWorld {
 
 fn metrics_to_py(py: Python<'_>, metrics: &SimulationMetrics) -> PyResult<Py<PyDict>> {
     Ok(metrics_to_py_bound(py, metrics)?.into())
+}
+
+fn step_events_to_py_bound<'py>(
+    py: Python<'py>,
+    events: &StepEvents,
+) -> PyResult<Bound<'py, PyDict>> {
+    let dict = PyDict::new_bound(py);
+    dict.set_item("targets_discovered", events.targets_discovered)?;
+    dict.set_item("agent_collisions", events.agent_collisions)?;
+    dict.set_item("obstacle_violations", events.obstacle_violations)?;
+    dict.set_item("new_coverage_cells", events.new_coverage_cells)?;
+    Ok(dict)
 }
 
 fn metrics_to_py_bound<'py>(
