@@ -186,9 +186,9 @@ impl EventCollector {
         targets.iter().filter(|target| target.discovered).count()
     }
 
-    /// Returns true when every target in a non-empty target set is discovered.
+    /// Returns true when every target in a target set is discovered.
     pub fn all_targets_discovered(targets: &[Target]) -> bool {
-        !targets.is_empty() && Self::discovered_target_count(targets) == targets.len()
+        Self::discovered_target_count(targets) == targets.len()
     }
 }
 

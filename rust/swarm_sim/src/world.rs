@@ -39,7 +39,6 @@ pub struct World {
     collision_count: usize,
     obstacle_violation_count: usize,
     communication_metrics: CommunicationMetrics,
-    done: bool,
 }
 
 impl World {
@@ -57,7 +56,6 @@ impl World {
             collision_count: 0,
             obstacle_violation_count: 0,
             communication_metrics: CommunicationMetrics::default(),
-            done: false,
         };
         world.reset(seed)?;
         Ok(world)
@@ -71,7 +69,6 @@ impl World {
         self.timestep = 0;
         self.collision_count = 0;
         self.obstacle_violation_count = 0;
-        self.done = false;
 
         let scenario = ScenarioSampler::generate(&self.config, seed)?;
         self.agents = scenario.agents;
@@ -94,7 +91,7 @@ impl World {
     /// is clamped to the configured world bounds. Calling `step` after the episode is done returns
     /// an error rather than a no-op result.
     pub fn step(&mut self, actions: &[Vec2]) -> SimResult<StepResult> {
-        if self.done {
+        if self.is_done() {
             return Err(
                 "cannot step a world after the episode is done; call reset first".to_string(),
             );
@@ -137,9 +134,6 @@ impl World {
         );
         self.timestep += 1;
 
-        self.done = EventCollector::all_targets_discovered(&self.targets)
-            || self.timestep >= self.config.max_episode_steps;
-
         Ok(StepResult {
             events,
             metrics: self.metrics(),
@@ -173,7 +167,7 @@ impl World {
                 .communication_metrics
                 .largest_connected_component_size,
             communication_edge_count: self.communication_metrics.edge_count,
-            done: self.done,
+            done: self.is_done(),
             all_targets_discovered,
             horizon_reached,
         }
@@ -186,7 +180,7 @@ impl World {
 
     /// Returns whether this episode has reached a terminal or truncated state.
     pub fn is_done(&self) -> bool {
-        self.done
+        return EventCollector::all_targets_discovered(&self.targets) || self.timestep >= self.config.max_episode_steps;
     }
 
     fn apply_actions(&mut self, actions: &[Vec2]) {
