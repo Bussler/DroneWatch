@@ -53,12 +53,12 @@ impl SwarmWorld {
 
     #[pyo3(signature = (seed=None))]
     fn reset(&mut self, seed: Option<u64>, py: Python<'_>) -> PyResult<Py<PyDict>> {
-        self.world
+        let result = self.world
             .reset(resolve_seed(seed))
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
-        metrics_to_py(py, &self.world.metrics())
+        metrics_to_py(py, &result)
     }
-
+    
     fn step(&mut self, actions: Vec<(f64, f64)>, py: Python<'_>) -> PyResult<Py<PyDict>> {
         let action_vectors: Vec<Vec2> = actions.into_iter().map(|(x, y)| Vec2::new(x, y)).collect();
         let result = self

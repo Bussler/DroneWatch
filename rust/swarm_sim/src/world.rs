@@ -79,6 +79,7 @@ impl World {
         self.obstacles = scenario.obstacles;
         self.coverage.reset();
         self.coverage.mark_from_agents(&self.agents, &self.config);
+        self.update_targets();
         self.communication_metrics = EventCollector::communication_graph(
             &self.agents,
             self.config.agents.communication_radius,
