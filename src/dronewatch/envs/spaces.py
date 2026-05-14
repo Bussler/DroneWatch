@@ -2,47 +2,77 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Mapping
-
 import gymnasium as gym
 import numpy as np
+from pydantic import BaseModel, ConfigDict, Field
 
 
-@dataclass(frozen=True)
-class WorldDefaults:
-    width: float = 100.0
-    height: float = 100.0
-    max_episode_steps: int = 200
+class _FrozenModel(BaseModel):
+    """Immutable Pydantic base model for Phase 2 configuration objects."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
 
 
-@dataclass(frozen=True)
-class AgentDefaults:
-    count: int = 16
-    max_speed: float = 2.0
-    sensing_radius: float = 15.0
-    communication_radius: float = 20.0
+class WorldDefaults(_FrozenModel):
+    """Default world dimensions and episode horizon mirrored from Rust."""
+
+    width: float = Field(default=100.0, gt=0.0, description="World width in continuous coordinate units.")
+    height: float = Field(default=100.0, gt=0.0, description="World height in continuous coordinate units.")
+    max_episode_steps: int = Field(default=200, gt=0, description="Maximum number of simulator steps per episode.")
 
 
-@dataclass(frozen=True)
-class ObstacleDefaults:
-    expected_max_radius: float = 6.0
+class AgentDefaults(_FrozenModel):
+    """Default homogeneous swarm settings mirrored from Rust."""
+
+    count: int = Field(default=16, gt=0, description="Number of homogeneous drones in the swarm.")
+    max_speed: float = Field(default=2.0, gt=0.0, description="Maximum movement speed per unit timestep.")
+    sensing_radius: float = Field(default=15.0, gt=0.0, description="Local sensing radius for observation building.")
+    communication_radius: float = Field(
+        default=20.0, gt=0.0, description="Distance threshold for communication neighbors."
+    )
 
 
-@dataclass(frozen=True)
-class ObservationDefaults:
-    max_visible_agents: int = 5
-    max_visible_targets: int = 5
-    max_visible_obstacles: int = 5
+class ObstacleDefaults(_FrozenModel):
+    """Default obstacle settings needed by the Python observation layer."""
+
+    expected_max_radius: float = Field(
+        default=6.0,
+        gt=0.0,
+        description="Expected maximum circular obstacle radius used for observation normalization.",
+    )
 
 
-@dataclass(frozen=True)
-class RewardWeights:
-    target_discovered: float = 5.0
-    new_coverage_cell: float = 0.02
-    agent_collision: float = -0.25
-    obstacle_collision: float = -0.5
-    step_penalty: float = -0.001
+class ObservationDefaults(_FrozenModel):
+    """Fixed observation capacity settings for local entity slots."""
+
+    max_visible_agents: int = Field(default=5, gt=0, description="Maximum visible neighboring agents per observation.")
+    max_visible_targets: int = Field(default=5, gt=0, description="Maximum visible targets per observation.")
+    max_visible_obstacles: int = Field(default=5, gt=0, description="Maximum visible obstacles per observation.")
+
+
+class RewardWeights(_FrozenModel):
+    """Cooperative reward weights for the Phase 2 Python reward function."""
+
+    target_discovered: float = Field(default=5.0, ge=0.0, description="Reward per newly discovered target.")
+    new_coverage_cell: float = Field(default=0.02, ge=0.0, description="Reward per newly covered grid cell.")
+    agent_collision: float = Field(default=-0.25, le=0.0, description="Penalty per agent-agent collision pair.")
+    obstacle_collision: float = Field(default=-0.5, le=0.0, description="Penalty per agent-obstacle overlap.")
+    step_penalty: float = Field(default=-0.001, le=0.0, description="Small per-step time penalty.")
+
+
+class SwarmSearchEnvConfig(_FrozenModel):
+    """Pydantic configuration accepted by the Phase 2 RLlib environment.
+
+    RLlib passes environment configuration as a dictionary, so the environment constructor validates
+    that dictionary directly with this model. Extra keys are forbidden until Rust configuration
+    bindings and OmegaConf-driven config loading are introduced in later phases.
+    """
+
+    seed: int | None = Field(
+        default=None,
+        ge=0,
+        description="Optional non-negative reset seed; None delegates seed resolution to the Rust simulator.",
+    )
 
 
 WORLD_DEFAULTS = WorldDefaults()
@@ -84,15 +114,3 @@ def observation_space() -> gym.spaces.Box:
         shape=(OBSERVATION_SIZE,),
         dtype=np.float32,
     )
-
-
-def validate_env_config(env_config: Mapping[str, Any] | None) -> dict[str, Any]:
-    """Validate Phase 2 env config values against the fixed Rust defaults."""
-    config = dict(env_config or {})
-    unsupported = sorted(key for key in config if key not in {"seed"})
-    if unsupported:
-        joined = ", ".join(unsupported)
-        raise ValueError(
-            f"unsupported Phase 2 env_config keys: {joined}; only 'seed' is supported until Rust config bindings are added"
-        )
-    return config

@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 
 from dronewatch.envs import SwarmSearchEnv
+from dronewatch.rendering import SimulationFrame
 from dronewatch.rendering.render_episode import render_episode_gif
 
 
@@ -17,9 +18,11 @@ class RandomPolicy:
     """Uniform random policy over the per-agent continuous action space."""
 
     def __init__(self, seed: int | None = None) -> None:
+        """Create a reproducible random policy when `seed` is provided."""
         self._rng = np.random.default_rng(seed)
 
     def compute_action(self) -> np.ndarray:
+        """Sample one continuous `[dx, dy]` action from the valid action range."""
         return self._rng.uniform(-1.0, 1.0, size=(2,)).astype(np.float32)
 
 
@@ -39,7 +42,7 @@ def run_random_policy(
         raise ValueError("render_stride must be greater than zero")
 
     episode_summaries: list[dict[str, Any]] = []
-    first_episode_frames: list[dict[str, Any]] = []
+    first_episode_frames: list[SimulationFrame] = []
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
@@ -51,7 +54,9 @@ def run_random_policy(
         final_metrics: dict[str, Any] = {}
 
         if render and episode_index == 0:
-            first_episode_frames.append({"state": env._simulation.state(), "metrics": env._simulation.metrics()})
+            first_episode_frames.append(
+                SimulationFrame.from_snapshots(env._simulation.state(), env._simulation.metrics())
+            )
 
         while not done:
             actions = {agent_id: policy.compute_action() for agent_id in observations}
@@ -64,7 +69,7 @@ def run_random_policy(
                 render and episode_index == 0 and (done or int(final_metrics["timestep"]) % render_stride == 0)
             )
             if should_capture:
-                first_episode_frames.append({"state": env._simulation.state(), "metrics": final_metrics})
+                first_episode_frames.append(SimulationFrame.from_snapshots(env._simulation.state(), final_metrics))
 
         episode_summaries.append(_episode_summary(episode_reward, final_metrics))
 
@@ -77,6 +82,7 @@ def run_random_policy(
 
 
 def _episode_summary(episode_reward: float, metrics: dict[str, Any]) -> dict[str, float]:
+    """Create a single-episode metric summary from final simulator metrics."""
     return {
         "reward": float(episode_reward),
         "target_discovery_rate": float(metrics["target_discovery_rate"]),
@@ -91,6 +97,8 @@ def _episode_summary(episode_reward: float, metrics: dict[str, Any]) -> dict[str
 
 
 def _aggregate_report(episode_summaries: list[dict[str, float]], episodes: int) -> dict[str, Any]:
+    """Aggregate per-episode summaries into the baseline report schema."""
+
     def mean(key: str) -> float:
         return float(np.mean([summary[key] for summary in episode_summaries]))
 
@@ -111,12 +119,14 @@ def _aggregate_report(episode_summaries: list[dict[str, float]], episodes: int) 
 
 
 def _write_json(path: str | Path, report: dict[str, Any]) -> None:
+    """Write a JSON report and create parent directories when needed."""
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def main() -> None:
+    """Command-line entry point for the random policy baseline."""
     parser = argparse.ArgumentParser(description="Run the DroneWatch random policy baseline.")
     parser.add_argument("--episodes", type=int, default=1)
     parser.add_argument("--seed", type=int, default=42)

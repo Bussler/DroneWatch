@@ -4,17 +4,17 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 from matplotlib.patches import Circle
 
 from dronewatch.envs.spaces import AGENT_DEFAULTS, WORLD_DEFAULTS
+from dronewatch.rendering.frame import SimulationFrame
 
 
-def render_episode_gif(frames: Sequence[dict[str, Any]], path: str | Path, fps: int = 12) -> None:
-    """Render captured episode frames to a GIF."""
+def render_episode_gif(frames: Sequence[SimulationFrame], path: str | Path, fps: int = 12) -> None:
+    """Render typed simulation frames to a GIF file."""
     if not frames:
         raise ValueError("cannot render an empty episode")
 
@@ -30,9 +30,10 @@ def render_episode_gif(frames: Sequence[dict[str, Any]], path: str | Path, fps: 
     plt.close(fig)
 
 
-def _draw_frame(ax: plt.Axes, frame: dict[str, Any]) -> None:
-    state = frame["state"]
-    metrics = frame["metrics"]
+def _draw_frame(ax: plt.Axes, frame: SimulationFrame) -> None:
+    """Draw one `SimulationFrame` onto an existing matplotlib axes."""
+    state = frame.world_state
+    metrics = frame.simulation_metrics
     ax.clear()
     ax.set_xlim(0.0, WORLD_DEFAULTS.width)
     ax.set_ylim(0.0, WORLD_DEFAULTS.height)

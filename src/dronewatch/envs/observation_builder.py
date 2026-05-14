@@ -27,6 +27,7 @@ class ObservationBuilder:
         state: Mapping[str, Any],
         metrics: Mapping[str, Any],
     ) -> dict[str, np.ndarray]:
+        """Build one fixed-size local observation vector for every simulator agent."""
         agents = list(state["agents"])
         targets = list(state["targets"])
         obstacles = list(state["obstacles"])
@@ -51,6 +52,7 @@ class ObservationBuilder:
         obstacles: list[Mapping[str, Any]],
         metrics: Mapping[str, Any],
     ) -> np.ndarray:
+        """Build and validate the complete observation vector for one agent."""
         position = _array2(agent["position"])
         velocity = _array2(agent["velocity"])
         timestep = float(metrics.get("timestep", 0.0))
@@ -82,6 +84,7 @@ class ObservationBuilder:
         position: np.ndarray,
         velocity: np.ndarray,
     ) -> list[float]:
+        """Encode nearest visible neighboring agents with zero padding."""
         agent_id = int(agent["id"])
         visible: list[tuple[float, Mapping[str, Any]]] = []
         for other in agents:
@@ -112,6 +115,7 @@ class ObservationBuilder:
         return values
 
     def _visible_targets(self, targets: list[Mapping[str, Any]], position: np.ndarray) -> list[float]:
+        """Encode nearest visible targets with discovery flags and zero padding."""
         visible: list[tuple[float, Mapping[str, Any]]] = []
         for target in targets:
             distance = float(np.linalg.norm(_array2(target["position"]) - position))
@@ -137,6 +141,7 @@ class ObservationBuilder:
         return values
 
     def _visible_obstacles(self, obstacles: list[Mapping[str, Any]], position: np.ndarray) -> list[float]:
+        """Encode nearest visible circular obstacles with radius normalization."""
         visible: list[tuple[float, Mapping[str, Any]]] = []
         for obstacle in obstacles:
             center_distance = float(np.linalg.norm(_array2(obstacle["position"]) - position))
@@ -172,6 +177,7 @@ class ObservationBuilder:
         position: np.ndarray,
         velocity: np.ndarray,
     ) -> list[float]:
+        """Summarize communication-neighbor count and mean relative state."""
         agent_id = int(agent["id"])
         neighbors: list[Mapping[str, Any]] = []
         for other in agents:
@@ -198,6 +204,7 @@ class ObservationBuilder:
 
 
 def _array2(value: Any) -> np.ndarray:
+    """Convert a value to a finite two-element NumPy vector shape."""
     array = np.asarray(value, dtype=np.float64)
     if array.shape != (2,):
         raise ValueError(f"expected 2D vector, got shape {array.shape}")

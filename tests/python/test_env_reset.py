@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
+from pydantic import ValidationError
 
 from dronewatch.envs import SwarmSearchEnv
-from dronewatch.envs.spaces import OBSERVATION_SIZE
+from dronewatch.envs.spaces import OBSERVATION_SIZE, SwarmSearchEnvConfig
 
 
 def test_env_reset_returns_observations_and_infos_for_all_agents() -> None:
@@ -23,9 +25,10 @@ def test_env_reset_returns_observations_and_infos_for_all_agents() -> None:
 
 
 def test_env_rejects_unsupported_non_default_config() -> None:
-    try:
+    with pytest.raises(ValidationError, match="num_agents"):
         SwarmSearchEnv({"num_agents": 8})
-    except ValueError as error:
-        assert "unsupported Phase 2 env_config keys" in str(error)
-    else:
-        raise AssertionError("expected unsupported env_config to raise ValueError")
+
+
+def test_env_accepts_pydantic_config_and_none_seed() -> None:
+    SwarmSearchEnv({"seed": None})
+    SwarmSearchEnv(SwarmSearchEnvConfig(seed=None))

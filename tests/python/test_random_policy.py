@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from dronewatch.baselines.random_policy import run_random_policy
+from dronewatch.rendering import SimulationFrame, render_episode_gif
+from dronewatch.sim import SwarmSimulation
 
 
 def test_random_policy_rollout_writes_report_and_gif(tmp_path: Path) -> None:
@@ -45,3 +47,14 @@ def test_random_policy_report_is_deterministic_for_same_seed(tmp_path: Path) -> 
     second = run_random_policy(episodes=1, seed=7, report_path=tmp_path / "second.json")
 
     assert first == second
+
+
+def test_simulation_frame_renders_single_frame_gif(tmp_path: Path) -> None:
+    sim = SwarmSimulation(seed=5)
+    frame = SimulationFrame.from_snapshots(sim.state(), sim.metrics())
+    gif_path = tmp_path / "single_frame.gif"
+
+    render_episode_gif([frame], gif_path)
+
+    assert gif_path.exists()
+    assert gif_path.stat().st_size > 0
