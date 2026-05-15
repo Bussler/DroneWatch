@@ -12,6 +12,9 @@ from .spaces import (
     OBSERVATION_DEFAULTS,
     OBSERVATION_SIZE,
     OBSTACLE_DEFAULTS,
+    VISIBLE_AGENT_FEATURES,
+    VISIBLE_OBSTACLE_FEATURES,
+    VISIBLE_TARGET_FEATURES,
     WORLD_DEFAULTS,
     agent_ids,
 )
@@ -101,19 +104,20 @@ class ObservationBuilder:
         for distance, other in visible[: OBSERVATION_DEFAULTS.max_visible_agents]:
             relative_position = _array2(other["position"]) - position
             relative_velocity = _array2(other["velocity"]) - velocity
-            values.extend(
-                [
-                    relative_position[0] / AGENT_DEFAULTS.sensing_radius,
-                    relative_position[1] / AGENT_DEFAULTS.sensing_radius,
-                    relative_velocity[0] / self._relative_velocity_scale,
-                    relative_velocity[1] / self._relative_velocity_scale,
-                    distance / AGENT_DEFAULTS.sensing_radius,
-                    1.0,
-                ]
-            )
+            agent_features = [
+                relative_position[0] / AGENT_DEFAULTS.sensing_radius,
+                relative_position[1] / AGENT_DEFAULTS.sensing_radius,
+                relative_velocity[0] / self._relative_velocity_scale,
+                relative_velocity[1] / self._relative_velocity_scale,
+                distance / AGENT_DEFAULTS.sensing_radius,
+                1.0,
+            ]
+            if len(agent_features) != VISIBLE_AGENT_FEATURES:
+                raise ValueError(f"expected {VISIBLE_AGENT_FEATURES} visible-agent features, got {len(agent_features)}")
+            values.extend(agent_features)
 
         missing = OBSERVATION_DEFAULTS.max_visible_agents - min(len(visible), OBSERVATION_DEFAULTS.max_visible_agents)
-        values.extend([0.0] * missing * 6)
+        values.extend([0.0] * missing * VISIBLE_AGENT_FEATURES)
         return values
 
     def _visible_targets(self, targets: list[Mapping[str, Any]], position: np.ndarray) -> list[float]:
@@ -128,18 +132,21 @@ class ObservationBuilder:
         values: list[float] = []
         for distance, target in visible[: OBSERVATION_DEFAULTS.max_visible_targets]:
             relative_position = _array2(target["position"]) - position
-            values.extend(
-                [
-                    relative_position[0] / AGENT_DEFAULTS.sensing_radius,
-                    relative_position[1] / AGENT_DEFAULTS.sensing_radius,
-                    distance / AGENT_DEFAULTS.sensing_radius,
-                    1.0 if bool(target["discovered"]) else 0.0,
-                    1.0,
-                ]
-            )
+            target_features = [
+                relative_position[0] / AGENT_DEFAULTS.sensing_radius,
+                relative_position[1] / AGENT_DEFAULTS.sensing_radius,
+                distance / AGENT_DEFAULTS.sensing_radius,
+                1.0 if bool(target["discovered"]) else 0.0,
+                1.0,
+            ]
+            if len(target_features) != VISIBLE_TARGET_FEATURES:
+                raise ValueError(
+                    f"expected {VISIBLE_TARGET_FEATURES} visible-target features, got {len(target_features)}"
+                )
+            values.extend(target_features)
 
         missing = OBSERVATION_DEFAULTS.max_visible_targets - min(len(visible), OBSERVATION_DEFAULTS.max_visible_targets)
-        values.extend([0.0] * missing * 5)
+        values.extend([0.0] * missing * VISIBLE_TARGET_FEATURES)
         return values
 
     def _visible_obstacles(self, obstacles: list[Mapping[str, Any]], position: np.ndarray) -> list[float]:
@@ -156,20 +163,23 @@ class ObservationBuilder:
         for distance, obstacle in visible[: OBSERVATION_DEFAULTS.max_visible_obstacles]:
             relative_position = _array2(obstacle["position"]) - position
             radius = float(obstacle["radius"])
-            values.extend(
-                [
-                    relative_position[0] / self._obstacle_visibility_scale,
-                    relative_position[1] / self._obstacle_visibility_scale,
-                    radius / OBSTACLE_DEFAULTS.expected_max_radius,
-                    distance / self._obstacle_visibility_scale,
-                    1.0,
-                ]
-            )
+            obstacle_features = [
+                relative_position[0] / self._obstacle_visibility_scale,
+                relative_position[1] / self._obstacle_visibility_scale,
+                radius / OBSTACLE_DEFAULTS.expected_max_radius,
+                distance / self._obstacle_visibility_scale,
+                1.0,
+            ]
+            if len(obstacle_features) != VISIBLE_OBSTACLE_FEATURES:
+                raise ValueError(
+                    f"expected {VISIBLE_OBSTACLE_FEATURES} visible-obstacle features, got {len(obstacle_features)}"
+                )
+            values.extend(obstacle_features)
 
         missing = OBSERVATION_DEFAULTS.max_visible_obstacles - min(
             len(visible), OBSERVATION_DEFAULTS.max_visible_obstacles
         )
-        values.extend([0.0] * missing * 5)
+        values.extend([0.0] * missing * VISIBLE_OBSTACLE_FEATURES)
         return values
 
     def _communication_summary(
