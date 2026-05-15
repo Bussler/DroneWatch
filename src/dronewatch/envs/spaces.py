@@ -109,8 +109,8 @@ def action_space() -> gym.spaces.Box:
 def observation_space() -> gym.spaces.Box:
     """Return the per-agent fixed-size observation space."""
     return gym.spaces.Box(
-        low=-np.inf,
-        high=np.inf,
+        low=-1.0,  # np.inf,
+        high=1.0,  # np.inf,
         shape=(OBSERVATION_SIZE,),
         dtype=np.float32,
     )

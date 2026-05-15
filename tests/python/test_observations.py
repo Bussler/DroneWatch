@@ -29,3 +29,29 @@ def test_observation_builder_is_deterministic_for_same_state() -> None:
     assert first.keys() == second.keys()
     for agent_id in first:
         np.testing.assert_array_equal(first[agent_id], second[agent_id])
+
+
+def test_observation_builder_keeps_normalized_values_within_unit_range() -> None:
+    builder = ObservationBuilder()
+    state = {
+        "agents": [
+            {"id": 0, "position": [10.0, 10.0], "velocity": [2.0, 0.0]},
+            {"id": 1, "position": [25.0, 10.0], "velocity": [-2.0, 0.0]},
+        ],
+        "targets": [
+            {"id": 0, "position": [25.0, 10.0], "discovered": False},
+        ],
+        "obstacles": [
+            {"id": 0, "position": [31.0, 10.0], "radius": 6.0},
+        ],
+    }
+    metrics = {
+        "timestep": 200,
+        "max_episode_steps": 200,
+    }
+
+    observations = builder.build(state, metrics)
+
+    for agent_id, observation in observations.items():
+        assert np.all(observation >= -1.0), f"{agent_id} contains values below -1.0: {observation[observation < -1.0]}"
+        assert np.all(observation <= 1.0), f"{agent_id} contains values above 1.0: {observation[observation > 1.0]}"

@@ -21,6 +21,8 @@ class ObservationBuilder:
     """Build local, padded, fixed-size observations from Rust simulator state."""
 
     observation_size = OBSERVATION_SIZE
+    _relative_velocity_scale = AGENT_DEFAULTS.max_speed * 2.0
+    _obstacle_visibility_scale = AGENT_DEFAULTS.sensing_radius + OBSTACLE_DEFAULTS.expected_max_radius
 
     def build(
         self,
@@ -103,8 +105,8 @@ class ObservationBuilder:
                 [
                     relative_position[0] / AGENT_DEFAULTS.sensing_radius,
                     relative_position[1] / AGENT_DEFAULTS.sensing_radius,
-                    relative_velocity[0] / AGENT_DEFAULTS.max_speed,
-                    relative_velocity[1] / AGENT_DEFAULTS.max_speed,
+                    relative_velocity[0] / self._relative_velocity_scale,
+                    relative_velocity[1] / self._relative_velocity_scale,
                     distance / AGENT_DEFAULTS.sensing_radius,
                     1.0,
                 ]
@@ -156,10 +158,10 @@ class ObservationBuilder:
             radius = float(obstacle["radius"])
             values.extend(
                 [
-                    relative_position[0] / AGENT_DEFAULTS.sensing_radius,
-                    relative_position[1] / AGENT_DEFAULTS.sensing_radius,
+                    relative_position[0] / self._obstacle_visibility_scale,
+                    relative_position[1] / self._obstacle_visibility_scale,
                     radius / OBSTACLE_DEFAULTS.expected_max_radius,
-                    distance / AGENT_DEFAULTS.sensing_radius,
+                    distance / self._obstacle_visibility_scale,
                     1.0,
                 ]
             )
@@ -198,8 +200,8 @@ class ObservationBuilder:
             len(neighbors) / max(AGENT_DEFAULTS.count - 1, 1),
             mean_relative_position[0] / AGENT_DEFAULTS.communication_radius,
             mean_relative_position[1] / AGENT_DEFAULTS.communication_radius,
-            mean_relative_velocity[0] / AGENT_DEFAULTS.max_speed,
-            mean_relative_velocity[1] / AGENT_DEFAULTS.max_speed,
+            mean_relative_velocity[0] / self._relative_velocity_scale,
+            mean_relative_velocity[1] / self._relative_velocity_scale,
         ]
 
 
