@@ -54,9 +54,8 @@ def run_random_policy(
         final_metrics: dict[str, Any] = {}
 
         if render and episode_index == 0:
-            first_episode_frames.append(
-                SimulationFrame.from_snapshots(env._simulation.state(), env._simulation.metrics())
-            )
+            state_snapshot, metrics_snapshot = env.snapshot()
+            first_episode_frames.append(SimulationFrame.from_snapshots(state_snapshot, metrics_snapshot))
 
         while not done:
             actions = {agent_id: policy.compute_action() for agent_id in observations}
@@ -69,7 +68,8 @@ def run_random_policy(
                 render and episode_index == 0 and (done or int(final_metrics["timestep"]) % render_stride == 0)
             )
             if should_capture:
-                first_episode_frames.append(SimulationFrame.from_snapshots(env._simulation.state(), final_metrics))
+                state_snapshot, _metrics_snapshot = env.snapshot()
+                first_episode_frames.append(SimulationFrame.from_snapshots(state_snapshot, final_metrics))
 
         episode_summaries.append(_episode_summary(episode_reward, final_metrics))
 

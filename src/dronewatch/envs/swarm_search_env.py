@@ -126,6 +126,10 @@ class SwarmSearchEnv(MultiAgentEnv):
         }
         return observations, rewards, terminateds, truncateds, infos
 
+    def snapshot(self) -> tuple[dict[str, Any], dict[str, Any]]:
+        """Return the current simulator state and metrics for rendering and evaluation helpers."""
+        return self._simulation.state(), self._simulation.metrics()
+
     def _ordered_actions(self, action_dict: Mapping[str, Any]) -> list[tuple[float, float]]:
         """Validate action values and order them by stable simulator agent ID."""
         missing = [agent_id for agent_id in self._agent_ids if agent_id not in action_dict]
