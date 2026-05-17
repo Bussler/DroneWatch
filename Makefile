@@ -10,7 +10,6 @@ help:
 	@echo "  render-random  Run a random policy rollout and write a report plus GIF"
 	@echo "  train-ppo      Train shared-policy PPO locally"
 	@echo "  evaluate-ppo   Evaluate PPO checkpoint; pass CHECKPOINT=path"
-	@echo "  render-ppo     Evaluate PPO checkpoint and render one GIF; pass CHECKPOINT=path"
 	@echo "  ppo-smoke      Run one tiny PPO training/evaluation smoke check"
 	@echo "  test-rust     Run Rust tests"
 	@echo "  test-python   Run Python tests"

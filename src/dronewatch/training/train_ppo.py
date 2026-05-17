@@ -64,17 +64,16 @@ def train_ppo(
             print(json.dumps(_training_progress(iteration, last_result), sort_keys=True))
 
             if iteration % checkpoint_frequency == 0:
-                checkpoint = _save_checkpoint(algorithm, output_dir)
+                checkpoint = _save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
                 checkpoints.append(checkpoint)
                 print(f"saved checkpoint: {checkpoint}")
 
-        final_checkpoint = _save_checkpoint(algorithm, output_dir)
+        final_checkpoint = _save_checkpoint(algorithm, output_dir / "final")
         if final_checkpoint not in checkpoints:
             checkpoints.append(final_checkpoint)
         print(f"saved final checkpoint: {final_checkpoint}")
     finally:
         algorithm.stop()
-        ray.shutdown()
 
     evaluation_report: dict[str, Any] | None = None
     if eval_episodes > 0:
@@ -88,6 +87,8 @@ def train_ppo(
             gif_path=output_dir / "evaluation_episode.gif",
             render_stride=4,
         )
+
+    ray.shutdown()
 
     return {
         "iterations": iterations,
@@ -103,6 +104,7 @@ def train_ppo(
 
 def _save_checkpoint(algorithm: Any, checkpoint_dir: Path) -> str:
     """Save an RLlib Algorithm checkpoint and return its path as a string."""
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
     saved = algorithm.save(str(checkpoint_dir.resolve()))
     if hasattr(saved, "checkpoint") and hasattr(saved.checkpoint, "path"):
         return str(saved.checkpoint.path)
@@ -121,9 +123,16 @@ def _training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]
         "num_env_steps_sampled_lifetime": result.get("num_env_steps_sampled_lifetime"),
     }
 
-    # logged by SwarmSearchMetricsCallback
-    target_discovery_rate = custom_metrics.get("dronewatch/target_discovery_rate_mean")
-    coverage_ratio = custom_metrics.get("dronewatch/coverage_ratio_mean")
+    # The new RLlib API stack exposes callback metrics under env_runners.
+    # Fall back to custom_metrics for compatibility with older result layouts.
+    target_discovery_rate = env_runners.get(
+        "dronewatch/target_discovery_rate",
+        custom_metrics.get("dronewatch/target_discovery_rate_mean"),
+    )
+    coverage_ratio = env_runners.get(
+        "dronewatch/coverage_ratio",
+        custom_metrics.get("dronewatch/coverage_ratio_mean"),
+    )
     if target_discovery_rate is not None:
         progress["target_discovery_rate"] = target_discovery_rate
     if coverage_ratio is not None:
