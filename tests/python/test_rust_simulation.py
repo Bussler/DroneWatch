@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from dronewatch.config.schema import EnvConfig, ObstacleConfig, TargetConfig
+from dronewatch.config.schema import (
+    AgentConfig,
+    EnvConfig,
+    ObstacleConfig,
+    TargetConfig,
+)
 from dronewatch.sim import SwarmSimulation
 
 
@@ -56,7 +61,7 @@ def test_scripted_rollout_finishes_with_bounded_metrics() -> None:
 
 def test_rust_world_accepts_configured_simulation_values() -> None:
     config = EnvConfig(
-        num_agents=4,
+        agents=AgentConfig(count=4),
         max_episode_steps=5,
         targets=TargetConfig(count=3),
         obstacles=ObstacleConfig(count=1, min_radius=2.0, max_radius=3.0),

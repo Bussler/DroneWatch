@@ -44,6 +44,7 @@ class WorldConfig(_FrozenModel):
 class AgentConfig(_FrozenModel):
     """Homogeneous swarm movement, collision, sensing, and communication settings."""
 
+    count: int = Field(default=16, gt=0)
     max_speed: float = Field(default=2.0, gt=0.0)
     collision_radius: float = Field(default=0.75, gt=0.0)
     sensing_radius: float = Field(default=15.0, gt=0.0)
@@ -103,7 +104,6 @@ class EnvConfig(_FrozenModel):
     """Complete SwarmSearch2D environment and simulator configuration."""
 
     name: str = Field(default="SwarmSearch2D", min_length=1)
-    num_agents: int = Field(default=16, gt=0)
     max_episode_steps: int = Field(default=200, gt=0)
     world: WorldConfig = Field(default_factory=WorldConfig)
     agents: AgentConfig = Field(default_factory=AgentConfig)
@@ -118,7 +118,7 @@ class EnvConfig(_FrozenModel):
         return {
             "max_episode_steps": self.max_episode_steps,
             "world": self.world.model_dump(mode="json"),
-            "agents": {"count": self.num_agents, **self.agents.model_dump(mode="json")},
+            "agents": self.agents.model_dump(mode="json"),
             "targets": self.targets.model_dump(mode="json"),
             "obstacles": self.obstacles.model_dump(mode="json"),
             "coverage": self.coverage.model_dump(mode="json"),

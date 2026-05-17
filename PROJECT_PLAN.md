@@ -315,7 +315,8 @@ Use Gymnasium/RLlib-compatible `terminated` and `truncated` semantics.
 MVP default:
 
 ```yaml
-num_agents: 16
+agents:
+  count: 16
 ```
 
 Agents are homogeneous in v1.
@@ -716,7 +717,6 @@ runtime:
 # configs/env/swarm_search_v1.yaml
 env:
   name: SwarmSearch2D
-  num_agents: 16
   max_episode_steps: 200
 
   world:
@@ -725,6 +725,7 @@ env:
     dt: 1.0
 
   agents:
+    count: 16
     max_speed: 2.0
     collision_radius: 0.75
     sensing_radius: 15.0

@@ -213,7 +213,7 @@ class ObservationBuilder:
         mean_relative_position = relative_positions.mean(axis=0)
         mean_relative_velocity = relative_velocities.mean(axis=0)
         return [
-            len(neighbors) / max(self._config.num_agents - 1, 1),
+            len(neighbors) / max(self._config.agents.count - 1, 1),
             mean_relative_position[0] / self._config.agents.communication_radius,
             mean_relative_position[1] / self._config.agents.communication_radius,
             mean_relative_velocity[0] / self._relative_velocity_scale,

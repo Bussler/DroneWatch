@@ -4,11 +4,15 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
-from dronewatch.config.schema import EnvConfig, ObservationConfig
+from dronewatch.config.schema import (
+    AgentConfig,
+    EnvConfig,
+    ObservationConfig,
+    SwarmSearchEnvConfig,
+)
 from dronewatch.envs import SwarmSearchEnv
 from dronewatch.envs.spaces import (
     OBSERVATION_SIZE,
-    SwarmSearchEnvConfig,
     observation_size,
 )
 
@@ -41,7 +45,7 @@ def test_env_accepts_pydantic_config_and_none_seed() -> None:
 
 def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
     env_config = EnvConfig(
-        num_agents=4,
+        agents=AgentConfig(count=4),
         observation=ObservationConfig(
             max_visible_agents=2,
             max_visible_targets=2,

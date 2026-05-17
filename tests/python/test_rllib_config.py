@@ -4,6 +4,7 @@ import pytest
 from pydantic import ValidationError
 
 from dronewatch.config.schema import (
+    AgentConfig,
     DroneWatchConfig,
     EnvConfig,
     ModelConfig,
@@ -97,7 +98,7 @@ def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
 
     assert config.env == SWARM_SEARCH_ENV_NAME
     assert config.env_config["seed"] == 7
-    assert config.env_config["env"]["num_agents"] == 16
+    assert config.env_config["env"]["agents"]["count"] == 16
     assert config.count_steps_by == "env_steps"
     assert SHARED_POLICY_ID in config.policies
 
@@ -121,7 +122,7 @@ def test_build_ppo_config_accepts_none_seed() -> None:
 
 def test_build_ppo_config_accepts_root_config_with_env_and_network_values() -> None:
     root = DroneWatchConfig(
-        env=EnvConfig(num_agents=4),
+        env=EnvConfig(agents=AgentConfig(count=4)),
         model=ModelConfig(
             kind="lstm",
             network=NetworkConfig(use_lstm=True, fcnet_hiddens=[32, 16], lstm_cell_size=64, max_seq_len=8),
@@ -131,7 +132,7 @@ def test_build_ppo_config_accepts_root_config_with_env_and_network_values() -> N
 
     config = build_ppo_config(root)
 
-    assert config.env_config["env"]["num_agents"] == 4
+    assert config.env_config["env"]["agents"]["count"] == 4
     assert config.env_config["seed"] == 42
     assert config.model_config["fcnet_hiddens"] == [32, 16]
     assert config.model_config["use_lstm"] is True

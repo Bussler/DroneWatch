@@ -44,7 +44,7 @@ class SwarmSearchEnv(MultiAgentEnv):
         self._initial_seed: int | None = self._config.seed
         self._simulation = SwarmSimulation(seed=self._initial_seed, config=self._env_config.to_rust_config_dict())
         self._observation_builder = ObservationBuilder(self._env_config)
-        self._agent_ids = agent_ids(self._env_config.num_agents)
+        self._agent_ids = agent_ids(self._env_config.agents.count)
         self.possible_agents = list(self._agent_ids)
         self.agents = list(self._agent_ids)
         self.action_space = action_space()
