@@ -15,6 +15,7 @@ from ray.rllib.core.rl_module.rl_module import RLModule
 from ray.rllib.utils.numpy import convert_to_numpy
 
 from dronewatch.envs import SwarmSearchEnv
+from dronewatch.rendering import SimulationFrame, render_episode_gif
 from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_search_env
 
 from .reporting import aggregate_report, episode_summary, write_json_report
@@ -27,6 +28,9 @@ def evaluate_checkpoint(
     seed: int = 42,
     report_path: str | Path | None = None,
     model: str | None = None,
+    render: bool = False,
+    gif_path: str | Path | None = None,
+    render_stride: int = 4,
 ) -> dict[str, Any]:
     """Evaluate a checkpoint and optionally write a JSON report."""
     if episodes <= 0:
@@ -42,6 +46,9 @@ def evaluate_checkpoint(
             seed=seed,
             checkpoint=str(checkpoint_path),
             model=model,
+            render=render,
+            gif_path=gif_path,
+            render_stride=render_stride,
         )
     finally:
         algorithm.stop()
@@ -58,6 +65,9 @@ def evaluate_algorithm(
     seed: int,
     checkpoint: str | None = None,
     model: str | None = None,
+    render: bool = False,
+    gif_path: str | Path | None = None,
+    render_stride: int = 4,
 ) -> dict[str, Any]:
     """Evaluate an instantiated RLlib algorithm on fresh simulator episodes."""
     if episodes <= 0:
@@ -66,6 +76,7 @@ def evaluate_algorithm(
     module = algorithm.get_module(SHARED_POLICY_ID)
     initial_state = _initial_module_state(module)
     episode_summaries: list[dict[str, float]] = []
+    first_episode_frames: list[SimulationFrame] = []
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
@@ -75,6 +86,9 @@ def evaluate_algorithm(
         done = False
         episode_reward = 0.0
         final_metrics: dict[str, Any] = {}
+
+        if render and episode_index == 0:
+            first_episode_frames.append(_capture_frame(env))
 
         while not done:
             actions: dict[str, np.ndarray] = {}
@@ -88,6 +102,12 @@ def evaluate_algorithm(
             done = bool(terminateds["__all__"] or truncateds["__all__"])
             final_metrics = dict(next(iter(infos.values()))["metrics"])
 
+            should_capture = (
+                render and episode_index == 0 and (done or int(final_metrics["timestep"]) % render_stride == 0)
+            )
+            if should_capture:
+                first_episode_frames.append(_capture_frame(env, final_metrics))
+
         episode_summaries.append(episode_summary(episode_reward, final_metrics))
 
     extra: dict[str, Any] = {}
@@ -95,7 +115,16 @@ def evaluate_algorithm(
         extra["checkpoint"] = checkpoint
     if model is not None:
         extra["model"] = model
-    return aggregate_report(episode_summaries, policy="ppo", extra=extra)
+    report = aggregate_report(episode_summaries, policy="ppo", extra=extra)
+    if render:
+        render_episode_gif(first_episode_frames, gif_path)
+    return report
+
+
+def _capture_frame(env: SwarmSearchEnv, metrics: dict[str, Any] | None = None) -> SimulationFrame:
+    """Capture one typed render frame from the current environment state."""
+    state_snapshot, metrics_snapshot = env.snapshot()
+    return SimulationFrame.from_snapshots(state_snapshot, metrics or metrics_snapshot)
 
 
 def _initial_module_state(module: RLModule) -> dict[str, torch.Tensor]:
@@ -153,6 +182,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--report-path", type=Path, default=Path("artifacts/reports/ppo_eval_report.json"))
     parser.add_argument("--model", choices=["feedforward", "lstm"], default=None)
+    parser.add_argument("--render", action="store_true")
+    parser.add_argument("--gif-path", type=Path, default=Path("artifacts/gifs/ppo_eval_episode.gif"))
+    parser.add_argument("--render-stride", type=int, default=4)
     args = parser.parse_args()
 
     report = evaluate_checkpoint(
@@ -161,6 +193,9 @@ def main() -> None:
         seed=args.seed,
         report_path=args.report_path,
         model=args.model,
+        render=args.render,
+        gif_path=args.gif_path,
+        render_stride=args.render_stride,
     )
     print(json.dumps(report, indent=2, sort_keys=True))
 

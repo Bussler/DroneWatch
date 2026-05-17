@@ -84,6 +84,9 @@ def train_ppo(
             seed=seed,
             report_path=eval_report_path,
             model=model,
+            render=True,
+            gif_path=output_dir / "evaluation_episode.gif",
+            render_stride=4,
         )
 
     return {
