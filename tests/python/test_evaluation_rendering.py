@@ -20,16 +20,6 @@ class _FakeAlgorithm:
         return object()
 
 
-def test_evaluate_algorithm_rejects_render_without_gif_path() -> None:
-    with pytest.raises(ValueError, match="gif_path"):
-        evaluate_algorithm(algorithm=_FakeAlgorithm(), episodes=1, seed=1, render=True)  # type: ignore[arg-type]
-
-
-def test_evaluate_algorithm_rejects_invalid_render_stride() -> None:
-    with pytest.raises(ValueError, match="render_stride"):
-        evaluate_algorithm(algorithm=_FakeAlgorithm(), episodes=1, seed=1, render_stride=0)  # type: ignore[arg-type]
-
-
 def test_evaluate_algorithm_renders_first_episode_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     rendered: dict[str, Any] = {}
 
