@@ -10,7 +10,11 @@ from typing import Any
 import ray
 
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
-from dronewatch.training.rllib_config import ModelKind, build_ppo_config
+from dronewatch.training.rllib_config import (
+    ModelKind,
+    PPOBuildContext,
+    build_ppo_config,
+)
 
 
 def train_ppo(
@@ -39,7 +43,7 @@ def train_ppo(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     ray.init(ignore_reinit_error=True, include_dashboard=False)
-    algorithm = build_ppo_config(
+    ppo_context = PPOBuildContext(
         model=model,
         seed=seed,
         num_env_runners=num_env_runners,
@@ -48,7 +52,8 @@ def train_ppo(
         train_batch_size_per_learner=train_batch_size_per_learner,
         minibatch_size=minibatch_size,
         num_epochs=num_epochs,
-    ).build_algo()
+    )
+    algorithm = build_ppo_config(ppo_context).build_algo()
 
     checkpoints: list[str] = []
     last_result: dict[str, Any] = {}
