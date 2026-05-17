@@ -1,0 +1,17 @@
+defaults:
+  - env: swarm_search_v1
+  - model: ppo_feedforward
+  - training: debug
+  - evaluation: debug
+  - rendering: default
+  - paths: default
+  - tune: ray_tune
+
+project:
+  name: DroneWatch
+  seed: 42
+
+runtime:
+  output_dir: outputs
+  artifact_dir: artifacts
+  resolved_config_filename: resolved_config.yaml

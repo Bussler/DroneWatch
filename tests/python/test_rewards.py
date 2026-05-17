@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dronewatch.config.schema import RewardWeights
 from dronewatch.envs.reward import calculate_team_reward
 
 
@@ -22,3 +23,12 @@ def test_connectivity_is_not_a_reward_term() -> None:
     high_connectivity = calculate_team_reward({"connectivity_ratio": 1.0})
 
     assert low_connectivity == high_connectivity == -0.001
+
+
+def test_reward_weights_are_configurable() -> None:
+    reward = calculate_team_reward(
+        {"targets_discovered": 1, "new_coverage_cells": 1},
+        RewardWeights(target_discovered=2.0, new_coverage_cell=0.5, step_penalty=0.0),
+    )
+
+    assert reward == 2.5

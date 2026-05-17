@@ -4,8 +4,13 @@ import numpy as np
 import pytest
 from pydantic import ValidationError
 
+from dronewatch.config.schema import EnvConfig, ObservationConfig
 from dronewatch.envs import SwarmSearchEnv
-from dronewatch.envs.spaces import OBSERVATION_SIZE, SwarmSearchEnvConfig
+from dronewatch.envs.spaces import (
+    OBSERVATION_SIZE,
+    SwarmSearchEnvConfig,
+    observation_size,
+)
 
 
 def test_env_reset_returns_observations_and_infos_for_all_agents() -> None:
@@ -32,3 +37,23 @@ def test_env_rejects_unsupported_non_default_config() -> None:
 def test_env_accepts_pydantic_config_and_none_seed() -> None:
     SwarmSearchEnv({"seed": None})
     SwarmSearchEnv(SwarmSearchEnvConfig(seed=None))
+
+
+def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
+    env_config = EnvConfig(
+        num_agents=4,
+        observation=ObservationConfig(
+            max_visible_agents=2,
+            max_visible_targets=2,
+            max_visible_obstacles=1,
+            include_communication_summary=False,
+        ),
+    )
+    env = SwarmSearchEnv({"seed": 7, "env": env_config.model_dump(mode="json")})
+
+    observations, infos = env.reset(seed=7)
+
+    assert len(observations) == 4
+    assert len(infos) == 4
+    assert env.observation_space.shape == (observation_size(env_config),)
+    assert all(observation.shape == (observation_size(env_config),) for observation in observations.values())

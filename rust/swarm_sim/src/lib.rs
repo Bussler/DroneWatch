@@ -1,7 +1,7 @@
 //! PyO3 bindings and public Rust modules for the DroneWatch simulation core.
 
 use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
+use pyo3::types::{PyAny, PyDict, PyList};
 use rand::random;
 
 pub mod agent;
@@ -15,7 +15,7 @@ pub mod target;
 pub mod world;
 
 use crate::{
-    config::SimulationConfig,
+    config::{AgentConfig, CoverageConfig, ObstacleConfig, SimulationConfig, TargetConfig, WorldConfig},
     geometry::Vec2,
     metrics::{SimulationMetrics, StepEvents},
     world::World,
@@ -44,9 +44,13 @@ struct SwarmWorld {
 #[pymethods]
 impl SwarmWorld {
     #[new]
-    #[pyo3(signature = (seed=None))]
-    fn new(seed: Option<u64>) -> PyResult<Self> {
-        let world = World::new(SimulationConfig::default(), resolve_seed(seed))
+    #[pyo3(signature = (seed=None, config=None))]
+    fn new(seed: Option<u64>, config: Option<&Bound<'_, PyDict>>) -> PyResult<Self> {
+        let simulation_config = match config {
+            Some(dict) => simulation_config_from_py(dict)?,
+            None => SimulationConfig::default(),
+        };
+        let world = World::new(simulation_config, resolve_seed(seed))
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
         Ok(Self { world })
     }
@@ -118,6 +122,70 @@ impl SwarmWorld {
     fn is_done(&self) -> bool {
         self.world.is_done()
     }
+}
+
+fn simulation_config_from_py(dict: &Bound<'_, PyDict>) -> PyResult<SimulationConfig> {
+    let world = get_dict(dict, "world")?;
+    let agents = get_dict(dict, "agents")?;
+    let targets = get_dict(dict, "targets")?;
+    let obstacles = get_dict(dict, "obstacles")?;
+    let coverage = get_dict(dict, "coverage")?;
+
+    let config = SimulationConfig {
+        max_episode_steps: get_usize(dict, "max_episode_steps")?,
+        world: WorldConfig {
+            width: get_f64(&world, "width")?,
+            height: get_f64(&world, "height")?,
+            dt: get_f64(&world, "dt")?,
+        },
+        agents: AgentConfig {
+            count: get_usize(&agents, "count")?,
+            max_speed: get_f64(&agents, "max_speed")?,
+            collision_radius: get_f64(&agents, "collision_radius")?,
+            sensing_radius: get_f64(&agents, "sensing_radius")?,
+            communication_radius: get_f64(&agents, "communication_radius")?,
+        },
+        targets: TargetConfig {
+            count: get_usize(&targets, "count")?,
+            discovery_radius: get_f64(&targets, "discovery_radius")?,
+        },
+        obstacles: ObstacleConfig {
+            count: get_usize(&obstacles, "count")?,
+            min_radius: get_f64(&obstacles, "min_radius")?,
+            max_radius: get_f64(&obstacles, "max_radius")?,
+        },
+        coverage: CoverageConfig {
+            grid_width: get_usize(&coverage, "grid_width")?,
+            grid_height: get_usize(&coverage, "grid_height")?,
+            sensing_radius: get_f64(&coverage, "sensing_radius")?,
+        },
+    };
+    config
+        .validate()
+        .map_err(pyo3::exceptions::PyValueError::new_err)?;
+    Ok(config)
+}
+
+fn get_dict<'py>(dict: &Bound<'py, PyDict>, key: &str) -> PyResult<Bound<'py, PyDict>> {
+    let value = dict
+        .get_item(key)?
+        .ok_or_else(|| pyo3::exceptions::PyKeyError::new_err(key.to_string()))?;
+    value.downcast_into::<PyDict>().map_err(|_| {
+        pyo3::exceptions::PyTypeError::new_err(format!("config field {key} must be a dict"))
+    })
+}
+
+fn get_f64(dict: &Bound<'_, PyDict>, key: &str) -> PyResult<f64> {
+    Ok(get_value(dict, key)?.extract::<f64>()?)
+}
+
+fn get_usize(dict: &Bound<'_, PyDict>, key: &str) -> PyResult<usize> {
+    Ok(get_value(dict, key)?.extract::<usize>()?)
+}
+
+fn get_value<'py>(dict: &Bound<'py, PyDict>, key: &str) -> PyResult<Bound<'py, PyAny>> {
+    dict.get_item(key)?
+        .ok_or_else(|| pyo3::exceptions::PyKeyError::new_err(key.to_string()))
 }
 
 fn metrics_to_py(py: Python<'_>, metrics: &SimulationMetrics) -> PyResult<Py<PyDict>> {

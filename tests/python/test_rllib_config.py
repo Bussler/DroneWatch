@@ -3,6 +3,13 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
+from dronewatch.config.schema import (
+    DroneWatchConfig,
+    EnvConfig,
+    ModelConfig,
+    NetworkConfig,
+    TrainingConfig,
+)
 from dronewatch.training.rllib_config import (
     SHARED_POLICY_ID,
     SWARM_SEARCH_ENV_NAME,
@@ -89,7 +96,8 @@ def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
     config = build_ppo_config(context)
 
     assert config.env == SWARM_SEARCH_ENV_NAME
-    assert config.env_config == {"seed": 7}
+    assert config.env_config["seed"] == 7
+    assert config.env_config["env"]["num_agents"] == 16
     assert config.count_steps_by == "env_steps"
     assert SHARED_POLICY_ID in config.policies
 
@@ -98,7 +106,8 @@ def test_build_ppo_config_without_context_uses_default_context() -> None:
     config = build_ppo_config()
 
     assert config.env == SWARM_SEARCH_ENV_NAME
-    assert config.env_config == {"seed": 42}
+    assert config.env_config["seed"] == 42
+    assert config.env_config["env"]["name"] == SWARM_SEARCH_ENV_NAME
     assert config.count_steps_by == "env_steps"
     assert SHARED_POLICY_ID in config.policies
 
@@ -107,4 +116,23 @@ def test_build_ppo_config_accepts_none_seed() -> None:
     config = build_ppo_config(PPOBuildContext(seed=None))
 
     assert config.env == SWARM_SEARCH_ENV_NAME
-    assert config.env_config == {"seed": None}
+    assert config.env_config["seed"] is None
+
+
+def test_build_ppo_config_accepts_root_config_with_env_and_network_values() -> None:
+    root = DroneWatchConfig(
+        env=EnvConfig(num_agents=4),
+        model=ModelConfig(
+            kind="lstm",
+            network=NetworkConfig(use_lstm=True, fcnet_hiddens=[32, 16], lstm_cell_size=64, max_seq_len=8),
+        ),
+        training=TrainingConfig(),
+    )
+
+    config = build_ppo_config(root)
+
+    assert config.env_config["env"]["num_agents"] == 4
+    assert config.env_config["seed"] == 42
+    assert config.model_config["fcnet_hiddens"] == [32, 16]
+    assert config.model_config["use_lstm"] is True
+    assert config.model_config["lstm_cell_size"] == 64

@@ -3,8 +3,10 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from dronewatch.envs.spaces import (
+from dronewatch.config.schema import (
     AgentDefaults,
+    DroneWatchConfig,
+    EnvConfig,
     ObservationDefaults,
     ObstacleDefaults,
     RewardWeights,
@@ -19,6 +21,7 @@ def test_default_models_construct_with_expected_values() -> None:
     assert ObservationDefaults().max_visible_agents == 5
     assert ObstacleDefaults().expected_max_radius == 6.0
     assert RewardWeights().target_discovered == 5.0
+    assert DroneWatchConfig().env.num_agents == 16
 
 
 def test_default_models_are_frozen() -> None:
@@ -42,6 +45,7 @@ def test_default_models_reject_invalid_numeric_values() -> None:
 def test_env_config_uses_pydantic_validation() -> None:
     assert SwarmSearchEnvConfig(seed=None).seed is None
     assert SwarmSearchEnvConfig.model_validate({"seed": 123}).seed == 123
+    assert SwarmSearchEnvConfig(env=EnvConfig(num_agents=4)).env.num_agents == 4
 
     with pytest.raises(ValidationError):
         SwarmSearchEnvConfig.model_validate({"num_agents": 8})

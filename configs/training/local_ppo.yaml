@@ -1,0 +1,34 @@
+training:
+  seed: null
+  stop:
+    iterations: 10
+    timesteps_total: 2000000
+  ray:
+    num_env_runners: 0
+    num_envs_per_env_runner: 1
+    num_learners: 0
+    num_gpus_per_learner: 0
+    num_cpus: 8
+    num_gpus: 0
+  ppo:
+    gamma: 0.99
+    lambda_: 0.95
+    lr: 0.0003
+    clip_param: 0.2
+    entropy_coeff: 0.01
+    vf_loss_coeff: 1.0
+    train_batch_size_per_learner: 1024
+    minibatch_size: 256
+    num_epochs: 5
+    rollout_fragment_length: auto
+  checkpoint:
+    directory: artifacts/checkpoints/ppo
+    frequency_iters: 5
+    keep_last: 5
+  evaluation:
+    enabled: true
+    episodes: 5
+    report_path: artifacts/reports/ppo_eval_report.json
+    render: true
+    gif_path: artifacts/gifs/ppo_eval_episode.gif
+    render_stride: 4

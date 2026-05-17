@@ -33,7 +33,7 @@ def test_evaluate_algorithm_renders_first_episode_only(monkeypatch: pytest.Monke
     ) -> tuple[np.ndarray, dict[str, Any]]:
         return np.zeros((2,), dtype=np.float32), state
 
-    def fake_render_episode_gif(frames: list[SimulationFrame], path: str | Path) -> None:
+    def fake_render_episode_gif(frames: list[SimulationFrame], path: str | Path, **_kwargs: Any) -> None:
         rendered["frames"] = list(frames)
         rendered["path"] = Path(path)
 

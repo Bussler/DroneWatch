@@ -1,0 +1,4 @@
+paths:
+  checkpoint_dir: artifacts/checkpoints/ppo
+  report_dir: artifacts/reports
+  gif_dir: artifacts/gifs

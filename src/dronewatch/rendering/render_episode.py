@@ -9,11 +9,17 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import PillowWriter
 from matplotlib.patches import Circle
 
+from dronewatch.config.schema import EnvConfig
 from dronewatch.envs.spaces import AGENT_DEFAULTS, WORLD_DEFAULTS
 from dronewatch.rendering.frame import SimulationFrame
 
 
-def render_episode_gif(frames: Sequence[SimulationFrame], path: str | Path, fps: int = 12) -> None:
+def render_episode_gif(
+    frames: Sequence[SimulationFrame],
+    path: str | Path,
+    fps: int = 12,
+    env_config: EnvConfig | None = None,
+) -> None:
     """Render typed simulation frames to a GIF file."""
     if not frames:
         raise ValueError("cannot render an empty episode")
@@ -25,18 +31,19 @@ def render_episode_gif(frames: Sequence[SimulationFrame], path: str | Path, fps:
     writer = PillowWriter(fps=fps)
     with writer.saving(fig, str(output_path), dpi=100):
         for frame in frames:
-            _draw_frame(ax, frame)
+            _draw_frame(ax, frame, env_config)
             writer.grab_frame()
     plt.close(fig)
 
 
-def _draw_frame(ax: plt.Axes, frame: SimulationFrame) -> None:
+def _draw_frame(ax: plt.Axes, frame: SimulationFrame, env_config: EnvConfig | None = None) -> None:
     """Draw one `SimulationFrame` onto an existing matplotlib axes."""
+    env_config = env_config or EnvConfig()
     state = frame.world_state
     metrics = frame.simulation_metrics
     ax.clear()
-    ax.set_xlim(0.0, WORLD_DEFAULTS.width)
-    ax.set_ylim(0.0, WORLD_DEFAULTS.height)
+    ax.set_xlim(0.0, env_config.world.width if env_config else WORLD_DEFAULTS.width)
+    ax.set_ylim(0.0, env_config.world.height if env_config else WORLD_DEFAULTS.height)
     ax.set_aspect("equal", adjustable="box")
     ax.set_title(f"step {metrics['timestep']} | targets {metrics['discovered_target_count']}/{metrics['target_count']}")
     ax.set_xlabel("x")
@@ -63,7 +70,10 @@ def _draw_frame(ax: plt.Axes, frame: SimulationFrame) -> None:
         for right in agents[left_index + 1 :]:
             dx = left["position"][0] - right["position"][0]
             dy = left["position"][1] - right["position"][1]
-            if (dx * dx + dy * dy) ** 0.5 <= AGENT_DEFAULTS.communication_radius:
+            communication_radius = (
+                env_config.agents.communication_radius if env_config else AGENT_DEFAULTS.communication_radius
+            )
+            if (dx * dx + dy * dy) ** 0.5 <= communication_radius:
                 ax.plot(
                     [left["position"][0], right["position"][0]],
                     [left["position"][1], right["position"][1]],

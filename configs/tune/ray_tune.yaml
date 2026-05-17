@@ -1,0 +1,8 @@
+tune:
+  enabled: false
+  metric: mean_target_discovery_rate
+  mode: max
+  num_samples: 1
+  search_space:
+    training.ppo.lr: [0.0001, 0.0003, 0.001]
+    training.ppo.entropy_coeff: [0.0, 0.01, 0.02]

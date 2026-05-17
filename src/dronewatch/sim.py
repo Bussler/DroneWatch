@@ -16,8 +16,8 @@ def rust_version() -> str:
 class SwarmSimulation:
     """Small Python wrapper around the Rust simulation world."""
 
-    def __init__(self, seed: int | None = None) -> None:
-        self._world = env.SwarmWorld(seed)
+    def __init__(self, seed: int | None = None, config: dict[str, Any] | None = None) -> None:
+        self._world = env.SwarmWorld(seed, config)
 
     def reset(self, seed: int | None = None) -> dict[str, Any]:
         return self._world.reset(seed)

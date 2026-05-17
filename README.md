@@ -2,11 +2,11 @@
 
 DroneWatch is a MARL engineering showcase where 16 cooperative drones learn, via RLlib PPO and later MAPPO-style centralized critic training, to discover targets in a partially observable continuous 2D environment with obstacles, collisions, local sensing, and short-range communication.
 
-The repository is currently implementing Phase 3 of the project plan: RLlib PPO training on top of the completed Rust simulation core and Python multi-agent environment wrapper.
+The repository is currently implementing Phase 4 of the project plan: OmegaConf-based experiment configuration on top of the completed Rust simulation core, Python multi-agent environment wrapper, and RLlib PPO path.
 
 ## Current Phase
 
-Phase 3 establishes a local shared-policy PPO training and checkpoint evaluation path before OmegaConf configuration, MLflow logging, Ray Tune, and Docker training workflows are added.
+Phase 4 establishes structured YAML configs, CLI overrides, resolved-config artifacts, and fast debug training before MLflow logging, Ray Tune execution, and Docker training workflows are expanded.
 
 Implemented in this slice:
 
@@ -30,6 +30,10 @@ Implemented in this slice:
 - feedforward and LSTM model presets
 - local PPO training CLI
 - checkpoint evaluation CLI
+- OmegaConf config composition under `configs/`
+- Pydantic config validation in `dronewatch.config`
+- CLI `key=value` overrides for training, evaluation, random rollout, and rendering settings
+- resolved config snapshots saved with run artifacts
 - PPO checkpoint saving under `artifacts/checkpoints/ppo/`
 - PPO evaluation reports under `artifacts/reports/`
 - uv dependency management
@@ -78,6 +82,28 @@ make ppo-smoke
 `make render-random` writes the same report plus `artifacts/gifs/random_policy_episode.gif`.
 `make ppo-smoke` runs one tiny feedforward PPO iteration, saves a checkpoint, and writes `artifacts/reports/ppo_smoke_report.json`.
 
+## Configuration
+
+DroneWatch scripts now load structured YAML configs and accept dotlist overrides:
+
+```bash
+uv run python -m dronewatch.training.train_ppo \
+	--config configs/config.yaml \
+	model=ppo_lstm \
+	training.stop.iterations=1 \
+	training.ppo.train_batch_size_per_learner=200 \
+	training.ppo.minibatch_size=64
+```
+
+The root configs are:
+
+- `configs/config.yaml` for local PPO training defaults.
+- `configs/debug.yaml` for a one-iteration smoke path.
+
+Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/rendering`, `configs/paths`, and `configs/tune`. Any field can be overridden from the CLI, including environment size, reward weights, PPO hyperparameters, model type, report paths, render settings, and checkpoint paths.
+
+Each training, evaluation, or random-policy run writes a resolved YAML snapshot named `resolved_config.yaml` beside its run/report artifacts.
+
 ## PPO Training
 
 Run a local feedforward PPO training job and evaluate the final checkpoint:
@@ -90,29 +116,38 @@ For direct control over training settings:
 
 ```bash
 uv run python -m dronewatch.training.train_ppo \
-	--iterations 10 \
-	--model feedforward \
-	--checkpoint-dir artifacts/checkpoints/ppo \
-	--checkpoint-frequency 5 \
-	--eval-episodes 5 \
-	--eval-report-path artifacts/reports/ppo_eval_report.json
+	--config configs/config.yaml \
+	training.stop.iterations=10 \
+	model=ppo_feedforward \
+	training.checkpoint.frequency_iters=5 \
+	training.evaluation.episodes=5 \
+	training.evaluation.report_path=artifacts/reports/ppo_eval_report.json
 ```
 
 Run the LSTM PPO smoke path after the feedforward path is working:
 
 ```bash
 uv run python -m dronewatch.training.train_ppo \
-	--iterations 1 \
-	--model lstm \
-	--checkpoint-dir artifacts/checkpoints/ppo/lstm_smoke \
-	--eval-episodes 1 \
-	--num-env-runners 0
+	--config configs/debug.yaml \
+	model=ppo_lstm \
+	training.checkpoint.directory=artifacts/checkpoints/ppo/lstm_smoke \
+	training.evaluation.episodes=1 \
+	training.ray.num_env_runners=0
 ```
 
 Evaluate a saved checkpoint:
 
 ```bash
 make evaluate-ppo CHECKPOINT=artifacts/checkpoints/ppo/path-to-checkpoint
+```
+
+Or directly:
+
+```bash
+uv run python -m dronewatch.evaluation.evaluate \
+	--config configs/config.yaml \
+	evaluation.checkpoint=artifacts/checkpoints/ppo/path-to-checkpoint \
+	evaluation.render=true
 ```
 
 PPO reports use the same task-metric schema as the random baseline, which makes it straightforward to compare target discovery rate, coverage ratio, collisions, obstacle violations, connectivity, and success rate.

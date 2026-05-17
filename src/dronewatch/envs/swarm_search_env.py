@@ -8,13 +8,12 @@ from typing import Any
 import numpy as np
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
+from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.sim import SwarmSimulation
 
 from .observation_builder import ObservationBuilder
 from .reward import calculate_team_reward
 from .spaces import (
-    AGENT_DEFAULTS,
-    SwarmSearchEnvConfig,
     action_space,
     agent_ids,
     observation_space,
@@ -41,14 +40,15 @@ class SwarmSearchEnv(MultiAgentEnv):
             if isinstance(env_config, SwarmSearchEnvConfig)
             else SwarmSearchEnvConfig.model_validate(env_config or {})
         )
+        self._env_config = self._config.env
         self._initial_seed: int | None = self._config.seed
-        self._simulation = SwarmSimulation(seed=self._initial_seed)
-        self._observation_builder = ObservationBuilder()
-        self._agent_ids = agent_ids(AGENT_DEFAULTS.count)
+        self._simulation = SwarmSimulation(seed=self._initial_seed, config=self._env_config.to_rust_config_dict())
+        self._observation_builder = ObservationBuilder(self._env_config)
+        self._agent_ids = agent_ids(self._env_config.num_agents)
         self.possible_agents = list(self._agent_ids)
         self.agents = list(self._agent_ids)
         self.action_space = action_space()
-        self.observation_space = observation_space()
+        self.observation_space = observation_space(self._env_config)
         self.action_spaces = {agent_id: self.action_space for agent_id in self._agent_ids}
         self.observation_spaces = {agent_id: self.observation_space for agent_id in self._agent_ids}
         self._episode_reward = 0.0
@@ -99,7 +99,7 @@ class SwarmSearchEnv(MultiAgentEnv):
         state = result["state"]
 
         observations = self._observation_builder.build(state, metrics)
-        team_reward = calculate_team_reward(events)
+        team_reward = calculate_team_reward(events, self._env_config.reward)
         self._episode_reward += team_reward
 
         terminated = bool(metrics.get("all_targets_discovered", False))
