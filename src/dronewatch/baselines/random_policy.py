@@ -10,6 +10,7 @@ from typing import Any
 import numpy as np
 
 from dronewatch.envs import SwarmSearchEnv
+from dronewatch.evaluation import aggregate_report, episode_summary, write_json_report
 from dronewatch.rendering import SimulationFrame
 from dronewatch.rendering.render_episode import render_episode_gif
 
@@ -71,58 +72,14 @@ def run_random_policy(
                 state_snapshot, _metrics_snapshot = env.snapshot()
                 first_episode_frames.append(SimulationFrame.from_snapshots(state_snapshot, final_metrics))
 
-        episode_summaries.append(_episode_summary(episode_reward, final_metrics))
+        episode_summaries.append(episode_summary(episode_reward, final_metrics))
 
-    report = _aggregate_report(episode_summaries, episodes)
+    report = aggregate_report(episode_summaries, policy="random")
     if report_path is not None:
-        _write_json(report_path, report)
+        write_json_report(report_path, report)
     if render and gif_path is not None:
         render_episode_gif(first_episode_frames, gif_path)
     return report
-
-
-def _episode_summary(episode_reward: float, metrics: dict[str, Any]) -> dict[str, float]:
-    """Create a single-episode metric summary from final simulator metrics."""
-    return {
-        "reward": float(episode_reward),
-        "target_discovery_rate": float(metrics["target_discovery_rate"]),
-        "discovered_target_count": float(metrics["discovered_target_count"]),
-        "coverage_ratio": float(metrics["coverage_ratio"]),
-        "collision_count": float(metrics["collision_count"]),
-        "obstacle_violation_count": float(metrics["obstacle_violation_count"]),
-        "connectivity_ratio": float(metrics["connectivity_ratio"]),
-        "success": 1.0 if bool(metrics["all_targets_discovered"]) else 0.0,
-        "episode_length": float(metrics["timestep"]),
-    }
-
-
-def _aggregate_report(episode_summaries: list[dict[str, float]], episodes: int) -> dict[str, Any]:
-    """Aggregate per-episode summaries into the baseline report schema."""
-
-    def mean(key: str) -> float:
-        return float(np.mean([summary[key] for summary in episode_summaries]))
-
-    return {
-        "policy": "random",
-        "num_episodes": episodes,
-        "mean_reward": mean("reward"),
-        "mean_target_discovery_rate": mean("target_discovery_rate"),
-        "mean_discovered_target_count": mean("discovered_target_count"),
-        "mean_coverage_ratio": mean("coverage_ratio"),
-        "mean_collision_count": mean("collision_count"),
-        "mean_obstacle_violation_count": mean("obstacle_violation_count"),
-        "mean_connectivity_ratio": mean("connectivity_ratio"),
-        "success_rate": mean("success"),
-        "mean_episode_length": mean("episode_length"),
-        "episodes": episode_summaries,
-    }
-
-
-def _write_json(path: str | Path, report: dict[str, Any]) -> None:
-    """Write a JSON report and create parent directories when needed."""
-    output_path = Path(path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
 def main() -> None:

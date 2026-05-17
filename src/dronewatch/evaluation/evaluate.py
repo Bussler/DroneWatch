@@ -1,0 +1,169 @@
+"""Evaluate a trained RLlib PPO checkpoint on SwarmSearch2D."""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+from ray.rllib.algorithms.algorithm import Algorithm
+from ray.rllib.core.columns import Columns
+from ray.rllib.core.rl_module.rl_module import RLModule
+from ray.rllib.utils.numpy import convert_to_numpy
+
+from dronewatch.envs import SwarmSearchEnv
+from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_search_env
+
+from .reporting import aggregate_report, episode_summary, write_json_report
+
+
+def evaluate_checkpoint(
+    *,
+    checkpoint: str | Path,
+    episodes: int = 10,
+    seed: int = 42,
+    report_path: str | Path | None = None,
+    model: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate a checkpoint and optionally write a JSON report."""
+    if episodes <= 0:
+        raise ValueError("episodes must be greater than zero")
+
+    register_swarm_search_env()
+    checkpoint_path = Path(checkpoint).resolve()
+    algorithm = Algorithm.from_checkpoint(str(checkpoint_path))
+    try:
+        report = evaluate_algorithm(
+            algorithm=algorithm,
+            episodes=episodes,
+            seed=seed,
+            checkpoint=str(checkpoint_path),
+            model=model,
+        )
+    finally:
+        algorithm.stop()
+
+    if report_path is not None:
+        write_json_report(report_path, report)
+    return report
+
+
+def evaluate_algorithm(
+    *,
+    algorithm: Algorithm,
+    episodes: int,
+    seed: int,
+    checkpoint: str | None = None,
+    model: str | None = None,
+) -> dict[str, Any]:
+    """Evaluate an instantiated RLlib algorithm on fresh simulator episodes."""
+    if episodes <= 0:
+        raise ValueError("episodes must be greater than zero")
+
+    module = algorithm.get_module(SHARED_POLICY_ID)
+    initial_state = _initial_module_state(module)
+    episode_summaries: list[dict[str, float]] = []
+
+    for episode_index in range(episodes):
+        episode_seed = seed + episode_index
+        env = SwarmSearchEnv({"seed": episode_seed})
+        observations, _infos = env.reset(seed=episode_seed)
+        policy_states = {agent_id: _copy_state(initial_state) for agent_id in observations}
+        done = False
+        episode_reward = 0.0
+        final_metrics: dict[str, Any] = {}
+
+        while not done:
+            actions: dict[str, np.ndarray] = {}
+            for agent_id, observation in observations.items():
+                action, next_state = _compute_action(module, observation, policy_states[agent_id])
+                policy_states[agent_id] = next_state
+                actions[agent_id] = np.asarray(action, dtype=np.float32)
+
+            observations, rewards, terminateds, truncateds, infos = env.step(actions)
+            episode_reward += float(next(iter(rewards.values())))
+            done = bool(terminateds["__all__"] or truncateds["__all__"])
+            final_metrics = dict(next(iter(infos.values()))["metrics"])
+
+        episode_summaries.append(episode_summary(episode_reward, final_metrics))
+
+    extra: dict[str, Any] = {}
+    if checkpoint is not None:
+        extra["checkpoint"] = checkpoint
+    if model is not None:
+        extra["model"] = model
+    return aggregate_report(episode_summaries, policy="ppo", extra=extra)
+
+
+def _initial_module_state(module: RLModule) -> dict[str, torch.Tensor]:
+    """Return the shared module's initial recurrent state, if the model uses one."""
+    state = module.get_initial_state()
+    return {key: value.unsqueeze(0) for key, value in state.items()}
+
+
+def _copy_state(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
+    """Copy recurrent state tensors so each agent keeps independent memory."""
+    return {key: value.clone() for key, value in state.items()}
+
+
+def _compute_action(
+    module: RLModule,
+    observation: np.ndarray,
+    state: dict[str, torch.Tensor],
+) -> tuple[np.ndarray, dict[str, torch.Tensor]]:
+    """Compute one deterministic action for the shared module."""
+    with torch.no_grad():
+        observation_tensor = torch.from_numpy(observation.astype(np.float32))
+        input_dict: dict[str, Any] = {Columns.OBS: observation_tensor.unsqueeze(0)}
+
+        if state:
+            input_dict[Columns.OBS] = observation_tensor.unsqueeze(0).unsqueeze(0)
+            input_dict[Columns.STATE_IN] = state
+
+        output = module.forward_inference(input_dict)
+
+    next_state = dict(output.get(Columns.STATE_OUT, state))
+    action = _action_from_module_output(module, output)
+    return action, next_state
+
+
+def _action_from_module_output(module: RLModule, output: dict[str, Any]) -> np.ndarray:
+    """Convert RLModule inference output into one clipped environment action."""
+    if Columns.ACTIONS in output:
+        action = convert_to_numpy(output[Columns.ACTIONS])
+    else:
+        logits = output[Columns.ACTION_DIST_INPUTS]
+        if hasattr(logits, "ndim") and logits.ndim == 3 and logits.shape[1] == 1:
+            logits = logits[:, 0]
+        distribution = module.get_inference_action_dist_cls().from_logits(logits)
+        action = convert_to_numpy(distribution.to_deterministic().sample())
+
+    action_array = np.asarray(action, dtype=np.float32).reshape((-1, *module.action_space.shape))[0]
+    return np.clip(action_array, module.action_space.low, module.action_space.high).astype(np.float32)
+
+
+def main() -> None:
+    """Command-line entry point for PPO checkpoint evaluation."""
+    parser = argparse.ArgumentParser(description="Evaluate a DroneWatch RLlib PPO checkpoint.")
+    parser.add_argument("--checkpoint", type=Path, required=True)
+    parser.add_argument("--episodes", type=int, default=10)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--report-path", type=Path, default=Path("artifacts/reports/ppo_eval_report.json"))
+    parser.add_argument("--model", choices=["feedforward", "lstm"], default=None)
+    args = parser.parse_args()
+
+    report = evaluate_checkpoint(
+        checkpoint=args.checkpoint,
+        episodes=args.episodes,
+        seed=args.seed,
+        report_path=args.report_path,
+        model=args.model,
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
