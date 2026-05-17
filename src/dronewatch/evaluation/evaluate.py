@@ -15,10 +15,13 @@ from ray.rllib.core.rl_module.rl_module import RLModule
 from ray.rllib.utils.numpy import convert_to_numpy
 
 from dronewatch.envs import SwarmSearchEnv
+from dronewatch.evaluation.reporting import (
+    aggregate_report,
+    episode_summary,
+    write_json_report,
+)
 from dronewatch.rendering import SimulationFrame, render_episode_gif
 from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_search_env
-
-from .reporting import aggregate_report, episode_summary, write_json_report
 
 
 def evaluate_checkpoint(
@@ -160,7 +163,12 @@ def _compute_action(
 
 
 def _action_from_module_output(module: RLModule, output: dict[str, Any]) -> np.ndarray:
-    """Convert RLModule inference output into one clipped environment action."""
+    """Convert RLModule inference output into one clipped environment action.
+
+    RLlib can return actions in a couple of shapes/forms:
+        - Include concrete actions under Columns.ACTIONS.
+        - Action distribution inputs, usually logits or parameters, under Columns.ACTION_DIST_INPUTS.
+    """
     if Columns.ACTIONS in output:
         action = convert_to_numpy(output[Columns.ACTIONS])
     else:
