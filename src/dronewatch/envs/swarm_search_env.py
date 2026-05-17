@@ -40,15 +40,14 @@ class SwarmSearchEnv(MultiAgentEnv):
             if isinstance(env_config, SwarmSearchEnvConfig)
             else SwarmSearchEnvConfig.model_validate(env_config or {})
         )
-        self._env_config = self._config.env
         self._initial_seed: int | None = self._config.seed
-        self._simulation = SwarmSimulation(seed=self._initial_seed, config=self._env_config.to_rust_config_dict())
-        self._observation_builder = ObservationBuilder(self._env_config)
-        self._agent_ids = agent_ids(self._env_config.agents.count)
+        self._simulation = SwarmSimulation(seed=self._initial_seed, config=self._config.simulation)
+        self._observation_builder = ObservationBuilder(self._config.simulation, self._config.observation)
+        self._agent_ids = agent_ids(self._config.simulation.agents.count)
         self.possible_agents = list(self._agent_ids)
         self.agents = list(self._agent_ids)
         self.action_space = action_space()
-        self.observation_space = observation_space(self._env_config)
+        self.observation_space = observation_space(self._config.observation)
         self.action_spaces = {agent_id: self.action_space for agent_id in self._agent_ids}
         self.observation_spaces = {agent_id: self.observation_space for agent_id in self._agent_ids}
         self._episode_reward = 0.0
@@ -99,7 +98,7 @@ class SwarmSearchEnv(MultiAgentEnv):
         state = result["state"]
 
         observations = self._observation_builder.build(state, metrics)
-        team_reward = calculate_team_reward(events, self._env_config.reward)
+        team_reward = calculate_team_reward(events, self._config.reward)
         self._episode_reward += team_reward
 
         terminated = bool(metrics.get("all_targets_discovered", False))

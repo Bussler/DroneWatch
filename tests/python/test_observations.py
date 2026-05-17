@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import numpy as np
 
-from dronewatch.config.schema import AgentConfig, EnvConfig, ObservationConfig
+from dronewatch.config.schema import (
+    AgentConfig,
+    EnvConfig,
+    ObservationConfig,
+    SwarmSearchEnvConfig,
+)
 from dronewatch.envs.observation_builder import ObservationBuilder
 from dronewatch.envs.spaces import OBSERVATION_SIZE, observation_size
 from dronewatch.sim import SwarmSimulation
@@ -59,8 +64,8 @@ def test_observation_builder_keeps_normalized_values_within_unit_range() -> None
 
 
 def test_observation_builder_uses_configured_shape() -> None:
-    config = EnvConfig(
-        agents=AgentConfig(count=2),
+    config = SwarmSearchEnvConfig(
+        simulation=EnvConfig(agents=AgentConfig(count=2)),
         observation=ObservationConfig(
             max_visible_agents=1,
             max_visible_targets=1,
@@ -68,10 +73,10 @@ def test_observation_builder_uses_configured_shape() -> None:
             include_communication_summary=False,
         ),
     )
-    sim = SwarmSimulation(seed=123, config=config.to_rust_config_dict())
-    builder = ObservationBuilder(config)
+    sim = SwarmSimulation(seed=123, config=config.simulation)
+    builder = ObservationBuilder(config.simulation, config.observation)
 
     observations = builder.build(sim.state(), sim.metrics())
 
     assert len(observations) == 2
-    assert all(observation.shape == (observation_size(config),) for observation in observations.values())
+    assert all(observation.shape == (observation_size(config.observation),) for observation in observations.values())

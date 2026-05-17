@@ -44,8 +44,8 @@ def test_env_accepts_pydantic_config_and_none_seed() -> None:
 
 
 def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
-    env_config = EnvConfig(
-        agents=AgentConfig(count=4),
+    env_config = SwarmSearchEnvConfig(
+        simulation=EnvConfig(agents=AgentConfig(count=4)),
         observation=ObservationConfig(
             max_visible_agents=2,
             max_visible_targets=2,
@@ -53,11 +53,13 @@ def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
             include_communication_summary=False,
         ),
     )
-    env = SwarmSearchEnv({"seed": 7, "env": env_config.model_dump(mode="json")})
+    env = SwarmSearchEnv(env_config.model_copy(update={"seed": 7}).model_dump(mode="json"))
 
     observations, infos = env.reset(seed=7)
 
     assert len(observations) == 4
     assert len(infos) == 4
-    assert env.observation_space.shape == (observation_size(env_config),)
-    assert all(observation.shape == (observation_size(env_config),) for observation in observations.values())
+    assert env.observation_space.shape == (observation_size(env_config.observation),)
+    assert all(
+        observation.shape == (observation_size(env_config.observation),) for observation in observations.values()
+    )

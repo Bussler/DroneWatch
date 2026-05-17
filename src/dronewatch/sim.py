@@ -7,6 +7,8 @@ from typing import Any
 
 import swarm_sim as env  # type: ignore
 
+from dronewatch.config.schema import EnvConfig
+
 
 def rust_version() -> str:
     """Return the version string reported by the Rust extension."""
@@ -16,8 +18,9 @@ def rust_version() -> str:
 class SwarmSimulation:
     """Small Python wrapper around the Rust simulation world."""
 
-    def __init__(self, seed: int | None = None, config: dict[str, Any] | None = None) -> None:
-        self._world = env.SwarmWorld(seed, config)
+    def __init__(self, seed: int | None = None, config: EnvConfig | dict[str, Any] | None = None) -> None:
+        rust_config = config.to_rust_config_dict() if isinstance(config, EnvConfig) else config
+        self._world = env.SwarmWorld(seed, rust_config)
 
     def reset(self, seed: int | None = None) -> dict[str, Any]:
         return self._world.reset(seed)

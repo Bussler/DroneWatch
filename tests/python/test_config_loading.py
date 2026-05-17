@@ -13,7 +13,7 @@ def test_load_config_composes_default_groups() -> None:
 
     assert config.project.name == "DroneWatch"
     assert config.env.name == "SwarmSearch2D"
-    assert config.env.agents.count == 16
+    assert config.env.simulation.agents.count == 16
     assert config.model.kind == "feedforward"
     assert config.training.stop.iterations == 10
 
@@ -24,8 +24,8 @@ def test_load_config_supports_group_and_field_overrides() -> None:
         [
             "model=ppo_lstm",
             "training=debug",
-            "env.agents.count=4",
-            "env.max_episode_steps=12",
+            "env.simulation.agents.count=4",
+            "env.simulation.max_episode_steps=12",
             "model.network.fcnet_hiddens=[64,64]",
             "baseline.random.render=true",
         ],
@@ -35,8 +35,8 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.model.network.use_lstm is True
     assert config.model.network.fcnet_hiddens == [64, 64]
     assert config.training.stop.iterations == 1
-    assert config.env.agents.count == 4
-    assert config.env.max_episode_steps == 12
+    assert config.env.simulation.agents.count == 4
+    assert config.env.simulation.max_episode_steps == 12
     assert config.baseline.random.render is True
 
 
@@ -49,9 +49,9 @@ def test_load_config_rejects_invalid_overrides() -> None:
 
 
 def test_save_resolved_config_writes_yaml(tmp_path: Path) -> None:
-    config = load_config("configs/debug.yaml", ["env.agents.count=3"])
+    config = load_config("configs/debug.yaml", ["env.simulation.agents.count=3"])
     path = save_resolved_config(config, tmp_path / "resolved_config.yaml")
 
     text = path.read_text(encoding="utf-8")
-    assert "agents:\n    count: 3" in text
+    assert "agents:\n      count: 3" in text
     assert "resolved_config_filename: resolved_config.yaml" in text

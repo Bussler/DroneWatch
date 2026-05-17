@@ -19,7 +19,7 @@ from dronewatch.config.loader import (
     resolved_config_path,
     save_resolved_config,
 )
-from dronewatch.config.schema import EnvConfig
+from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.envs import SwarmSearchEnv
 from dronewatch.evaluation.reporting import (
     aggregate_report,
@@ -40,7 +40,7 @@ def evaluate_checkpoint(
     render: bool = False,
     gif_path: str | Path | None = None,
     render_stride: int = 4,
-    env_config: EnvConfig | None = None,
+    env_config: SwarmSearchEnvConfig | None = None,
     render_fps: int = 12,
 ) -> dict[str, Any]:
     """Evaluate a checkpoint and optionally write a JSON report."""
@@ -81,7 +81,7 @@ def evaluate_algorithm(
     render: bool = False,
     gif_path: str | Path | None = None,
     render_stride: int = 4,
-    env_config: EnvConfig | None = None,
+    env_config: SwarmSearchEnvConfig | None = None,
     render_fps: int = 12,
 ) -> dict[str, Any]:
     """Evaluate an instantiated RLlib algorithm on fresh simulator episodes."""
@@ -92,11 +92,13 @@ def evaluate_algorithm(
     initial_state = _initial_module_state(module)
     episode_summaries: list[dict[str, float]] = []
     first_episode_frames: list[SimulationFrame] = []
-    env_config = env_config or EnvConfig()
+    env_config = env_config or SwarmSearchEnvConfig()
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        env = SwarmSearchEnv({"seed": episode_seed, "env": env_config.model_dump(mode="json")})
+        env = SwarmSearchEnv(
+            env_config.model_copy(update={"seed": episode_seed}).model_dump(mode="json"),
+        )
         observations, _infos = env.reset(seed=episode_seed)
         policy_states = {agent_id: _copy_state(initial_state) for agent_id in observations}
         done = False
@@ -133,7 +135,7 @@ def evaluate_algorithm(
         extra["model"] = model
     report = aggregate_report(episode_summaries, policy="ppo", extra=extra)
     if render:
-        render_episode_gif(first_episode_frames, gif_path, fps=render_fps, env_config=env_config)
+        render_episode_gif(first_episode_frames, gif_path, fps=render_fps, env_config=env_config.simulation)
     return report
 
 

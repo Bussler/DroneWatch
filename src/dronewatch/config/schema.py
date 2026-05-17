@@ -101,17 +101,14 @@ class RewardWeights(_FrozenModel):
 
 
 class EnvConfig(_FrozenModel):
-    """Complete SwarmSearch2D environment and simulator configuration."""
+    """Rust simulator configuration passed across the Python/Rust boundary."""
 
-    name: str = Field(default="SwarmSearch2D", min_length=1)
     max_episode_steps: int = Field(default=200, gt=0)
     world: WorldConfig = Field(default_factory=WorldConfig)
     agents: AgentConfig = Field(default_factory=AgentConfig)
     targets: TargetConfig = Field(default_factory=TargetConfig)
     obstacles: ObstacleConfig = Field(default_factory=ObstacleConfig)
     coverage: CoverageConfig = Field(default_factory=CoverageConfig)
-    observation: ObservationConfig = Field(default_factory=ObservationConfig)
-    reward: RewardWeights = Field(default_factory=RewardWeights)
 
     def to_rust_config_dict(self) -> dict[str, Any]:
         """Return the nested dictionary expected by the Rust simulator binding."""
@@ -128,8 +125,11 @@ class EnvConfig(_FrozenModel):
 class SwarmSearchEnvConfig(_FrozenModel):
     """Validated configuration accepted by the RLlib MultiAgentEnv wrapper."""
 
+    name: str = Field(default="SwarmSearch2D", min_length=1)
     seed: int | None = Field(default=None, ge=0)
-    env: EnvConfig = Field(default_factory=EnvConfig)
+    simulation: EnvConfig = Field(default_factory=EnvConfig)
+    observation: ObservationConfig = Field(default_factory=ObservationConfig)
+    reward: RewardWeights = Field(default_factory=RewardWeights)
 
 
 class NetworkConfig(_FrozenModel):
@@ -326,7 +326,7 @@ class DroneWatchConfig(_FrozenModel):
 
     project: ProjectConfig = Field(default_factory=ProjectConfig)
     runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
-    env: EnvConfig = Field(default_factory=EnvConfig)
+    env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
@@ -349,7 +349,7 @@ class DroneWatchConfig(_FrozenModel):
 
     def swarm_env_config(self, seed: int | None) -> dict[str, Any]:
         """Return the environment config dictionary passed through RLlib."""
-        return {"seed": seed, "env": self.env.model_dump(mode="json")}
+        return self.env.model_copy(update={"seed": seed}).model_dump(mode="json")
 
     def ppo_build_context(self) -> PPOBuildContext:
         """Create the compact RLlib build context from the root experiment config."""

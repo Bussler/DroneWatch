@@ -14,7 +14,7 @@ from dronewatch.config.loader import (
     resolved_config_path,
     save_resolved_config,
 )
-from dronewatch.config.schema import EnvConfig
+from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.envs import SwarmSearchEnv
 from dronewatch.evaluation import aggregate_report, episode_summary, write_json_report
 from dronewatch.rendering import SimulationFrame
@@ -41,7 +41,7 @@ def run_random_policy(
     gif_path: str | Path | None = None,
     render: bool = False,
     render_stride: int = 4,
-    env_config: EnvConfig | None = None,
+    env_config: SwarmSearchEnvConfig | None = None,
     render_fps: int = 12,
 ) -> dict[str, Any]:
     """Run a random policy baseline and optionally write a report and GIF."""
@@ -52,11 +52,13 @@ def run_random_policy(
 
     episode_summaries: list[dict[str, Any]] = []
     first_episode_frames: list[SimulationFrame] = []
-    env_config = env_config or EnvConfig()
+    env_config = env_config or SwarmSearchEnvConfig()
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        env = SwarmSearchEnv({"seed": episode_seed, "env": env_config.model_dump(mode="json")})
+        env = SwarmSearchEnv(
+            env_config.model_copy(update={"seed": episode_seed}).model_dump(mode="json"),
+        )
         policy = RandomPolicy(seed=episode_seed)
         observations, _infos = env.reset(seed=episode_seed)
         done = False
@@ -87,7 +89,7 @@ def run_random_policy(
     if report_path is not None:
         write_json_report(report_path, report)
     if render and gif_path is not None:
-        render_episode_gif(first_episode_frames, gif_path, fps=render_fps, env_config=env_config)
+        render_episode_gif(first_episode_frames, gif_path, fps=render_fps, env_config=env_config.simulation)
     return report
 
 

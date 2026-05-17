@@ -10,10 +10,10 @@ from ray.tune.registry import register_env
 
 from dronewatch.config.schema import (
     DroneWatchConfig,
-    EnvConfig,
     ModelKind,
     NetworkConfig,
     PPOBuildContext,
+    SwarmSearchEnvConfig,
 )
 from dronewatch.envs import SwarmSearchEnv
 
@@ -36,21 +36,23 @@ def shared_policy_mapping_fn(agent_id: str, episode: Any, **kwargs: Any) -> str:
 
 def build_ppo_config(context: PPOBuildContext | DroneWatchConfig | None = None) -> PPOConfig:
     """Build a PPOConfig for shared-policy DroneWatch training."""
-    env_config = EnvConfig()
+    env_config = SwarmSearchEnvConfig()
     if isinstance(context, DroneWatchConfig):
         root_config = context
         context = root_config.ppo_build_context()
         env_config = root_config.env
+        env_config_payload = root_config.swarm_env_config(context.seed)
     else:
         context = context or PPOBuildContext()
+        env_config_payload = env_config.model_copy(update={"seed": context.seed}).model_dump(
+            mode="json",
+        )
     register_swarm_search_env()
 
     return (
         PPOConfig()
         .framework("torch")
-        .environment(
-            env=SWARM_SEARCH_ENV_NAME, env_config={"seed": context.seed, "env": env_config.model_dump(mode="json")}
-        )
+        .environment(env=SWARM_SEARCH_ENV_NAME, env_config=env_config_payload)
         .env_runners(
             num_env_runners=context.num_env_runners,
             rollout_fragment_length=context.rollout_fragment_length,

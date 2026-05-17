@@ -7,7 +7,7 @@ from typing import Any
 
 import numpy as np
 
-from dronewatch.config.schema import EnvConfig
+from dronewatch.config.schema import EnvConfig, ObservationConfig
 
 from .spaces import (
     VISIBLE_AGENT_FEATURES,
@@ -21,12 +21,17 @@ from .spaces import (
 class ObservationBuilder:
     """Build local, padded, fixed-size observations from Rust simulator state."""
 
-    def __init__(self, config: EnvConfig | None = None) -> None:
+    def __init__(
+        self,
+        env_config: EnvConfig | None = None,
+        observation_config: ObservationConfig | None = None,
+    ) -> None:
         """Create an observation builder for a configured environment."""
-        self._config = config or EnvConfig()
-        self.observation_size = observation_size(self._config)
-        self._relative_velocity_scale = self._config.agents.max_speed * 2.0
-        self._obstacle_visibility_scale = self._config.agents.sensing_radius + self._config.obstacles.max_radius
+        self._env_config = env_config or EnvConfig()
+        self._observation_config = observation_config or ObservationConfig()
+        self.observation_size = observation_size(self._observation_config)
+        self._relative_velocity_scale = self._env_config.agents.max_speed * 2.0
+        self._obstacle_visibility_scale = self._env_config.agents.sensing_radius + self._env_config.obstacles.max_radius
 
     def build(
         self,
@@ -62,19 +67,19 @@ class ObservationBuilder:
         position = _array2(agent["position"])
         velocity = _array2(agent["velocity"])
         timestep = float(metrics.get("timestep", 0.0))
-        horizon = max(float(metrics.get("max_episode_steps", self._config.max_episode_steps)), 1.0)
+        horizon = max(float(metrics.get("max_episode_steps", self._env_config.max_episode_steps)), 1.0)
 
         values: list[float] = [
-            position[0] / self._config.world.width,
-            position[1] / self._config.world.height,
-            velocity[0] / self._config.agents.max_speed,
-            velocity[1] / self._config.agents.max_speed,
+            position[0] / self._env_config.world.width,
+            position[1] / self._env_config.world.height,
+            velocity[0] / self._env_config.agents.max_speed,
+            velocity[1] / self._env_config.agents.max_speed,
             timestep / horizon,
         ]
         values.extend(self._visible_agents(agent, agents, position, velocity))
         values.extend(self._visible_targets(targets, position))
         values.extend(self._visible_obstacles(obstacles, position))
-        if self._config.observation.include_communication_summary:
+        if self._observation_config.include_communication_summary:
             values.extend(self._communication_summary(agent, agents, position, velocity))
 
         observation = np.asarray(values, dtype=np.float32)
@@ -98,28 +103,28 @@ class ObservationBuilder:
             if int(other["id"]) == agent_id:
                 continue
             distance = float(np.linalg.norm(_array2(other["position"]) - position))
-            if distance <= self._config.agents.sensing_radius:
+            if distance <= self._env_config.agents.sensing_radius:
                 visible.append((distance, other))
         visible.sort(key=lambda item: (item[0], int(item[1]["id"])))
 
         values: list[float] = []
-        for distance, other in visible[: self._config.observation.max_visible_agents]:
+        for distance, other in visible[: self._observation_config.max_visible_agents]:
             relative_position = _array2(other["position"]) - position
             relative_velocity = _array2(other["velocity"]) - velocity
             agent_features = [
-                relative_position[0] / self._config.agents.sensing_radius,
-                relative_position[1] / self._config.agents.sensing_radius,
+                relative_position[0] / self._env_config.agents.sensing_radius,
+                relative_position[1] / self._env_config.agents.sensing_radius,
                 relative_velocity[0] / self._relative_velocity_scale,
                 relative_velocity[1] / self._relative_velocity_scale,
-                distance / self._config.agents.sensing_radius,
+                distance / self._env_config.agents.sensing_radius,
                 1.0,
             ]
             if len(agent_features) != VISIBLE_AGENT_FEATURES:
                 raise ValueError(f"expected {VISIBLE_AGENT_FEATURES} visible-agent features, got {len(agent_features)}")
             values.extend(agent_features)
 
-        missing = self._config.observation.max_visible_agents - min(
-            len(visible), self._config.observation.max_visible_agents
+        missing = self._observation_config.max_visible_agents - min(
+            len(visible), self._observation_config.max_visible_agents
         )
         values.extend([0.0] * missing * VISIBLE_AGENT_FEATURES)
         return values
@@ -129,17 +134,17 @@ class ObservationBuilder:
         visible: list[tuple[float, Mapping[str, Any]]] = []
         for target in targets:
             distance = float(np.linalg.norm(_array2(target["position"]) - position))
-            if distance <= self._config.agents.sensing_radius:
+            if distance <= self._env_config.agents.sensing_radius:
                 visible.append((distance, target))
         visible.sort(key=lambda item: (item[0], int(item[1]["id"])))
 
         values: list[float] = []
-        for distance, target in visible[: self._config.observation.max_visible_targets]:
+        for distance, target in visible[: self._observation_config.max_visible_targets]:
             relative_position = _array2(target["position"]) - position
             target_features = [
-                relative_position[0] / self._config.agents.sensing_radius,
-                relative_position[1] / self._config.agents.sensing_radius,
-                distance / self._config.agents.sensing_radius,
+                relative_position[0] / self._env_config.agents.sensing_radius,
+                relative_position[1] / self._env_config.agents.sensing_radius,
+                distance / self._env_config.agents.sensing_radius,
                 1.0 if bool(target["discovered"]) else 0.0,
                 1.0,
             ]
@@ -149,8 +154,8 @@ class ObservationBuilder:
                 )
             values.extend(target_features)
 
-        missing = self._config.observation.max_visible_targets - min(
-            len(visible), self._config.observation.max_visible_targets
+        missing = self._observation_config.max_visible_targets - min(
+            len(visible), self._observation_config.max_visible_targets
         )
         values.extend([0.0] * missing * VISIBLE_TARGET_FEATURES)
         return values
@@ -161,18 +166,18 @@ class ObservationBuilder:
         for obstacle in obstacles:
             center_distance = float(np.linalg.norm(_array2(obstacle["position"]) - position))
             radius = float(obstacle["radius"])
-            if center_distance <= self._config.agents.sensing_radius + radius:
+            if center_distance <= self._env_config.agents.sensing_radius + radius:
                 visible.append((center_distance, obstacle))
         visible.sort(key=lambda item: (item[0], int(item[1]["id"])))
 
         values: list[float] = []
-        for distance, obstacle in visible[: self._config.observation.max_visible_obstacles]:
+        for distance, obstacle in visible[: self._observation_config.max_visible_obstacles]:
             relative_position = _array2(obstacle["position"]) - position
             radius = float(obstacle["radius"])
             obstacle_features = [
                 relative_position[0] / self._obstacle_visibility_scale,
                 relative_position[1] / self._obstacle_visibility_scale,
-                radius / self._config.obstacles.max_radius,
+                radius / self._env_config.obstacles.max_radius,
                 distance / self._obstacle_visibility_scale,
                 1.0,
             ]
@@ -182,8 +187,8 @@ class ObservationBuilder:
                 )
             values.extend(obstacle_features)
 
-        missing = self._config.observation.max_visible_obstacles - min(
-            len(visible), self._config.observation.max_visible_obstacles
+        missing = self._observation_config.max_visible_obstacles - min(
+            len(visible), self._observation_config.max_visible_obstacles
         )
         values.extend([0.0] * missing * VISIBLE_OBSTACLE_FEATURES)
         return values
@@ -202,7 +207,7 @@ class ObservationBuilder:
             if int(other["id"]) == agent_id:
                 continue
             distance = float(np.linalg.norm(_array2(other["position"]) - position))
-            if distance <= self._config.agents.communication_radius:
+            if distance <= self._env_config.agents.communication_radius:
                 neighbors.append(other)
 
         if not neighbors:
@@ -213,9 +218,9 @@ class ObservationBuilder:
         mean_relative_position = relative_positions.mean(axis=0)
         mean_relative_velocity = relative_velocities.mean(axis=0)
         return [
-            len(neighbors) / max(self._config.agents.count - 1, 1),
-            mean_relative_position[0] / self._config.agents.communication_radius,
-            mean_relative_position[1] / self._config.agents.communication_radius,
+            len(neighbors) / max(self._env_config.agents.count - 1, 1),
+            mean_relative_position[0] / self._env_config.agents.communication_radius,
+            mean_relative_position[1] / self._env_config.agents.communication_radius,
             mean_relative_velocity[0] / self._relative_velocity_scale,
             mean_relative_velocity[1] / self._relative_velocity_scale,
         ]

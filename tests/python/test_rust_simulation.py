@@ -66,7 +66,7 @@ def test_rust_world_accepts_configured_simulation_values() -> None:
         targets=TargetConfig(count=3),
         obstacles=ObstacleConfig(count=1, min_radius=2.0, max_radius=3.0),
     )
-    sim = SwarmSimulation(seed=123, config=config.to_rust_config_dict())
+    sim = SwarmSimulation(seed=123, config=config)
     state = sim.state()
     metrics = sim.metrics()
 

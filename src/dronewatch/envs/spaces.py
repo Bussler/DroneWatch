@@ -7,7 +7,7 @@ import numpy as np
 
 from dronewatch.config.schema import (
     AgentDefaults,
-    EnvConfig,
+    ObservationConfig,
     ObservationDefaults,
     ObstacleDefaults,
     RewardWeights,
@@ -26,24 +26,24 @@ VISIBLE_TARGET_FEATURES = 5
 VISIBLE_OBSTACLE_FEATURES = 5
 COMMUNICATION_SUMMARY_SIZE = 5
 
-DEFAULT_ENV_CONFIG = EnvConfig()
+DEFAULT_OBSERVATION_CONFIG = ObservationConfig()
 
 
-def observation_size(config: EnvConfig | None = None) -> int:
+def observation_size(config: ObservationConfig | None = None) -> int:
     """Return the fixed observation vector size for a configured environment."""
-    env_config = config or DEFAULT_ENV_CONFIG
+    observation_config = config or DEFAULT_OBSERVATION_CONFIG
     size = (
         OWN_STATE_SIZE
-        + env_config.observation.max_visible_agents * VISIBLE_AGENT_FEATURES
-        + env_config.observation.max_visible_targets * VISIBLE_TARGET_FEATURES
-        + env_config.observation.max_visible_obstacles * VISIBLE_OBSTACLE_FEATURES
+        + observation_config.max_visible_agents * VISIBLE_AGENT_FEATURES
+        + observation_config.max_visible_targets * VISIBLE_TARGET_FEATURES
+        + observation_config.max_visible_obstacles * VISIBLE_OBSTACLE_FEATURES
     )
-    if env_config.observation.include_communication_summary:
+    if observation_config.include_communication_summary:
         size += COMMUNICATION_SUMMARY_SIZE
     return size
 
 
-OBSERVATION_SIZE = observation_size(DEFAULT_ENV_CONFIG)
+OBSERVATION_SIZE = observation_size(DEFAULT_OBSERVATION_CONFIG)
 
 
 def agent_ids(num_agents: int = AGENT_DEFAULTS.count) -> list[str]:
@@ -56,7 +56,7 @@ def action_space() -> gym.spaces.Box:
     return gym.spaces.Box(low=-1.0, high=1.0, shape=(2,), dtype=np.float32)
 
 
-def observation_space(config: EnvConfig | None = None) -> gym.spaces.Box:
+def observation_space(config: ObservationConfig | None = None) -> gym.spaces.Box:
     """Return the per-agent fixed-size observation space."""
     return gym.spaces.Box(
         low=-1.0,
