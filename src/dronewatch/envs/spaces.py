@@ -26,12 +26,10 @@ VISIBLE_TARGET_FEATURES = 5
 VISIBLE_OBSTACLE_FEATURES = 5
 COMMUNICATION_SUMMARY_SIZE = 5
 
-DEFAULT_OBSERVATION_CONFIG = ObservationConfig()
-
 
 def observation_size(config: ObservationConfig | None = None) -> int:
     """Return the fixed observation vector size for a configured environment."""
-    observation_config = config or DEFAULT_OBSERVATION_CONFIG
+    observation_config = config or ObservationConfig()
     size = (
         OWN_STATE_SIZE
         + observation_config.max_visible_agents * VISIBLE_AGENT_FEATURES
@@ -41,9 +39,6 @@ def observation_size(config: ObservationConfig | None = None) -> int:
     if observation_config.include_communication_summary:
         size += COMMUNICATION_SUMMARY_SIZE
     return size
-
-
-OBSERVATION_SIZE = observation_size(DEFAULT_OBSERVATION_CONFIG)
 
 
 def agent_ids(num_agents: int = AGENT_DEFAULTS.count) -> list[str]:

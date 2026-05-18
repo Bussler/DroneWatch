@@ -9,18 +9,19 @@ from dronewatch.config.schema import (
     SwarmSearchEnvConfig,
 )
 from dronewatch.envs.observation_builder import ObservationBuilder
-from dronewatch.envs.spaces import OBSERVATION_SIZE, observation_size
+from dronewatch.envs.spaces import observation_size
 from dronewatch.sim import SwarmSimulation
 
 
 def test_observation_builder_returns_fixed_finite_float_vectors() -> None:
     sim = SwarmSimulation(seed=123)
     builder = ObservationBuilder()
+    default_observation_size = observation_size(ObservationConfig())
 
     observations = builder.build(sim.state(), sim.metrics())
 
     assert len(observations) == sim.num_agents
-    assert all(observation.shape == (OBSERVATION_SIZE,) for observation in observations.values())
+    assert all(observation.shape == (default_observation_size,) for observation in observations.values())
     assert all(observation.dtype == np.float32 for observation in observations.values())
     assert all(np.isfinite(observation).all() for observation in observations.values())
 
