@@ -298,10 +298,6 @@ class DroneWatchConfig(_FrozenModel):
         """Return the effective seed for random-policy rollouts."""
         return self.baseline.random.seed if self.baseline.random.seed is not None else self.project.seed
 
-    def swarm_env_config(self, seed: int | None) -> dict[str, Any]:
-        """Return the environment config dictionary passed through RLlib."""
-        return self.env.model_copy(update={"seed": seed}).model_dump(mode="json")
-
 
 class WorldDefaults(_FrozenModel):
     """Backward-compatible world defaults mirrored from Phase 2."""

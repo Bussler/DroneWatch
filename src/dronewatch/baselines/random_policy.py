@@ -55,9 +55,8 @@ def run_random_policy(
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        env = SwarmSearchEnv(
-            env_config.model_copy(update={"seed": episode_seed}).model_dump(mode="json"),
-        )
+        episode_config = env_config.model_copy(update={"seed": episode_seed})
+        env = SwarmSearchEnv(episode_config)
         policy = RandomPolicy(seed=episode_seed)
         observations, _infos = env.reset(seed=episode_seed)
         done = False

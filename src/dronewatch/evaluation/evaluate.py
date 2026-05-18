@@ -94,9 +94,8 @@ def evaluate_algorithm(
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        env = SwarmSearchEnv(
-            env_config.model_copy(update={"seed": episode_seed}).model_dump(mode="json"),
-        )
+        episode_config = env_config.model_copy(update={"seed": episode_seed})
+        env = SwarmSearchEnv(episode_config)
         observations, _infos = env.reset(seed=episode_seed)
         policy_states = {agent_id: _copy_state(initial_state) for agent_id in observations}
         done = False

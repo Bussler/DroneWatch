@@ -51,7 +51,8 @@ def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
             include_communication_summary=False,
         ),
     )
-    env = SwarmSearchEnv(env_config.model_copy(update={"seed": 7}).model_dump(mode="json"))
+    episode_config = env_config.model_copy(update={"seed": 7})
+    env = SwarmSearchEnv(episode_config)
 
     observations, infos = env.reset(seed=7)
 
