@@ -14,12 +14,9 @@ from dronewatch.config.loader import (
     resolved_config_path,
     save_resolved_config,
 )
-from dronewatch.config.schema import DroneWatchConfig
+from dronewatch.config.schema import DroneWatchConfig, ModelKind
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
-from dronewatch.training.rllib_config import (
-    ModelKind,
-    build_ppo_config,
-)
+from dronewatch.training.rllib_config import build_ppo_config
 
 
 def train_ppo(
@@ -70,7 +67,12 @@ def train_ppo(
     saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
 
     ray.init(ignore_reinit_error=True, include_dashboard=False)
-    algorithm = build_ppo_config(config).build_algo()
+    algorithm_training = config.training.model_copy(update={"seed": seed})
+    algorithm = build_ppo_config(
+        training=algorithm_training,
+        env_config=config.env,
+        model=config.model,
+    ).build_algo()
 
     checkpoints: list[str] = []
     last_result: dict[str, Any] = {}

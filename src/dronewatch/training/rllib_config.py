@@ -9,11 +9,12 @@ from ray.rllib.core.rl_module.default_model_config import DefaultModelConfig
 from ray.tune.registry import register_env
 
 from dronewatch.config.schema import (
-    DroneWatchConfig,
+    ModelConfig,
     ModelKind,
     NetworkConfig,
-    PPOBuildContext,
+    ProjectConfig,
     SwarmSearchEnvConfig,
+    TrainingConfig,
 )
 from dronewatch.envs import SwarmSearchEnv
 
@@ -34,19 +35,19 @@ def shared_policy_mapping_fn(agent_id: str, episode: Any, **kwargs: Any) -> str:
     return SHARED_POLICY_ID
 
 
-def build_ppo_config(context: PPOBuildContext | DroneWatchConfig | None = None) -> PPOConfig:
+def build_ppo_config(
+    training: TrainingConfig | None = None,
+    env_config: SwarmSearchEnvConfig | None = None,
+    model: ModelConfig | None = None,
+) -> PPOConfig:
     """Build a PPOConfig for shared-policy DroneWatch training."""
-    env_config = SwarmSearchEnvConfig()
-    if isinstance(context, DroneWatchConfig):
-        root_config = context
-        context = root_config.ppo_build_context()
-        env_config = root_config.env
-        env_config_payload = root_config.swarm_env_config(context.seed)
-    else:
-        context = context or PPOBuildContext()
-        env_config_payload = env_config.model_copy(update={"seed": context.seed}).model_dump(
-            mode="json",
-        )
+    training = training or TrainingConfig(seed=ProjectConfig().seed)
+    env_config = env_config or SwarmSearchEnvConfig()
+    model = model or ModelConfig()
+    seed = training.seed if training.seed is not None else env_config.seed
+    ray_config = training.ray
+    ppo = training.ppo
+    env_config_payload = env_config.model_copy(update={"seed": seed}).model_dump(mode="json")
     register_swarm_search_env()
 
     return (
@@ -54,21 +55,22 @@ def build_ppo_config(context: PPOBuildContext | DroneWatchConfig | None = None) 
         .framework("torch")
         .environment(env=SWARM_SEARCH_ENV_NAME, env_config=env_config_payload)
         .env_runners(
-            num_env_runners=context.num_env_runners,
-            rollout_fragment_length=context.rollout_fragment_length,
+            num_env_runners=ray_config.num_env_runners,
+            num_envs_per_env_runner=ray_config.num_envs_per_env_runner,
+            rollout_fragment_length=ppo.rollout_fragment_length,
             batch_mode="complete_episodes",
         )
-        .learners(num_learners=context.num_learners, num_gpus_per_learner=context.num_gpus_per_learner)
+        .learners(num_learners=ray_config.num_learners, num_gpus_per_learner=ray_config.num_gpus_per_learner)
         .training(
-            gamma=context.gamma,
-            lambda_=context.lambda_,
-            lr=context.lr,
-            clip_param=context.clip_param,
-            entropy_coeff=context.entropy_coeff,
-            vf_loss_coeff=context.vf_loss_coeff,
-            train_batch_size_per_learner=context.train_batch_size_per_learner,
-            minibatch_size=context.minibatch_size,
-            num_epochs=context.num_epochs,
+            gamma=ppo.gamma,
+            lambda_=ppo.lambda_,
+            lr=ppo.lr,
+            clip_param=ppo.clip_param,
+            entropy_coeff=ppo.entropy_coeff,
+            vf_loss_coeff=ppo.vf_loss_coeff,
+            train_batch_size_per_learner=ppo.train_batch_size_per_learner,
+            minibatch_size=ppo.minibatch_size,
+            num_epochs=ppo.num_epochs,
         )
         .multi_agent(
             policies={SHARED_POLICY_ID},
@@ -76,9 +78,9 @@ def build_ppo_config(context: PPOBuildContext | DroneWatchConfig | None = None) 
             policies_to_train=[SHARED_POLICY_ID],
             count_steps_by="env_steps",
         )
-        .rl_module(model_config=_model_config(context.model, context.network))
+        .rl_module(model_config=_model_config(model.kind, model.network))
         .callbacks(SwarmSearchMetricsCallback)
-        .debugging(seed=context.seed)
+        .debugging(seed=seed)
     )
 
 

@@ -283,44 +283,6 @@ class TuneConfig(_FrozenModel):
     search_space: dict[str, Any] = Field(default_factory=dict)
 
 
-class PPOBuildContext(_FrozenModel):
-    """Validated inputs for building a shared-policy PPOConfig."""
-
-    model: ModelKind = "feedforward"
-    seed: int | None = Field(default=42, ge=0)
-    num_env_runners: int = Field(default=0, ge=0)
-    num_learners: int = Field(default=0, ge=0)
-    num_gpus_per_learner: int = Field(default=0, ge=0)
-    train_batch_size_per_learner: int = Field(default=1024, gt=0)
-    minibatch_size: int = Field(default=256, gt=0)
-    num_epochs: int = Field(default=5, gt=0)
-    rollout_fragment_length: RolloutFragmentLength = "auto"
-    lr: float = Field(default=3e-4, gt=0.0)
-    gamma: float = Field(default=0.99, ge=0.0, le=1.0)
-    lambda_: float = Field(default=0.95, ge=0.0, le=1.0)
-    clip_param: float = Field(default=0.2, gt=0.0)
-    entropy_coeff: float = Field(default=0.01, ge=0.0)
-    vf_loss_coeff: float = Field(default=1.0, ge=0.0)
-    network: NetworkConfig = Field(default_factory=NetworkConfig)
-
-    @model_validator(mode="after")
-    def validate_batch_and_rollout_settings(self) -> PPOBuildContext:
-        """Validate fields whose constraints depend on multiple values."""
-        PPOHyperparameters(
-            gamma=self.gamma,
-            lambda_=self.lambda_,
-            lr=self.lr,
-            clip_param=self.clip_param,
-            entropy_coeff=self.entropy_coeff,
-            vf_loss_coeff=self.vf_loss_coeff,
-            train_batch_size_per_learner=self.train_batch_size_per_learner,
-            minibatch_size=self.minibatch_size,
-            num_epochs=self.num_epochs,
-            rollout_fragment_length=self.rollout_fragment_length,
-        )
-        return self
-
-
 class DroneWatchConfig(_FrozenModel):
     """Fully composed and validated DroneWatch experiment configuration."""
 
@@ -350,28 +312,6 @@ class DroneWatchConfig(_FrozenModel):
     def swarm_env_config(self, seed: int | None) -> dict[str, Any]:
         """Return the environment config dictionary passed through RLlib."""
         return self.env.model_copy(update={"seed": seed}).model_dump(mode="json")
-
-    def ppo_build_context(self) -> PPOBuildContext:
-        """Create the compact RLlib build context from the root experiment config."""
-        ppo = self.training.ppo
-        return PPOBuildContext(
-            model=self.model.kind,
-            seed=self.training_seed(),
-            num_env_runners=self.training.ray.num_env_runners,
-            num_learners=self.training.ray.num_learners,
-            num_gpus_per_learner=self.training.ray.num_gpus_per_learner,
-            train_batch_size_per_learner=ppo.train_batch_size_per_learner,
-            minibatch_size=ppo.minibatch_size,
-            num_epochs=ppo.num_epochs,
-            rollout_fragment_length=ppo.rollout_fragment_length,
-            lr=ppo.lr,
-            gamma=ppo.gamma,
-            lambda_=ppo.lambda_,
-            clip_param=ppo.clip_param,
-            entropy_coeff=ppo.entropy_coeff,
-            vf_loss_coeff=ppo.vf_loss_coeff,
-            network=self.model.network,
-        )
 
 
 class WorldDefaults(_FrozenModel):
