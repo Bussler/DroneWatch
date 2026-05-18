@@ -110,17 +110,6 @@ class EnvConfig(_FrozenModel):
     obstacles: ObstacleConfig = Field(default_factory=ObstacleConfig)
     coverage: CoverageConfig = Field(default_factory=CoverageConfig)
 
-    def to_rust_config_dict(self) -> dict[str, Any]:
-        """Return the nested dictionary expected by the Rust simulator binding."""
-        return {
-            "max_episode_steps": self.max_episode_steps,
-            "world": self.world.model_dump(mode="json"),
-            "agents": self.agents.model_dump(mode="json"),
-            "targets": self.targets.model_dump(mode="json"),
-            "obstacles": self.obstacles.model_dump(mode="json"),
-            "coverage": self.coverage.model_dump(mode="json"),
-        }
-
 
 class SwarmSearchEnvConfig(_FrozenModel):
     """Validated configuration accepted by the RLlib MultiAgentEnv wrapper."""

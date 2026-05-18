@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from pydantic import ValidationError
 
@@ -57,3 +59,13 @@ def test_env_config_uses_pydantic_validation() -> None:
         SwarmSearchEnvConfig.model_validate({"agents": AgentConfig().model_dump(mode="json")})
     with pytest.raises(ValidationError):
         SwarmSearchEnvConfig(seed=-1)
+
+
+def test_env_config_serializes_to_rust_json() -> None:
+    config = EnvConfig(agents=AgentConfig(count=4))
+
+    payload = json.loads(config.model_dump_json())
+
+    assert sorted(payload) == ["agents", "coverage", "max_episode_steps", "obstacles", "targets", "world"]
+    assert payload["agents"]["count"] == 4
+    assert payload["world"]["width"] == 100.0
