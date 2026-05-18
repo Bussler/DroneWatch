@@ -31,7 +31,6 @@ from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_se
 
 
 def evaluate_checkpoint(
-    *,
     checkpoint: str | Path,
     episodes: int = 10,
     seed: int = 42,
@@ -72,7 +71,6 @@ def evaluate_checkpoint(
 
 
 def evaluate_algorithm(
-    *,
     algorithm: Algorithm,
     episodes: int,
     seed: int,

@@ -20,7 +20,6 @@ from dronewatch.training.rllib_config import build_ppo_config
 
 
 def train_ppo(
-    *,
     config: DroneWatchConfig,
 ) -> dict[str, Any]:
     """Train PPO and return a compact run summary."""

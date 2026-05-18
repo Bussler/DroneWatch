@@ -54,7 +54,6 @@ class SwarmSearchEnv(MultiAgentEnv):
 
     def reset(
         self,
-        *,
         seed: int | None = None,
         options: Mapping[str, Any] | None = None,
     ) -> tuple[dict[str, np.ndarray], dict[str, dict[str, Any]]]:
