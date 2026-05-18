@@ -28,6 +28,7 @@ def test_load_config_supports_group_and_field_overrides() -> None:
             "env.simulation.max_episode_steps=12",
             "model.network.fcnet_hiddens=[64,64]",
             "baseline.random.render=true",
+            "project.seed=7",
         ],
     )
 
@@ -38,6 +39,7 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.env.simulation.agents.count == 4
     assert config.env.simulation.max_episode_steps == 12
     assert config.baseline.random.render is True
+    assert config.project.seed == 7
 
 
 def test_load_config_rejects_invalid_overrides() -> None:

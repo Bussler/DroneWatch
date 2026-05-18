@@ -39,15 +39,15 @@ def build_ppo_config(
     training: TrainingConfig | None = None,
     env_config: SwarmSearchEnvConfig | None = None,
     model: ModelConfig | None = None,
+    seed: int | None = ProjectConfig().seed,
 ) -> PPOConfig:
     """Build a PPOConfig for shared-policy DroneWatch training."""
-    training = training or TrainingConfig(seed=ProjectConfig().seed)
+    training = training or TrainingConfig()
     env_config = env_config or SwarmSearchEnvConfig()
     model = model or ModelConfig()
-    seed = training.seed if training.seed is not None else env_config.seed
     ray_config = training.ray
     ppo = training.ppo
-    env_config_payload = env_config.model_copy(update={"seed": seed}).model_dump(mode="json")
+    env_config_payload = env_config.model_dump(mode="json") | {"seed": seed}
     register_swarm_search_env()
 
     return (
@@ -103,10 +103,9 @@ def _model_config(model: ModelKind, network: NetworkConfig | None = None) -> Def
 def _create_swarm_search_env(env_context: Any) -> SwarmSearchEnv:
     """Create a SwarmSearchEnv from RLlib's EnvContext."""
     config = dict(env_context or {})
-    seed = config.get("seed")
+    seed = config.pop("seed", None)
     if seed is not None:
         worker_index = int(getattr(env_context, "worker_index", 0) or 0)
         vector_index = int(getattr(env_context, "vector_index", 0) or 0)
         seed = int(seed) + worker_index * 1000 + vector_index
-    config["seed"] = seed
-    return SwarmSearchEnv(config)
+    return SwarmSearchEnv(config, seed=seed)

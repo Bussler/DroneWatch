@@ -12,6 +12,7 @@ from dronewatch.config.schema import (
     EnvConfig,
     ObservationDefaults,
     ObstacleDefaults,
+    ProjectConfig,
     RewardWeights,
     SwarmSearchEnvConfig,
     WorldDefaults,
@@ -48,17 +49,19 @@ def test_default_models_reject_invalid_numeric_values() -> None:
 
 
 def test_env_config_uses_pydantic_validation() -> None:
-    assert SwarmSearchEnvConfig(seed=None).seed is None
-    assert SwarmSearchEnvConfig.model_validate({"seed": 123}).seed == 123
+    assert ProjectConfig(seed=None).seed is None
+    assert ProjectConfig(seed=123).seed == 123
     configured_env = SwarmSearchEnvConfig(simulation=EnvConfig(agents=AgentConfig(count=4)))
     assert configured_env.simulation.agents.count == 4
 
     with pytest.raises(ValidationError):
+        ProjectConfig(seed=-1)
+    with pytest.raises(ValidationError):
+        SwarmSearchEnvConfig.model_validate({"seed": 123})
+    with pytest.raises(ValidationError):
         SwarmSearchEnvConfig.model_validate({"num_agents": 8})
     with pytest.raises(ValidationError):
         SwarmSearchEnvConfig.model_validate({"agents": AgentConfig().model_dump(mode="json")})
-    with pytest.raises(ValidationError):
-        SwarmSearchEnvConfig(seed=-1)
 
 
 def test_env_config_serializes_to_rust_json() -> None:

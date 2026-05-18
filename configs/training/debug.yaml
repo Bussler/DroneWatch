@@ -1,5 +1,4 @@
 training:
-  seed: null
   stop:
     iterations: 1
     timesteps_total: null

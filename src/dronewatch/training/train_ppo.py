@@ -24,7 +24,7 @@ def train_ppo(
 ) -> dict[str, Any]:
     """Train PPO and return a compact run summary."""
     iterations = config.training.stop.iterations
-    seed = config.training_seed()
+    seed = config.project.seed
     model = config.model.kind
     checkpoint_frequency = config.training.checkpoint.frequency_iters
     if iterations <= 0:
@@ -37,11 +37,11 @@ def train_ppo(
     saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
 
     ray.init(ignore_reinit_error=True, include_dashboard=False)
-    algorithm_training = config.training.model_copy(update={"seed": seed})
     algorithm = build_ppo_config(
-        training=algorithm_training,
+        training=config.training,
         env_config=config.env,
         model=config.model,
+        seed=seed,
     ).build_algo()
 
     checkpoints: list[str] = []

@@ -1,7 +1,6 @@
 evaluation:
   checkpoint: null
   episodes: 10
-  seed: null
   report_path: artifacts/reports/ppo_eval_report.json
   render: false
   gif_path: artifacts/gifs/ppo_eval_episode.gif
@@ -10,7 +9,6 @@ evaluation:
 baseline:
   random:
     episodes: 1
-    seed: null
     report_path: artifacts/reports/random_policy_report.json
     render: false
     gif_path: artifacts/gifs/random_policy_episode.gif

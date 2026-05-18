@@ -15,7 +15,7 @@ from dronewatch.envs.spaces import observation_size
 
 
 def test_env_reset_returns_observations_and_infos_for_all_agents() -> None:
-    env = SwarmSearchEnv({"seed": 123})
+    env = SwarmSearchEnv(seed=123)
     default_observation_size = observation_size(ObservationConfig())
 
     observations, infos = env.reset(seed=123)
@@ -36,9 +36,14 @@ def test_env_rejects_unsupported_non_default_config() -> None:
         SwarmSearchEnv({"num_agents": 8})
 
 
-def test_env_accepts_pydantic_config_and_none_seed() -> None:
-    SwarmSearchEnv({"seed": None})
-    SwarmSearchEnv(SwarmSearchEnvConfig(seed=None))
+def test_env_accepts_pydantic_config_and_runtime_seed() -> None:
+    SwarmSearchEnv(seed=None)
+    SwarmSearchEnv(SwarmSearchEnvConfig(), seed=None)
+
+
+def test_env_rejects_seed_inside_structural_config() -> None:
+    with pytest.raises(ValidationError, match="seed"):
+        SwarmSearchEnv({"seed": None})
 
 
 def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
@@ -51,8 +56,7 @@ def test_env_accepts_configured_agent_count_and_observation_shape() -> None:
             include_communication_summary=False,
         ),
     )
-    episode_config = env_config.model_copy(update={"seed": 7})
-    env = SwarmSearchEnv(episode_config)
+    env = SwarmSearchEnv(env_config, seed=7)
 
     observations, infos = env.reset(seed=7)
 

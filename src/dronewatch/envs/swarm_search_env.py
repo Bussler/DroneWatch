@@ -25,11 +25,16 @@ class SwarmSearchEnv(MultiAgentEnv):
 
     metadata = {"name": "SwarmSearch2D"}
 
-    def __init__(self, env_config: SwarmSearchEnvConfig | Mapping[str, Any] | None = None) -> None:
-        """Create an environment and validate RLlib configuration with Pydantic.
+    def __init__(
+        self,
+        env_config: SwarmSearchEnvConfig | Mapping[str, Any] | None = None,
+        seed: int | None = None,
+    ) -> None:
+        """Create an environment and validate structural RLlib configuration with Pydantic.
 
         Args:
             env_config: Optional `SwarmSearchEnvConfig` or RLlib-provided dictionary.
+            seed: Optional runtime seed for simulator initialization and default resets.
 
         Raises:
             pydantic.ValidationError: If the config contains unsupported keys or invalid values.
@@ -40,7 +45,7 @@ class SwarmSearchEnv(MultiAgentEnv):
             if isinstance(env_config, SwarmSearchEnvConfig)
             else SwarmSearchEnvConfig.model_validate(env_config or {})
         )
-        self._initial_seed: int | None = self._config.seed
+        self._initial_seed = seed
         self._simulation = SwarmSimulation(seed=self._initial_seed, config=self._config.simulation)
         self._observation_builder = ObservationBuilder(self._config.simulation, self._config.observation)
         self._agent_ids = agent_ids(self._config.simulation.agents.count)
@@ -60,8 +65,8 @@ class SwarmSearchEnv(MultiAgentEnv):
         """Reset the Rust simulator and return RLlib observations plus infos.
 
         Args:
-            seed: Optional reset seed supplied by RLlib. When omitted, the validated environment
-                config seed is used. A value of `None` delegates seed resolution to Rust.
+            seed: Optional reset seed supplied by RLlib. When omitted, the constructor seed is used.
+                A value of `None` delegates seed resolution to Rust if no constructor seed exists.
             options: Reserved for Gymnasium/RLlib compatibility and ignored in Phase 2.
         """
         del options

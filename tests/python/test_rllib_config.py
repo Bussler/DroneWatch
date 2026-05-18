@@ -13,6 +13,7 @@ from dronewatch.config.schema import (
 from dronewatch.training.rllib_config import (
     SHARED_POLICY_ID,
     SWARM_SEARCH_ENV_NAME,
+    _create_swarm_search_env,
     build_ppo_config,
     shared_policy_mapping_fn,
 )
@@ -25,7 +26,6 @@ def test_shared_policy_mapping_maps_all_agents_to_one_policy() -> None:
 
 def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
     training = TrainingConfig(
-        seed=7,
         ray=RayConfig(num_env_runners=0),
         ppo=PPOHyperparameters(
             train_batch_size_per_learner=200,
@@ -33,7 +33,7 @@ def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
             num_epochs=1,
         ),
     )
-    config = build_ppo_config(training=training)
+    config = build_ppo_config(training=training, seed=7)
 
     assert config.env == SWARM_SEARCH_ENV_NAME
     assert config.env_config["seed"] == 7
@@ -53,7 +53,7 @@ def test_build_ppo_config_without_inputs_uses_default_config() -> None:
 
 
 def test_build_ppo_config_accepts_none_seed() -> None:
-    config = build_ppo_config(training=TrainingConfig(seed=None))
+    config = build_ppo_config(seed=None)
 
     assert config.env == SWARM_SEARCH_ENV_NAME
     assert config.env_config["seed"] is None
@@ -73,3 +73,12 @@ def test_build_ppo_config_accepts_env_and_model_values() -> None:
     assert config.model_config["fcnet_hiddens"] == [32, 16]
     assert config.model_config["use_lstm"] is True
     assert config.model_config["lstm_cell_size"] == 64
+
+
+def test_create_swarm_search_env_passes_runtime_seed_outside_structural_config() -> None:
+    env = _create_swarm_search_env({"seed": 7, "simulation": {"agents": {"count": 2}}})
+
+    observations, infos = env.reset()
+
+    assert len(observations) == 2
+    assert len(infos) == 2

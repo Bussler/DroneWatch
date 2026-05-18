@@ -55,8 +55,7 @@ def run_random_policy(
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        episode_config = env_config.model_copy(update={"seed": episode_seed})
-        env = SwarmSearchEnv(episode_config)
+        env = SwarmSearchEnv(env_config, seed=episode_seed)
         policy = RandomPolicy(seed=episode_seed)
         observations, _infos = env.reset(seed=episode_seed)
         done = False
@@ -104,7 +103,7 @@ def main() -> None:
 
     report = run_random_policy(
         episodes=config.baseline.random.episodes,
-        seed=config.random_seed() or 0,
+        seed=config.project.seed or 0,
         report_path=config.baseline.random.report_path,
         gif_path=config.baseline.random.gif_path,
         render=config.baseline.random.render,

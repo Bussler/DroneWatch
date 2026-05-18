@@ -94,8 +94,7 @@ def evaluate_algorithm(
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        episode_config = env_config.model_copy(update={"seed": episode_seed})
-        env = SwarmSearchEnv(episode_config)
+        env = SwarmSearchEnv(env_config, seed=episode_seed)
         observations, _infos = env.reset(seed=episode_seed)
         policy_states = {agent_id: _copy_state(initial_state) for agent_id in observations}
         done = False
@@ -211,7 +210,7 @@ def main() -> None:
     report = evaluate_checkpoint(
         checkpoint=config.evaluation.checkpoint,
         episodes=config.evaluation.episodes,
-        seed=config.evaluation_seed() or 0,
+        seed=config.project.seed or 0,
         report_path=config.evaluation.report_path,
         model=config.model.kind,
         render=config.evaluation.render,

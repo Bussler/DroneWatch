@@ -17,7 +17,6 @@ from dronewatch.training.train_ppo import train_ppo
 def test_train_ppo_single_iteration_logs_metrics_and_keeps_distinct_checkpoints(tmp_path: Path) -> None:
     config = DroneWatchConfig(
         training=TrainingConfig(
-            seed=42,
             stop=TrainingStopConfig(iterations=1),
             ray=RayConfig(num_env_runners=0, num_learners=0),
             ppo=PPOHyperparameters(

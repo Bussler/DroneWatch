@@ -7,7 +7,7 @@ from dronewatch.envs import SwarmSearchEnv
 
 
 def test_env_step_returns_rllib_multi_agent_payload() -> None:
-    env = SwarmSearchEnv({"seed": 123})
+    env = SwarmSearchEnv(seed=123)
     observations, _infos = env.reset(seed=123)
     actions = {agent_id: np.zeros(2, dtype=np.float32) for agent_id in observations}
 
@@ -26,7 +26,7 @@ def test_env_step_returns_rllib_multi_agent_payload() -> None:
 
 
 def test_env_step_rejects_missing_and_non_finite_actions() -> None:
-    env = SwarmSearchEnv({"seed": 123})
+    env = SwarmSearchEnv(seed=123)
     observations, _infos = env.reset(seed=123)
 
     with pytest.raises(ValueError, match="missing actions"):

@@ -1,5 +1,4 @@
 training:
-  seed: null
   stop:
     iterations: 10
     timesteps_total: 2000000
