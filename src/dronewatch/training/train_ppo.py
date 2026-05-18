@@ -14,45 +14,16 @@ from dronewatch.config.loader import (
     resolved_config_path,
     save_resolved_config,
 )
-from dronewatch.config.schema import DroneWatchConfig, ModelKind
+from dronewatch.config.schema import DroneWatchConfig
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
 from dronewatch.training.rllib_config import build_ppo_config
 
 
 def train_ppo(
     *,
-    config: DroneWatchConfig | None = None,
-    iterations: int | None = None,
-    seed: int | None = None,
-    model: ModelKind | None = None,
-    checkpoint_dir: str | Path | None = None,
-    checkpoint_frequency: int | None = None,
-    eval_episodes: int | None = None,
-    eval_report_path: str | Path | None = None,
-    num_env_runners: int | None = None,
-    num_learners: int | None = None,
-    num_gpus_per_learner: int | None = None,
-    train_batch_size_per_learner: int | None = None,
-    minibatch_size: int | None = None,
-    num_epochs: int | None = None,
+    config: DroneWatchConfig,
 ) -> dict[str, Any]:
     """Train PPO and return a compact run summary."""
-    config = _with_legacy_overrides(
-        config or DroneWatchConfig(),
-        iterations=iterations,
-        seed=seed,
-        model=model,
-        checkpoint_dir=checkpoint_dir,
-        checkpoint_frequency=checkpoint_frequency,
-        eval_episodes=eval_episodes,
-        eval_report_path=eval_report_path,
-        num_env_runners=num_env_runners,
-        num_learners=num_learners,
-        num_gpus_per_learner=num_gpus_per_learner,
-        train_batch_size_per_learner=train_batch_size_per_learner,
-        minibatch_size=minibatch_size,
-        num_epochs=num_epochs,
-    )
     iterations = config.training.stop.iterations
     seed = config.training_seed()
     model = config.model.kind
@@ -123,37 +94,6 @@ def train_ppo(
         "last_result": _training_progress(iterations, last_result),
         "evaluation_report": evaluation_report,
     }
-
-
-def _with_legacy_overrides(config: DroneWatchConfig, **overrides: Any) -> DroneWatchConfig:
-    """Apply legacy keyword arguments used by tests and older call sites."""
-    if not any(value is not None for value in overrides.values()):
-        return config
-
-    data = config.model_dump(mode="python")
-    if overrides["iterations"] is not None:
-        data["training"]["stop"]["iterations"] = overrides["iterations"]
-    if overrides["seed"] is not None:
-        data["training"]["seed"] = overrides["seed"]
-    if overrides["model"] is not None:
-        data["model"]["kind"] = overrides["model"]
-        data["model"]["network"]["use_lstm"] = overrides["model"] == "lstm"
-    if overrides["checkpoint_dir"] is not None:
-        data["training"]["checkpoint"]["directory"] = overrides["checkpoint_dir"]
-    if overrides["checkpoint_frequency"] is not None:
-        data["training"]["checkpoint"]["frequency_iters"] = overrides["checkpoint_frequency"]
-    if overrides["eval_episodes"] is not None:
-        data["training"]["evaluation"]["episodes"] = overrides["eval_episodes"]
-        data["training"]["evaluation"]["enabled"] = overrides["eval_episodes"] > 0
-    if overrides["eval_report_path"] is not None:
-        data["training"]["evaluation"]["report_path"] = overrides["eval_report_path"]
-    for key in ("num_env_runners", "num_learners", "num_gpus_per_learner"):
-        if overrides[key] is not None:
-            data["training"]["ray"][key] = overrides[key]
-    for key in ("train_batch_size_per_learner", "minibatch_size", "num_epochs"):
-        if overrides[key] is not None:
-            data["training"]["ppo"][key] = overrides[key]
-    return DroneWatchConfig.model_validate(data)
 
 
 def _save_checkpoint(algorithm: Any, checkpoint_dir: Path) -> str:
