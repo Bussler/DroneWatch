@@ -35,16 +35,16 @@ render-random:
 	uv run python -m dronewatch.baselines.random_policy --config configs/config.yaml baseline.random.episodes=1 project.seed=42 baseline.random.report_path=artifacts/reports/random_policy_report.json baseline.random.gif_path=artifacts/gifs/random_policy_episode.gif baseline.random.render=true
 
 train-ppo:
-	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml training.stop.iterations=10 model=ppo_feedforward training.checkpoint.directory=artifacts/checkpoints/ppo training.checkpoint.frequency_iters=5 training.evaluation.episodes=5 training.evaluation.report_path=artifacts/reports/ppo_eval_report.json
+	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml
 
 evaluate-ppo:
 ifndef CHECKPOINT
 	$(error CHECKPOINT=path/to/checkpoint is required)
 endif
-	uv run python -m dronewatch.evaluation.evaluate --config configs/config.yaml evaluation.checkpoint=$(CHECKPOINT) evaluation.episodes=10 evaluation.report_path=artifacts/reports/ppo_eval_report.json evaluation.render=true evaluation.gif_path=artifacts/gifs/ppo_eval_episode.gif
+	uv run python -m dronewatch.evaluation.evaluate --config configs/config.yaml evaluation.checkpoint=$(CHECKPOINT) evaluation.render=true evaluation.gif_path=artifacts/gifs/ppo_eval_episode.gif
 
 ppo-smoke:
-	uv run python -m dronewatch.training.train_ppo --config configs/debug.yaml training.stop.iterations=1 model=ppo_feedforward training.checkpoint.directory=artifacts/checkpoints/ppo/smoke training.checkpoint.frequency_iters=1 training.evaluation.episodes=1 training.evaluation.report_path=artifacts/reports/ppo_smoke_report.json training.ray.num_env_runners=0 training.ppo.train_batch_size_per_learner=200 training.ppo.minibatch_size=64 training.ppo.num_epochs=1
+	uv run python -m dronewatch.training.train_ppo --config configs/debug.yaml
 
 test-rust:
 	cargo test --manifest-path rust/swarm_sim/Cargo.toml

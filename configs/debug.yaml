@@ -4,7 +4,6 @@ defaults:
   - training: debug
   - evaluation: debug
   - rendering: default
-  - paths: default
   - tune: ray_tune
 
 project:

@@ -10,7 +10,7 @@ from omegaconf import DictConfig, OmegaConf
 
 from .schema import DroneWatchConfig
 
-GROUP_NAMES = {"env", "model", "training", "evaluation", "rendering", "paths", "tune"}
+GROUP_NAMES = {"env", "model", "training", "evaluation", "rendering", "tune"}
 
 
 def load_config(config_path: str | Path, overrides: Iterable[str] | None = None) -> DroneWatchConfig:

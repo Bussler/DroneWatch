@@ -250,14 +250,6 @@ class RenderingConfig(_FrozenModel):
     fps: int = Field(default=12, gt=0)
 
 
-class PathsConfig(_FrozenModel):
-    """Common artifact paths used by scripts and configs."""
-
-    checkpoint_dir: Path = Path("artifacts/checkpoints/ppo")
-    report_dir: Path = Path("artifacts/reports")
-    gif_dir: Path = Path("artifacts/gifs")
-
-
 class TuneConfig(_FrozenModel):
     """Validated Ray Tune metadata and search-space placeholder for later phases."""
 
@@ -279,7 +271,6 @@ class DroneWatchConfig(_FrozenModel):
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
     baseline: BaselineConfig = Field(default_factory=BaselineConfig)
     rendering: RenderingConfig = Field(default_factory=RenderingConfig)
-    paths: PathsConfig = Field(default_factory=PathsConfig)
     tune: TuneConfig = Field(default_factory=TuneConfig)
 
 

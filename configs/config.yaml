@@ -4,7 +4,6 @@ defaults:
   - training: local_ppo
   - evaluation: eval_default
   - rendering: default
-  - paths: default
   - tune: ray_tune
 
 project:
