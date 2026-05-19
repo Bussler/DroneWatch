@@ -4,13 +4,10 @@ from dronewatch.sim import SwarmSimulation
 
 
 def main() -> None:
-    sim = SwarmSimulation(seed=42)
+    sim = SwarmSimulation(seed=133742)
 
     while not sim.is_done():
-        actions = [
-            (1.0, 0.25) if index % 2 == 0 else (-0.25, 1.0)
-            for index in range(sim.num_agents)
-        ]
+        actions = [(1.0, 0.25) if index % 2 == 0 else (-0.25, 1.0) for index in range(sim.num_agents)]
         sim.step(actions)
 
     metrics = sim.metrics()

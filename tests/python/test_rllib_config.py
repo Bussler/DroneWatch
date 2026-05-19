@@ -46,7 +46,7 @@ def test_build_ppo_config_without_inputs_uses_default_config() -> None:
     config = build_ppo_config()
 
     assert config.env == SWARM_SEARCH_ENV_NAME
-    assert config.env_config["seed"] == 42
+    assert config.env_config["seed"] == 133742
     assert config.env_config["name"] == SWARM_SEARCH_ENV_NAME
     assert config.count_steps_by == "env_steps"
     assert SHARED_POLICY_ID in config.policies
@@ -69,7 +69,7 @@ def test_build_ppo_config_accepts_env_and_model_values() -> None:
     config = build_ppo_config(env_config=env_config, model=model)
 
     assert config.env_config["simulation"]["agents"]["count"] == 4
-    assert config.env_config["seed"] == 42
+    assert config.env_config["seed"] == 133742
     assert config.model_config["fcnet_hiddens"] == [32, 16]
     assert config.model_config["use_lstm"] is True
     assert config.model_config["lstm_cell_size"] == 64

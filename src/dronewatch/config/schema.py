@@ -22,7 +22,7 @@ class ProjectConfig(_FrozenModel):
     """Project-level metadata and default seed."""
 
     name: str = Field(default="DroneWatch", min_length=1)
-    seed: int | None = Field(default=42, ge=0)
+    seed: int | None = Field(default=133742, ge=0)
 
 
 class RuntimeConfig(_FrozenModel):

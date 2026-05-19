@@ -13,7 +13,7 @@ def test_random_policy_rollout_writes_report_and_gif(tmp_path: Path) -> None:
 
     report = run_random_policy(
         episodes=1,
-        seed=42,
+        seed=133742,
         report_path=report_path,
         gif_path=gif_path,
         render=True,

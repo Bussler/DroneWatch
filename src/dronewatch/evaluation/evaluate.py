@@ -33,7 +33,7 @@ from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_se
 def evaluate_checkpoint(
     checkpoint: str | Path,
     episodes: int = 10,
-    seed: int = 42,
+    seed: int = 133742,
     report_path: str | Path | None = None,
     model: str | None = None,
     render: bool = False,

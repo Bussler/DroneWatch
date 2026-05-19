@@ -705,7 +705,7 @@ defaults:
 
 project:
   name: DroneWatch
-  seed: 42
+  seed: 133742
 
 runtime:
   output_dir: outputs

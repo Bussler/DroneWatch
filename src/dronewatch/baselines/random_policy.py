@@ -35,7 +35,7 @@ class RandomPolicy:
 
 def run_random_policy(
     episodes: int = 1,
-    seed: int = 42,
+    seed: int = 133742,
     report_path: str | Path | None = None,
     gif_path: str | Path | None = None,
     render: bool = False,
