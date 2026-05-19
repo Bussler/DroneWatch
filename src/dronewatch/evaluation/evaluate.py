@@ -15,7 +15,7 @@ from ray.rllib.core.rl_module.rl_module import RLModule
 from ray.rllib.utils.numpy import convert_to_numpy
 
 from dronewatch.config.loader import (
-    load_config,
+    load_evaluation_config,
     resolved_config_path,
     save_resolved_config,
 )
@@ -196,9 +196,9 @@ def _action_from_module_output(module: RLModule, output: dict[str, Any]) -> np.n
 def main() -> None:
     """Command-line entry point for PPO checkpoint evaluation."""
     parser = argparse.ArgumentParser(description="Evaluate a DroneWatch RLlib PPO checkpoint.")
-    parser.add_argument("--config", type=Path, default=Path("configs/config.yaml"))
+    parser.add_argument("--config", type=Path, default=Path("configs/evaluate.yaml"))
     args, overrides = parser.parse_known_args()
-    config = load_config(args.config, overrides)
+    config = load_evaluation_config(args.config, overrides)
     if config.evaluation.checkpoint is None:
         raise ValueError("evaluation.checkpoint must be set via config or CLI override")
 

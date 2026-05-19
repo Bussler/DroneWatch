@@ -1,0 +1,95 @@
+from __future__ import annotations
+
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+import pytest
+
+import dronewatch.baselines.random_policy as random_policy_module
+import dronewatch.evaluation.evaluate as evaluate_module
+
+
+def test_random_policy_main_uses_standalone_config(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, Any] = {}
+    report_path = tmp_path / "random_report.json"
+
+    def fake_run_random_policy(**kwargs: Any) -> dict[str, Any]:
+        captured.update(kwargs)
+        return {"policy": "random"}
+
+    monkeypatch.setattr(random_policy_module, "run_random_policy", fake_run_random_policy)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "random_policy",
+            "--config",
+            "configs/random_policy.yaml",
+            "random_policy=debug",
+            "random_policy.episodes=2",
+            f"random_policy.report_path={report_path}",
+            "random_policy.render=false",
+            "project.seed=42",
+        ],
+    )
+
+    random_policy_module.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["policy"] == "random"
+    assert output["resolved_config_path"] == str(tmp_path / "resolved_config.yaml")
+    assert captured["episodes"] == 2
+    assert captured["seed"] == 42
+    assert captured["report_path"] == report_path
+    assert captured["render"] is False
+    assert captured["env_config"].name == "SwarmSearch2D"
+
+
+def test_evaluate_main_uses_standalone_config(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, Any] = {}
+    checkpoint_path = tmp_path / "checkpoint"
+    report_path = tmp_path / "ppo_report.json"
+
+    def fake_evaluate_checkpoint(**kwargs: Any) -> dict[str, Any]:
+        captured.update(kwargs)
+        return {"policy": "ppo"}
+
+    monkeypatch.setattr(evaluate_module, "evaluate_checkpoint", fake_evaluate_checkpoint)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "evaluate",
+            "--config",
+            "configs/evaluate.yaml",
+            "model=ppo_lstm",
+            f"evaluation.checkpoint={checkpoint_path}",
+            "evaluation.episodes=3",
+            f"evaluation.report_path={report_path}",
+            "evaluation.render=false",
+            "project.seed=123",
+        ],
+    )
+
+    evaluate_module.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["policy"] == "ppo"
+    assert output["resolved_config_path"] == str(tmp_path / "resolved_config.yaml")
+    assert captured["checkpoint"] == checkpoint_path
+    assert captured["episodes"] == 3
+    assert captured["seed"] == 123
+    assert captured["report_path"] == report_path
+    assert captured["model"] == "lstm"
+    assert captured["render"] is False
+    assert captured["env_config"].name == "SwarmSearch2D"

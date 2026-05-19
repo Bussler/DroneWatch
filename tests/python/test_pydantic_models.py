@@ -9,6 +9,8 @@ from dronewatch.config.schema import (
     AgentConfig,
     AgentDefaults,
     DroneWatchConfig,
+    DroneWatchEvaluationConfig,
+    DroneWatchRandomPolicyConfig,
     EnvConfig,
     ObservationDefaults,
     ObstacleDefaults,
@@ -25,7 +27,14 @@ def test_default_models_construct_with_expected_values() -> None:
     assert ObservationDefaults().max_visible_agents == 5
     assert ObstacleDefaults().expected_max_radius == 6.0
     assert RewardWeights().target_discovered == 5.0
-    assert DroneWatchConfig().env.simulation.agents.count == 16
+    training_config = DroneWatchConfig()
+    evaluation_config = DroneWatchEvaluationConfig()
+    random_policy_config = DroneWatchRandomPolicyConfig()
+    assert training_config.env.simulation.agents.count == 16
+    assert not hasattr(training_config, "evaluation")
+    assert not hasattr(training_config, "baseline")
+    assert evaluation_config.evaluation.checkpoint is None
+    assert random_policy_config.random_policy.episodes == 1
     assert EnvConfig().agents.count == 16
     assert not hasattr(EnvConfig(), "observation")
 
@@ -46,6 +55,8 @@ def test_default_models_reject_invalid_numeric_values() -> None:
         ObservationDefaults(max_visible_targets=0)
     with pytest.raises(ValidationError):
         RewardWeights(agent_collision=0.25)
+    with pytest.raises(ValidationError):
+        DroneWatchConfig.model_validate({"evaluation": {}})
 
 
 def test_env_config_uses_pydantic_validation() -> None:

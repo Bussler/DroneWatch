@@ -5,11 +5,3 @@ evaluation:
   render: true
   gif_path: artifacts/gifs/ppo_eval_episode.gif
   render_stride: 4
-
-baseline:
-  random:
-    episodes: 1
-    report_path: artifacts/reports/random_policy_report.json
-    render: true
-    gif_path: artifacts/gifs/random_policy_episode.gif
-    render_stride: 4

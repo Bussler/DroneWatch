@@ -4,31 +4,46 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from omegaconf import DictConfig, OmegaConf
+from pydantic import BaseModel
 
-from .schema import DroneWatchConfig
+from .schema import (
+    DroneWatchConfig,
+    DroneWatchEvaluationConfig,
+    DroneWatchRandomPolicyConfig,
+)
 
-GROUP_NAMES = {"env", "model", "training", "evaluation", "rendering", "tune"}
+ConfigModel = TypeVar("ConfigModel", bound=BaseModel)
+
+TRAINING_GROUP_NAMES = {"env", "model", "training", "rendering", "tune"}
+EVALUATION_GROUP_NAMES = {"env", "model", "evaluation", "rendering"}
+RANDOM_POLICY_GROUP_NAMES = {"env", "random_policy", "rendering"}
 
 
 def load_config(config_path: str | Path, overrides: Iterable[str] | None = None) -> DroneWatchConfig:
-    """Load, compose, override, resolve, and validate a DroneWatch config."""
-    path = Path(config_path)
-    overrides = list(overrides or [])
-    group_overrides, field_overrides = _split_overrides(overrides)
-    composed = _compose_config(path, group_overrides)
-    if field_overrides:
-        composed = OmegaConf.merge(composed, OmegaConf.from_dotlist(field_overrides))
-    data = OmegaConf.to_container(composed, resolve=True)
-    if not isinstance(data, dict):
-        raise ValueError(f"config at {path} did not resolve to a mapping")
-    data.pop("defaults", None)
-    return DroneWatchConfig.model_validate(data)
+    """Load, compose, override, resolve, and validate a PPO training config."""
+    return _load_typed_config(config_path, overrides, DroneWatchConfig, TRAINING_GROUP_NAMES)
 
 
-def save_resolved_config(config: DroneWatchConfig, path: str | Path) -> Path:
+def load_evaluation_config(
+    config_path: str | Path,
+    overrides: Iterable[str] | None = None,
+) -> DroneWatchEvaluationConfig:
+    """Load, compose, override, resolve, and validate a standalone evaluation config."""
+    return _load_typed_config(config_path, overrides, DroneWatchEvaluationConfig, EVALUATION_GROUP_NAMES)
+
+
+def load_random_policy_config(
+    config_path: str | Path,
+    overrides: Iterable[str] | None = None,
+) -> DroneWatchRandomPolicyConfig:
+    """Load, compose, override, resolve, and validate a standalone random-policy config."""
+    return _load_typed_config(config_path, overrides, DroneWatchRandomPolicyConfig, RANDOM_POLICY_GROUP_NAMES)
+
+
+def save_resolved_config(config: BaseModel, path: str | Path) -> Path:
     """Write a fully resolved config model as YAML and return its path."""
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -37,9 +52,30 @@ def save_resolved_config(config: DroneWatchConfig, path: str | Path) -> Path:
     return output_path
 
 
-def resolved_config_path(base_dir: str | Path, config: DroneWatchConfig) -> Path:
+def resolved_config_path(
+    base_dir: str | Path, config: DroneWatchConfig | DroneWatchEvaluationConfig | DroneWatchRandomPolicyConfig
+) -> Path:
     """Return the standard resolved-config path for a run artifact directory."""
     return Path(base_dir) / config.project.resolved_config_filename
+
+
+def _load_typed_config(
+    config_path: str | Path,
+    overrides: Iterable[str] | None,
+    model_type: type[ConfigModel],
+    group_names: set[str],
+) -> ConfigModel:
+    path = Path(config_path)
+    overrides = list(overrides or [])
+    group_overrides, field_overrides = _split_overrides(overrides, group_names)
+    composed = _compose_config(path, group_overrides)
+    if field_overrides:
+        composed = OmegaConf.merge(composed, OmegaConf.from_dotlist(field_overrides))
+    data = OmegaConf.to_container(composed, resolve=True)
+    if not isinstance(data, dict):
+        raise ValueError(f"config at {path} did not resolve to a mapping")
+    data.pop("defaults", None)
+    return model_type.model_validate(data)
 
 
 def _compose_config(path: Path, group_overrides: Mapping[str, str]) -> DictConfig:
@@ -75,14 +111,14 @@ def _parse_default(item: Any) -> tuple[str, str]:
     raise ValueError(f"unsupported default entry: {item!r}")
 
 
-def _split_overrides(overrides: list[str]) -> tuple[dict[str, str], list[str]]:
+def _split_overrides(overrides: list[str], group_names: set[str]) -> tuple[dict[str, str], list[str]]:
     group_overrides: dict[str, str] = {}
     field_overrides: list[str] = []
     for override in overrides:
         if "=" not in override:
             raise ValueError(f"override must use key=value syntax: {override}")
         key, value = override.split("=", 1)
-        if key in GROUP_NAMES:
+        if key in group_names:
             group_overrides[key] = value
         else:
             field_overrides.append(override)

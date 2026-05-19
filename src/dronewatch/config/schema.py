@@ -228,12 +228,6 @@ class RandomPolicyConfig(_FrozenModel):
     render_stride: int = Field(default=4, gt=0)
 
 
-class BaselineConfig(_FrozenModel):
-    """Baseline policy configurations."""
-
-    random: RandomPolicyConfig = Field(default_factory=RandomPolicyConfig)
-
-
 class RenderingConfig(_FrozenModel):
     """Shared rendering settings."""
 
@@ -251,16 +245,33 @@ class TuneConfig(_FrozenModel):
 
 
 class DroneWatchConfig(_FrozenModel):
-    """Fully composed and validated DroneWatch experiment configuration."""
+    """Fully composed and validated DroneWatch PPO training configuration."""
 
     project: ProjectConfig = Field(default_factory=ProjectConfig)
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
-    evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
-    baseline: BaselineConfig = Field(default_factory=BaselineConfig)
     rendering: RenderingConfig = Field(default_factory=RenderingConfig)
     tune: TuneConfig = Field(default_factory=TuneConfig)
+
+
+class DroneWatchEvaluationConfig(_FrozenModel):
+    """Standalone PPO checkpoint evaluation configuration."""
+
+    project: ProjectConfig = Field(default_factory=ProjectConfig)
+    env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
+    model: ModelConfig = Field(default_factory=ModelConfig)
+    evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
+    rendering: RenderingConfig = Field(default_factory=RenderingConfig)
+
+
+class DroneWatchRandomPolicyConfig(_FrozenModel):
+    """Standalone random-policy baseline execution configuration."""
+
+    project: ProjectConfig = Field(default_factory=ProjectConfig)
+    env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
+    random_policy: RandomPolicyConfig = Field(default_factory=RandomPolicyConfig)
+    rendering: RenderingConfig = Field(default_factory=RenderingConfig)
 
 
 class WorldDefaults(_FrozenModel):

@@ -99,8 +99,10 @@ The root configs are:
 
 - `configs/config.yaml` for local PPO training defaults.
 - `configs/debug.yaml` for a one-iteration smoke path.
+- `configs/evaluate.yaml` for standalone PPO checkpoint evaluation.
+- `configs/random_policy.yaml` for standalone random-policy baseline runs.
 
-Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/rendering`, `configs/paths`, and `configs/tune`. Any field can be overridden from the CLI, including environment size, reward weights, PPO hyperparameters, model type, report paths, render settings, and checkpoint paths.
+Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/random_policy`, `configs/rendering`, and `configs/tune`. Training, standalone evaluation, and random-policy runs each load their own root config, so standalone random-policy overrides use `random_policy.*` and standalone checkpoint evaluation overrides use `evaluation.*`.
 
 Each training, evaluation, or random-policy run writes a resolved YAML snapshot named `resolved_config.yaml` beside its run/report artifacts.
 
@@ -145,7 +147,7 @@ Or directly:
 
 ```bash
 uv run python -m dronewatch.evaluation.evaluate \
-	--config configs/config.yaml \
+	--config configs/evaluate.yaml \
 	evaluation.checkpoint=artifacts/checkpoints/ppo/path-to-checkpoint \
 	evaluation.render=true
 ```

@@ -1,9 +1,7 @@
 defaults:
   - env: swarm_search_v1
-  - model: ppo_feedforward
-  - training: debug
+  - random_policy: default
   - rendering: default
-  - tune: ray_tune
 
 project:
   name: DroneWatch

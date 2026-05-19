@@ -29,10 +29,10 @@ rollout-rust:
 	uv run python scripts/run_rust_rollout.py
 
 rollout-random:
-	uv run python -m dronewatch.baselines.random_policy --config configs/config.yaml baseline.random.episodes=1 project.seed=42 baseline.random.report_path=artifacts/reports/random_policy_report.json
+	uv run python -m dronewatch.baselines.random_policy --config configs/random_policy.yaml random_policy.episodes=1 project.seed=42 random_policy.report_path=artifacts/reports/random_policy_report.json random_policy.render=false
 
 render-random:
-	uv run python -m dronewatch.baselines.random_policy --config configs/config.yaml baseline.random.episodes=1 project.seed=42 baseline.random.report_path=artifacts/reports/random_policy_report.json baseline.random.gif_path=artifacts/gifs/random_policy_episode.gif baseline.random.render=true
+	uv run python -m dronewatch.baselines.random_policy --config configs/random_policy.yaml random_policy.episodes=1 project.seed=42 random_policy.report_path=artifacts/reports/random_policy_report.json random_policy.gif_path=artifacts/gifs/random_policy_episode.gif random_policy.render=true
 
 train-ppo:
 	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml
@@ -41,7 +41,7 @@ evaluate-ppo:
 ifndef CHECKPOINT
 	$(error CHECKPOINT=path/to/checkpoint is required)
 endif
-	uv run python -m dronewatch.evaluation.evaluate --config configs/config.yaml evaluation.checkpoint=$(CHECKPOINT) evaluation.render=true evaluation.gif_path=artifacts/gifs/ppo_eval_episode.gif
+	uv run python -m dronewatch.evaluation.evaluate --config configs/evaluate.yaml evaluation.checkpoint=$(CHECKPOINT) evaluation.render=true evaluation.gif_path=artifacts/gifs/ppo_eval_episode.gif
 
 ppo-smoke:
 	uv run python -m dronewatch.training.train_ppo --config configs/debug.yaml

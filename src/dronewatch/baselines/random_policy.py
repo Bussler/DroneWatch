@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 
 from dronewatch.config.loader import (
-    load_config,
+    load_random_policy_config,
     resolved_config_path,
     save_resolved_config,
 )
@@ -93,21 +93,21 @@ def run_random_policy(
 def main() -> None:
     """Command-line entry point for the random policy baseline."""
     parser = argparse.ArgumentParser(description="Run the DroneWatch random policy baseline.")
-    parser.add_argument("--config", type=Path, default=Path("configs/config.yaml"))
+    parser.add_argument("--config", type=Path, default=Path("configs/random_policy.yaml"))
     args, overrides = parser.parse_known_args()
-    config = load_config(args.config, overrides)
+    config = load_random_policy_config(args.config, overrides)
     resolved_path = save_resolved_config(
         config,
-        resolved_config_path(Path(config.baseline.random.report_path).parent, config),
+        resolved_config_path(Path(config.random_policy.report_path).parent, config),
     )
 
     report = run_random_policy(
-        episodes=config.baseline.random.episodes,
+        episodes=config.random_policy.episodes,
         seed=config.project.seed or 0,
-        report_path=config.baseline.random.report_path,
-        gif_path=config.baseline.random.gif_path,
-        render=config.baseline.random.render,
-        render_stride=config.baseline.random.render_stride,
+        report_path=config.random_policy.report_path,
+        gif_path=config.random_policy.gif_path,
+        render=config.random_policy.render,
+        render_stride=config.random_policy.render_stride,
         env_config=config.env,
         render_fps=config.rendering.fps,
     )

@@ -1083,10 +1083,10 @@ tune:
 	python -m dronewatch.training.tune_ppo --config configs/config.yaml
 
 evaluate:
-	python -m dronewatch.evaluation.evaluate --config configs/config.yaml
+  python -m dronewatch.evaluation.evaluate --config configs/evaluate.yaml
 
 render-random:
-	python -m dronewatch.rendering.render_episode --policy random --config configs/config.yaml
+  python -m dronewatch.baselines.random_policy --config configs/random_policy.yaml random_policy.render=true
 
 docker-build:
 	docker build -t dronewatch:latest .

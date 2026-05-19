@@ -1,0 +1,6 @@
+random_policy:
+  episodes: 1
+  report_path: artifacts/reports/random_policy_debug_report.json
+  render: true
+  gif_path: artifacts/gifs/random_policy_debug_episode.gif
+  render_stride: 4
