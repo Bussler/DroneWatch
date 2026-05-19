@@ -39,7 +39,7 @@ def save_resolved_config(config: DroneWatchConfig, path: str | Path) -> Path:
 
 def resolved_config_path(base_dir: str | Path, config: DroneWatchConfig) -> Path:
     """Return the standard resolved-config path for a run artifact directory."""
-    return Path(base_dir) / config.runtime.resolved_config_filename
+    return Path(base_dir) / config.project.resolved_config_filename
 
 
 def _compose_config(path: Path, group_overrides: Mapping[str, str]) -> DictConfig:

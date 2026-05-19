@@ -23,11 +23,6 @@ class ProjectConfig(_FrozenModel):
 
     name: str = Field(default="DroneWatch", min_length=1)
     seed: int | None = Field(default=133742, ge=0)
-
-
-class RuntimeConfig(_FrozenModel):
-    """Runtime artifact locations and resolved-config file naming."""
-
     output_dir: Path = Path("outputs")
     artifact_dir: Path = Path("artifacts")
     resolved_config_filename: str = Field(default="resolved_config.yaml", min_length=1)
@@ -217,15 +212,10 @@ class TrainingConfig(_FrozenModel):
     evaluation: TrainingEvaluationConfig = Field(default_factory=TrainingEvaluationConfig)
 
 
-class EvaluationConfig(_FrozenModel):
+class EvaluationConfig(TrainingEvaluationConfig):
     """Standalone checkpoint evaluation settings."""
 
     checkpoint: Path | None = None
-    episodes: int = Field(default=10, gt=0)
-    report_path: Path = Path("artifacts/reports/ppo_eval_report.json")
-    render: bool = False
-    gif_path: Path = Path("artifacts/gifs/ppo_eval_episode.gif")
-    render_stride: int = Field(default=4, gt=0)
 
 
 class RandomPolicyConfig(_FrozenModel):
@@ -264,7 +254,6 @@ class DroneWatchConfig(_FrozenModel):
     """Fully composed and validated DroneWatch experiment configuration."""
 
     project: ProjectConfig = Field(default_factory=ProjectConfig)
-    runtime: RuntimeConfig = Field(default_factory=RuntimeConfig)
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
