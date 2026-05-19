@@ -272,34 +272,3 @@ class DroneWatchRandomPolicyConfig(_FrozenModel):
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
     random_policy: RandomPolicyConfig = Field(default_factory=RandomPolicyConfig)
     rendering: RenderingConfig = Field(default_factory=RenderingConfig)
-
-
-class WorldDefaults(_FrozenModel):
-    """Backward-compatible world defaults mirrored from Phase 2."""
-
-    width: float = Field(default=100.0, gt=0.0)
-    height: float = Field(default=100.0, gt=0.0)
-    max_episode_steps: int = Field(default=200, gt=0)
-
-
-class AgentDefaults(_FrozenModel):
-    """Backward-compatible homogeneous swarm defaults mirrored from Phase 2."""
-
-    count: int = Field(default=16, gt=0)
-    max_speed: float = Field(default=2.0, gt=0.0)
-    sensing_radius: float = Field(default=15.0, gt=0.0)
-    communication_radius: float = Field(default=20.0, gt=0.0)
-
-
-class ObstacleDefaults(_FrozenModel):
-    """Backward-compatible obstacle normalization default."""
-
-    expected_max_radius: float = Field(default=6.0, gt=0.0)
-
-
-class ObservationDefaults(_FrozenModel):
-    """Backward-compatible fixed observation capacity defaults."""
-
-    max_visible_agents: int = Field(default=5, gt=0)
-    max_visible_targets: int = Field(default=5, gt=0)
-    max_visible_obstacles: int = Field(default=5, gt=0)

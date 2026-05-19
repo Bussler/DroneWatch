@@ -10,7 +10,6 @@ from matplotlib.animation import PillowWriter
 from matplotlib.patches import Circle
 
 from dronewatch.config.schema import EnvConfig
-from dronewatch.envs.spaces import AGENT_DEFAULTS, WORLD_DEFAULTS
 from dronewatch.rendering.frame import SimulationFrame
 
 
@@ -42,8 +41,8 @@ def _draw_frame(ax: plt.Axes, frame: SimulationFrame, env_config: EnvConfig | No
     state = frame.world_state
     metrics = frame.simulation_metrics
     ax.clear()
-    ax.set_xlim(0.0, env_config.world.width if env_config else WORLD_DEFAULTS.width)
-    ax.set_ylim(0.0, env_config.world.height if env_config else WORLD_DEFAULTS.height)
+    ax.set_xlim(0.0, env_config.world.width)
+    ax.set_ylim(0.0, env_config.world.height)
     ax.set_aspect("equal", adjustable="box")
     ax.set_title(f"step {metrics['timestep']} | targets {metrics['discovered_target_count']}/{metrics['target_count']}")
     ax.set_xlabel("x")
@@ -70,9 +69,7 @@ def _draw_frame(ax: plt.Axes, frame: SimulationFrame, env_config: EnvConfig | No
         for right in agents[left_index + 1 :]:
             dx = left["position"][0] - right["position"][0]
             dy = left["position"][1] - right["position"][1]
-            communication_radius = (
-                env_config.agents.communication_radius if env_config else AGENT_DEFAULTS.communication_radius
-            )
+            communication_radius = env_config.agents.communication_radius
             if (dx * dx + dy * dy) ** 0.5 <= communication_radius:
                 ax.plot(
                     [left["position"][0], right["position"][0]],

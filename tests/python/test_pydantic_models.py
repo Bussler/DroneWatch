@@ -7,25 +7,27 @@ from pydantic import ValidationError
 
 from dronewatch.config.schema import (
     AgentConfig,
-    AgentDefaults,
     DroneWatchConfig,
     DroneWatchEvaluationConfig,
     DroneWatchRandomPolicyConfig,
     EnvConfig,
-    ObservationDefaults,
-    ObstacleDefaults,
+    ObservationConfig,
     ProjectConfig,
     RewardWeights,
     SwarmSearchEnvConfig,
-    WorldDefaults,
+    WorldConfig,
 )
 
 
-def test_default_models_construct_with_expected_values() -> None:
-    assert WorldDefaults().width == 100.0
-    assert AgentDefaults().count == 16
-    assert ObservationDefaults().max_visible_agents == 5
-    assert ObstacleDefaults().expected_max_radius == 6.0
+def test_config_models_construct_with_expected_values() -> None:
+    env_config = EnvConfig()
+    observation_config = ObservationConfig()
+    assert env_config.world.width == 100.0
+    assert env_config.max_episode_steps == 200
+    assert env_config.agents.count == 16
+    assert env_config.agents.max_speed == 2.0
+    assert env_config.obstacles.max_radius == 6.0
+    assert observation_config.max_visible_agents == 5
     assert RewardWeights().target_discovered == 5.0
     training_config = DroneWatchConfig()
     evaluation_config = DroneWatchEvaluationConfig()
@@ -35,12 +37,11 @@ def test_default_models_construct_with_expected_values() -> None:
     assert not hasattr(training_config, "baseline")
     assert evaluation_config.evaluation.checkpoint is None
     assert random_policy_config.random_policy.episodes == 1
-    assert EnvConfig().agents.count == 16
-    assert not hasattr(EnvConfig(), "observation")
+    assert not hasattr(env_config, "observation")
 
 
 def test_default_models_are_frozen() -> None:
-    defaults = AgentDefaults()
+    defaults = AgentConfig()
 
     with pytest.raises(ValidationError):
         defaults.count = 8  # type: ignore[misc]
@@ -48,11 +49,11 @@ def test_default_models_are_frozen() -> None:
 
 def test_default_models_reject_invalid_numeric_values() -> None:
     with pytest.raises(ValidationError):
-        WorldDefaults(width=0.0)
+        WorldConfig(width=0.0)
     with pytest.raises(ValidationError):
-        AgentDefaults(max_speed=-1.0)
+        AgentConfig(max_speed=-1.0)
     with pytest.raises(ValidationError):
-        ObservationDefaults(max_visible_targets=0)
+        ObservationConfig(max_visible_targets=0)
     with pytest.raises(ValidationError):
         RewardWeights(agent_collision=0.25)
     with pytest.raises(ValidationError):

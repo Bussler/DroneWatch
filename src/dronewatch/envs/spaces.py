@@ -1,23 +1,12 @@
-"""Spaces and defaults for the SwarmSearch2D wrapper."""
+"""Spaces for the SwarmSearch2D wrapper."""
 
 from __future__ import annotations
 
 import gymnasium as gym
 import numpy as np
 
-from dronewatch.config.schema import (
-    AgentDefaults,
-    ObservationConfig,
-    ObservationDefaults,
-    ObstacleDefaults,
-    RewardWeights,
-    WorldDefaults,
-)
+from dronewatch.config.schema import ObservationConfig, RewardWeights
 
-WORLD_DEFAULTS = WorldDefaults()
-AGENT_DEFAULTS = AgentDefaults()
-OBSTACLE_DEFAULTS = ObstacleDefaults()
-OBSERVATION_DEFAULTS = ObservationDefaults()
 REWARD_WEIGHTS = RewardWeights()
 
 OWN_STATE_SIZE = 5
@@ -41,7 +30,7 @@ def observation_size(config: ObservationConfig | None = None) -> int:
     return size
 
 
-def agent_ids(num_agents: int = AGENT_DEFAULTS.count) -> list[str]:
+def agent_ids(num_agents: int) -> list[str]:
     """Return stable RLlib agent IDs for the homogeneous swarm."""
     return [f"agent_{index}" for index in range(num_agents)]
 
