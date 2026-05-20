@@ -104,7 +104,7 @@ The root configs are:
 
 Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/random_policy`, `configs/rendering`, and `configs/tune`. Training, standalone evaluation, and random-policy runs each load their own root config, so standalone random-policy overrides use `random_policy.*` and standalone checkpoint evaluation overrides use `evaluation.*`.
 
-Each training, evaluation, or random-policy run writes a resolved YAML snapshot named `resolved_config.yaml` beside its run/report artifacts.
+Each training run writes a resolved YAML snapshot named `resolved_config.yaml` beside its run/report artifacts.
 
 ## PPO Training
 
