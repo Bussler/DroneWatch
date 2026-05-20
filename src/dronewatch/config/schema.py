@@ -135,9 +135,7 @@ class NetworkConfig(_FrozenModel):
 class ModelConfig(_FrozenModel):
     """Shared-policy PPO model configuration."""
 
-    algorithm: Literal["PPO"] = "PPO"
     kind: ModelKind = "feedforward"
-    shared_policy: bool = True
     network: NetworkConfig = Field(default_factory=NetworkConfig)
 
 
@@ -172,15 +170,12 @@ class RayConfig(_FrozenModel):
     num_envs_per_env_runner: int = Field(default=1, gt=0)
     num_learners: int = Field(default=0, ge=0)
     num_gpus_per_learner: int = Field(default=0, ge=0)
-    num_cpus: int | None = Field(default=None, gt=0)
-    num_gpus: int | None = Field(default=None, ge=0)
 
 
 class TrainingStopConfig(_FrozenModel):
     """Training stop criteria used by local PPO runs."""
 
     iterations: int = Field(default=10, gt=0)
-    timesteps_total: int | None = Field(default=None, gt=0)
 
 
 class CheckpointConfig(_FrozenModel):
@@ -188,7 +183,6 @@ class CheckpointConfig(_FrozenModel):
 
     directory: Path = Path("artifacts/checkpoints/ppo")
     frequency_iters: int = Field(default=5, gt=0)
-    keep_last: int | None = Field(default=5, gt=0)
 
 
 class TrainingEvaluationConfig(_FrozenModel):

@@ -12,7 +12,6 @@ from dronewatch.config.schema import (
 )
 from dronewatch.training.rllib_config import (
     SHARED_POLICY_ID,
-    SWARM_SEARCH_ENV_NAME,
     _create_swarm_search_env,
     build_ppo_config,
     shared_policy_mapping_fn,
@@ -35,7 +34,7 @@ def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
     )
     config = build_ppo_config(training=training, seed=7)
 
-    assert config.env == SWARM_SEARCH_ENV_NAME
+    assert config.env == SwarmSearchEnvConfig().name
     assert config.env_config["seed"] == 7
     assert config.env_config["simulation"]["agents"]["count"] == 16
     assert config.count_steps_by == "env_steps"
@@ -45,9 +44,9 @@ def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
 def test_build_ppo_config_without_inputs_uses_default_config() -> None:
     config = build_ppo_config()
 
-    assert config.env == SWARM_SEARCH_ENV_NAME
+    assert config.env == SwarmSearchEnvConfig().name
     assert config.env_config["seed"] == 133742
-    assert config.env_config["name"] == SWARM_SEARCH_ENV_NAME
+    assert config.env_config["name"] == SwarmSearchEnvConfig().name
     assert config.count_steps_by == "env_steps"
     assert SHARED_POLICY_ID in config.policies
 
@@ -55,7 +54,7 @@ def test_build_ppo_config_without_inputs_uses_default_config() -> None:
 def test_build_ppo_config_accepts_none_seed() -> None:
     config = build_ppo_config(seed=None)
 
-    assert config.env == SWARM_SEARCH_ENV_NAME
+    assert config.env == SwarmSearchEnvConfig().name
     assert config.env_config["seed"] is None
 
 
@@ -73,6 +72,15 @@ def test_build_ppo_config_accepts_env_and_model_values() -> None:
     assert config.model_config["fcnet_hiddens"] == [32, 16]
     assert config.model_config["use_lstm"] is True
     assert config.model_config["lstm_cell_size"] == 64
+
+
+def test_build_ppo_config_uses_configured_env_name() -> None:
+    env_config = SwarmSearchEnvConfig(name="CustomSwarmSearch")
+
+    config = build_ppo_config(env_config=env_config)
+
+    assert config.env == "CustomSwarmSearch"
+    assert config.env_config["name"] == "CustomSwarmSearch"
 
 
 def test_create_swarm_search_env_passes_runtime_seed_outside_structural_config() -> None:

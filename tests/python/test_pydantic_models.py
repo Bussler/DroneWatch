@@ -11,10 +11,12 @@ from dronewatch.config.schema import (
     DroneWatchEvaluationConfig,
     DroneWatchRandomPolicyConfig,
     EnvConfig,
+    ModelConfig,
     ObservationConfig,
     ProjectConfig,
     RewardWeights,
     SwarmSearchEnvConfig,
+    TrainingConfig,
     WorldConfig,
 )
 

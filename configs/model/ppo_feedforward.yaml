@@ -1,7 +1,5 @@
 model:
-  algorithm: PPO
   kind: feedforward
-  shared_policy: true
   network:
     use_lstm: false
     lstm_cell_size: 128

@@ -1,14 +1,11 @@
 training:
   stop:
     iterations: 1
-    timesteps_total: null
   ray:
     num_env_runners: 0
     num_envs_per_env_runner: 1
     num_learners: 0
     num_gpus_per_learner: 0
-    num_cpus: 2
-    num_gpus: 0
   ppo:
     gamma: 0.99
     lambda_: 0.95
@@ -23,7 +20,6 @@ training:
   checkpoint:
     directory: artifacts/checkpoints/ppo/smoke
     frequency_iters: 1
-    keep_last: 2
   evaluation:
     enabled: true
     episodes: 1

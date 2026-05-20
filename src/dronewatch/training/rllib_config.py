@@ -20,13 +20,12 @@ from dronewatch.envs import SwarmSearchEnv
 
 from .callbacks import SwarmSearchMetricsCallback
 
-SWARM_SEARCH_ENV_NAME = "SwarmSearch2D"
 SHARED_POLICY_ID = "shared_policy"
 
 
-def register_swarm_search_env() -> None:
+def register_swarm_search_env(env_name: str) -> None:
     """Register the DroneWatch multi-agent environment with Ray Tune."""
-    register_env(SWARM_SEARCH_ENV_NAME, _create_swarm_search_env)
+    register_env(env_name, _create_swarm_search_env)
 
 
 def shared_policy_mapping_fn(agent_id: str, episode: Any, **kwargs: Any) -> str:
@@ -48,12 +47,12 @@ def build_ppo_config(
     ray_config = training.ray
     ppo = training.ppo
     env_config_payload = env_config.model_dump(mode="json") | {"seed": seed}
-    register_swarm_search_env()
+    register_swarm_search_env(env_config.name)
 
     return (
         PPOConfig()
         .framework("torch")
-        .environment(env=SWARM_SEARCH_ENV_NAME, env_config=env_config_payload)
+        .environment(env=env_config.name, env_config=env_config_payload)
         .env_runners(
             num_env_runners=ray_config.num_env_runners,
             num_envs_per_env_runner=ray_config.num_envs_per_env_runner,

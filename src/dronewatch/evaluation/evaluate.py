@@ -46,7 +46,8 @@ def evaluate_checkpoint(
     if episodes <= 0:
         raise ValueError("episodes must be greater than zero")
 
-    register_swarm_search_env()
+    env_config = env_config or SwarmSearchEnvConfig()
+    register_swarm_search_env(env_config.name)
     checkpoint_path = Path(checkpoint).resolve()
     algorithm = Algorithm.from_checkpoint(str(checkpoint_path))
     try:

@@ -767,9 +767,7 @@ env:
 ```yaml
 # configs/model/ppo_lstm.yaml
 model:
-  algorithm: PPO
-  shared_policy: true
-
+  kind: lstm
   network:
     use_lstm: true
     lstm_cell_size: 128
@@ -795,17 +793,17 @@ model:
 # configs/training/local_ppo.yaml
 training:
   stop:
-    timesteps_total: 2000000
+    iterations: 10
 
   ray:
     num_env_runners: 4
     num_envs_per_env_runner: 1
-    num_cpus: 8
-    num_gpus: 0
+    num_learners: 0
+    num_gpus_per_learner: 0
 
   checkpoint:
+    directory: artifacts/checkpoints/ppo
     frequency_iters: 25
-    keep_last: 5
 
   evaluation:
     interval_iters: 10

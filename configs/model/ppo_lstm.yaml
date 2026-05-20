@@ -1,7 +1,5 @@
 model:
-  algorithm: PPO
   kind: lstm
-  shared_policy: true
   network:
     use_lstm: true
     lstm_cell_size: 128

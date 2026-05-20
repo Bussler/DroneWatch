@@ -93,6 +93,9 @@ def test_load_config_rejects_invalid_overrides() -> None:
     with pytest.raises(ValidationError):
         load_config("configs/config.yaml", ["baseline.random.render=true"])
 
+    with pytest.raises(ValidationError):
+        load_config("configs/config.yaml", ["training.stop.timesteps_total=10"])
+
     with pytest.raises(ValueError, match="key=value"):
         load_config("configs/config.yaml", ["training.debug"])
 
