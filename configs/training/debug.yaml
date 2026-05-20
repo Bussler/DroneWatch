@@ -18,12 +18,12 @@ training:
     num_epochs: 1
     rollout_fragment_length: auto
   checkpoint:
-    directory: artifacts/checkpoints/ppo/smoke
+    directory: checkpoints/ppo/smoke
     frequency_iters: 1
   evaluation:
     enabled: true
     episodes: 1
-    report_path: artifacts/reports/ppo_smoke_report.json
+    report_path: reports/ppo_smoke_report.json
     render: true
-    gif_path: artifacts/gifs/ppo_smoke_episode.gif
+    gif_path: gifs/ppo_smoke_episode.gif
     render_stride: 4

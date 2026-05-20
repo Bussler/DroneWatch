@@ -79,7 +79,7 @@ def test_load_random_policy_config_composes_standalone_groups() -> None:
     )
 
     assert config.random_policy.episodes == 2
-    assert config.random_policy.report_path == Path("artifacts/reports/random_policy_debug_report.json")
+    assert config.random_policy.report_path == Path("reports/random_policy_debug_report.json")
     assert config.random_policy.render is False
     assert config.project.seed == 42
     assert not hasattr(config, "training")

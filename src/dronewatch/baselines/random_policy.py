@@ -11,8 +11,6 @@ import numpy as np
 
 from dronewatch.config.loader import (
     load_random_policy_config,
-    resolved_config_path,
-    save_resolved_config,
 )
 from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.envs import SwarmSearchEnv
@@ -96,22 +94,17 @@ def main() -> None:
     parser.add_argument("--config", type=Path, default=Path("configs/random_policy.yaml"))
     args, overrides = parser.parse_known_args()
     config = load_random_policy_config(args.config, overrides)
-    resolved_path = save_resolved_config(
-        config,
-        resolved_config_path(Path(config.random_policy.report_path).parent, config),
-    )
 
     report = run_random_policy(
         episodes=config.random_policy.episodes,
         seed=config.project.seed or 0,
-        report_path=config.random_policy.report_path,
-        gif_path=config.random_policy.gif_path,
+        report_path=config.project.artifact_dir / config.random_policy.report_path,
+        gif_path=config.project.artifact_dir / config.random_policy.gif_path,
         render=config.random_policy.render,
         render_stride=config.random_policy.render_stride,
         env_config=config.env,
         render_fps=config.rendering.fps,
     )
-    report["resolved_config_path"] = str(resolved_path)
     print(json.dumps(report, indent=2, sort_keys=True))
 
 

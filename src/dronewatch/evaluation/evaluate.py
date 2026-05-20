@@ -16,8 +16,6 @@ from ray.rllib.utils.numpy import convert_to_numpy
 
 from dronewatch.config.loader import (
     load_evaluation_config,
-    resolved_config_path,
-    save_resolved_config,
 )
 from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.envs import SwarmSearchEnv
@@ -203,24 +201,18 @@ def main() -> None:
     if config.evaluation.checkpoint is None:
         raise ValueError("evaluation.checkpoint must be set via config or CLI override")
 
-    resolved_path = save_resolved_config(
-        config,
-        resolved_config_path(Path(config.evaluation.report_path).parent, config),
-    )
-
     report = evaluate_checkpoint(
         checkpoint=config.evaluation.checkpoint,
         episodes=config.evaluation.episodes,
         seed=config.project.seed or 0,
-        report_path=config.evaluation.report_path,
+        report_path=config.project.artifact_dir / config.evaluation.report_path,
         model=config.model.kind,
         render=config.evaluation.render,
-        gif_path=config.evaluation.gif_path,
+        gif_path=config.project.artifact_dir / config.evaluation.gif_path,
         render_stride=config.evaluation.render_stride,
         env_config=config.env,
         render_fps=config.rendering.fps,
     )
-    report["resolved_config_path"] = str(resolved_path)
     print(json.dumps(report, indent=2, sort_keys=True))
 
 

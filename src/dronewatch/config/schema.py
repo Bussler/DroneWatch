@@ -181,7 +181,7 @@ class TrainingStopConfig(_FrozenModel):
 class CheckpointConfig(_FrozenModel):
     """Checkpoint persistence settings for local PPO training."""
 
-    directory: Path = Path("artifacts/checkpoints/ppo")
+    directory: Path = Path("checkpoints/ppo")
     frequency_iters: int = Field(default=5, gt=0)
 
 
@@ -190,9 +190,9 @@ class TrainingEvaluationConfig(_FrozenModel):
 
     enabled: bool = True
     episodes: int = Field(default=5, ge=0)
-    report_path: Path = Path("artifacts/reports/ppo_eval_report.json")
+    report_path: Path = Path("reports/ppo_eval_report.json")
     render: bool = True
-    gif_path: Path = Path("artifacts/gifs/ppo_eval_episode.gif")
+    gif_path: Path = Path("gifs/ppo_eval_episode.gif")
     render_stride: int = Field(default=4, gt=0)
 
 
@@ -216,9 +216,9 @@ class RandomPolicyConfig(_FrozenModel):
     """Random-policy baseline run settings."""
 
     episodes: int = Field(default=1, gt=0)
-    report_path: Path = Path("artifacts/reports/random_policy_report.json")
+    report_path: Path = Path("reports/random_policy_report.json")
     render: bool = False
-    gif_path: Path = Path("artifacts/gifs/random_policy_episode.gif")
+    gif_path: Path = Path("gifs/random_policy_episode.gif")
     render_stride: int = Field(default=4, gt=0)
 
 

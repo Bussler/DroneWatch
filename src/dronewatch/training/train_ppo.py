@@ -32,7 +32,7 @@ def train_ppo(
     if checkpoint_frequency <= 0:
         raise ValueError("checkpoint_frequency must be greater than zero")
 
-    output_dir = Path(config.training.checkpoint.directory)
+    output_dir = config.project.artifact_dir / config.training.checkpoint.directory
     output_dir.mkdir(parents=True, exist_ok=True)
     saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
 
@@ -71,10 +71,10 @@ def train_ppo(
             checkpoint=final_checkpoint,
             episodes=train_eval.episodes,
             seed=seed if seed is not None else 0,
-            report_path=train_eval.report_path,
+            report_path=config.project.artifact_dir / train_eval.report_path,
             model=model,
             render=train_eval.render,
-            gif_path=train_eval.gif_path,
+            gif_path=config.project.artifact_dir / train_eval.gif_path,
             render_stride=train_eval.render_stride,
             env_config=config.env,
             render_fps=config.rendering.fps,

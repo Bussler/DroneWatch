@@ -18,12 +18,12 @@ training:
     num_epochs: 5
     rollout_fragment_length: auto
   checkpoint:
-    directory: artifacts/checkpoints/ppo
+    directory: checkpoints/ppo
     frequency_iters: 5
   evaluation:
     enabled: true
     episodes: 5
-    report_path: artifacts/reports/ppo_eval_report.json
+    report_path: reports/ppo_eval_report.json
     render: true
-    gif_path: artifacts/gifs/ppo_eval_episode.gif
+    gif_path: gifs/ppo_eval_episode.gif
     render_stride: 4

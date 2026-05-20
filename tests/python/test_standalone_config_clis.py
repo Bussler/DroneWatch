@@ -43,7 +43,6 @@ def test_random_policy_main_uses_standalone_config(
 
     output = json.loads(capsys.readouterr().out)
     assert output["policy"] == "random"
-    assert output["resolved_config_path"] == str(tmp_path / "resolved_config.yaml")
     assert captured["episodes"] == 2
     assert captured["seed"] == 42
     assert captured["report_path"] == report_path
@@ -85,7 +84,6 @@ def test_evaluate_main_uses_standalone_config(
 
     output = json.loads(capsys.readouterr().out)
     assert output["policy"] == "ppo"
-    assert output["resolved_config_path"] == str(tmp_path / "resolved_config.yaml")
     assert captured["checkpoint"] == checkpoint_path
     assert captured["episodes"] == 3
     assert captured["seed"] == 123
