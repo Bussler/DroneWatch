@@ -33,14 +33,13 @@ def test_load_config_supports_group_and_field_overrides() -> None:
             "training=debug",
             "env.simulation.agents.count=4",
             "env.simulation.max_episode_steps=12",
-            "model.network.fcnet_hiddens=[64,64]",
+            "model.fcnet_hiddens=[64,64]",
             "project.seed=7",
         ],
     )
 
     assert config.model.kind == "lstm"
-    assert config.model.network.use_lstm is True
-    assert config.model.network.fcnet_hiddens == [64, 64]
+    assert config.model.fcnet_hiddens == [64, 64]
     assert config.training.stop.iterations == 1
     assert config.env.simulation.agents.count == 4
     assert config.env.simulation.max_episode_steps == 12

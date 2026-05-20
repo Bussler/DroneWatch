@@ -4,7 +4,6 @@ from dronewatch.config.schema import (
     AgentConfig,
     EnvConfig,
     ModelConfig,
-    NetworkConfig,
     PPOHyperparameters,
     RayConfig,
     SwarmSearchEnvConfig,
@@ -62,7 +61,10 @@ def test_build_ppo_config_accepts_env_and_model_values() -> None:
     env_config = SwarmSearchEnvConfig(simulation=EnvConfig(agents=AgentConfig(count=4)))
     model = ModelConfig(
         kind="lstm",
-        network=NetworkConfig(use_lstm=True, fcnet_hiddens=[32, 16], lstm_cell_size=64, max_seq_len=8),
+        fcnet_hiddens=[32, 16],
+        activation="tanh",
+        lstm_cell_size=64,
+        max_seq_len=8,
     )
 
     config = build_ppo_config(env_config=env_config, model=model)

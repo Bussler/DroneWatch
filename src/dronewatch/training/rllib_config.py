@@ -10,8 +10,6 @@ from ray.tune.registry import register_env
 
 from dronewatch.config.schema import (
     ModelConfig,
-    ModelKind,
-    NetworkConfig,
     ProjectConfig,
     SwarmSearchEnvConfig,
     TrainingConfig,
@@ -77,26 +75,26 @@ def build_ppo_config(
             policies_to_train=[SHARED_POLICY_ID],
             count_steps_by="env_steps",
         )
-        .rl_module(model_config=_model_config(model.kind, model.network))
+        .rl_module(model_config=_model_config(model))
         .callbacks(SwarmSearchMetricsCallback)
         .debugging(seed=seed)
     )
 
 
-def _model_config(model: ModelKind, network: NetworkConfig | None = None) -> DefaultModelConfig:
+def _model_config(model_config: ModelConfig | None = None) -> DefaultModelConfig:
     """Return the default RLlib model config for the requested model kind."""
-    network = network or NetworkConfig(use_lstm=(model == "lstm"))
-    if model == "feedforward":
+    network = model_config or ModelConfig()
+    if network.kind == "feedforward":
         return DefaultModelConfig(fcnet_hiddens=network.fcnet_hiddens, fcnet_activation=network.activation)
-    if model == "lstm":
+    if network.kind == "lstm":
         return DefaultModelConfig(
             fcnet_hiddens=network.fcnet_hiddens,
             fcnet_activation=network.activation,
-            use_lstm=network.use_lstm,
+            use_lstm=True,
             lstm_cell_size=network.lstm_cell_size,
             max_seq_len=network.max_seq_len,
         )
-    raise ValueError(f"unsupported model kind: {model}")
+    raise ValueError(f"unsupported model kind: {network.kind}")
 
 
 def _create_swarm_search_env(env_context: Any) -> SwarmSearchEnv:

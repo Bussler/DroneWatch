@@ -115,28 +115,14 @@ class SwarmSearchEnvConfig(_FrozenModel):
     reward: RewardWeights = Field(default_factory=RewardWeights)
 
 
-class NetworkConfig(_FrozenModel):
-    """RLlib default model network settings."""
-
-    use_lstm: bool = False
-    lstm_cell_size: int = Field(default=128, gt=0)
-    max_seq_len: int = Field(default=20, gt=0)
-    fcnet_hiddens: list[int] = Field(default_factory=lambda: [256, 256])
-    activation: str = Field(default="tanh", min_length=1)
-
-    @model_validator(mode="after")
-    def validate_hidden_layers(self) -> NetworkConfig:
-        """Ensure all hidden layer sizes are positive."""
-        if not self.fcnet_hiddens or any(size <= 0 for size in self.fcnet_hiddens):
-            raise ValueError("fcnet_hiddens must contain positive layer sizes")
-        return self
-
-
 class ModelConfig(_FrozenModel):
     """Shared-policy PPO model configuration."""
 
     kind: ModelKind = "feedforward"
-    network: NetworkConfig = Field(default_factory=NetworkConfig)
+    lstm_cell_size: int = Field(default=128, gt=0)
+    max_seq_len: int = Field(default=20, gt=0)
+    fcnet_hiddens: list[int] = Field(default_factory=lambda: [256, 256])
+    activation: str = Field(default="tanh", min_length=1)
 
 
 class PPOHyperparameters(_FrozenModel):
