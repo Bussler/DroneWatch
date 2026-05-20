@@ -1,0 +1,6 @@
+model:
+  kind: lstm
+  lstm_cell_size: 128
+  max_seq_len: 20
+  fcnet_hiddens: [256, 256]
+  activation: tanh

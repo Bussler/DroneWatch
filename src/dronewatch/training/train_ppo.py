@@ -9,51 +9,40 @@ from typing import Any
 
 import ray
 
-from dronewatch.evaluation.evaluate import evaluate_checkpoint
-from dronewatch.training.rllib_config import (
-    ModelKind,
-    PPOBuildContext,
-    build_ppo_config,
+from dronewatch.config.loader import (
+    load_config,
+    resolved_config_path,
+    save_resolved_config,
 )
+from dronewatch.config.schema import DroneWatchConfig
+from dronewatch.evaluation.evaluate import evaluate_checkpoint
+from dronewatch.training.rllib_config import build_ppo_config
 
 
 def train_ppo(
-    *,
-    iterations: int = 1,
-    seed: int = 42,
-    model: ModelKind = "feedforward",
-    checkpoint_dir: str | Path = Path("artifacts/checkpoints/ppo"),
-    checkpoint_frequency: int = 1,
-    eval_episodes: int = 0,
-    eval_report_path: str | Path | None = None,
-    num_env_runners: int = 0,
-    num_learners: int = 0,
-    num_gpus_per_learner: int = 0,
-    train_batch_size_per_learner: int = 1024,
-    minibatch_size: int = 256,
-    num_epochs: int = 5,
+    config: DroneWatchConfig,
 ) -> dict[str, Any]:
     """Train PPO and return a compact run summary."""
+    iterations = config.training.stop.iterations
+    seed = config.project.seed
+    model = config.model.kind
+    checkpoint_frequency = config.training.checkpoint.frequency_iters
     if iterations <= 0:
         raise ValueError("iterations must be greater than zero")
     if checkpoint_frequency <= 0:
         raise ValueError("checkpoint_frequency must be greater than zero")
 
-    output_dir = Path(checkpoint_dir)
+    output_dir = config.project.artifact_dir / config.training.checkpoint.directory
     output_dir.mkdir(parents=True, exist_ok=True)
+    saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
 
     ray.init(ignore_reinit_error=True, include_dashboard=False)
-    ppo_context = PPOBuildContext(
-        model=model,
+    algorithm = build_ppo_config(
+        training=config.training,
+        env_config=config.env,
+        model=config.model,
         seed=seed,
-        num_env_runners=num_env_runners,
-        num_learners=num_learners,
-        num_gpus_per_learner=num_gpus_per_learner,
-        train_batch_size_per_learner=train_batch_size_per_learner,
-        minibatch_size=minibatch_size,
-        num_epochs=num_epochs,
-    )
-    algorithm = build_ppo_config(ppo_context).build_algo()
+    ).build_algo()
 
     checkpoints: list[str] = []
     last_result: dict[str, Any] = {}
@@ -76,16 +65,19 @@ def train_ppo(
         algorithm.stop()
 
     evaluation_report: dict[str, Any] | None = None
-    if eval_episodes > 0:
+    train_eval = config.training.evaluation
+    if train_eval.enabled and train_eval.episodes > 0:
         evaluation_report = evaluate_checkpoint(
             checkpoint=final_checkpoint,
-            episodes=eval_episodes,
-            seed=seed,
-            report_path=eval_report_path,
+            episodes=train_eval.episodes,
+            seed=seed if seed is not None else 0,
+            report_path=config.project.artifact_dir / train_eval.report_path,
             model=model,
-            render=True,
-            gif_path=output_dir / "evaluation_episode.gif",
-            render_stride=4,
+            render=train_eval.render,
+            gif_path=config.project.artifact_dir / train_eval.gif_path,
+            render_stride=train_eval.render_stride,
+            env_config=config.env,
+            render_fps=config.rendering.fps,
         )
 
     ray.shutdown()
@@ -95,6 +87,7 @@ def train_ppo(
         "seed": seed,
         "model": model,
         "checkpoint_dir": str(output_dir),
+        "resolved_config_path": str(saved_config_path),
         "checkpoints": checkpoints,
         "final_checkpoint": final_checkpoint,
         "last_result": _training_progress(iterations, last_result),
@@ -143,36 +136,10 @@ def _training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]
 def main() -> None:
     """Command-line entry point for local PPO training."""
     parser = argparse.ArgumentParser(description="Train DroneWatch shared-policy PPO with RLlib.")
-    parser.add_argument("--iterations", type=int, default=1)
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--model", choices=["feedforward", "lstm"], default="feedforward")
-    parser.add_argument("--checkpoint-dir", type=Path, default=Path("artifacts/checkpoints/ppo"))
-    parser.add_argument("--checkpoint-frequency", type=int, default=1)
-    parser.add_argument("--eval-episodes", type=int, default=0)
-    parser.add_argument("--eval-report-path", type=Path, default=Path("artifacts/reports/ppo_eval_report.json"))
-    parser.add_argument("--num-env-runners", type=int, default=0)
-    parser.add_argument("--num-learners", type=int, default=0)
-    parser.add_argument("--num-gpus-per-learner", type=int, default=0)
-    parser.add_argument("--train-batch-size-per-learner", type=int, default=1024)
-    parser.add_argument("--minibatch-size", type=int, default=256)
-    parser.add_argument("--num-epochs", type=int, default=5)
-    args = parser.parse_args()
+    parser.add_argument("--config", type=Path, default=Path("configs/config.yaml"))
+    args, overrides = parser.parse_known_args()
 
-    summary = train_ppo(
-        iterations=args.iterations,
-        seed=args.seed,
-        model=args.model,
-        checkpoint_dir=args.checkpoint_dir,
-        checkpoint_frequency=args.checkpoint_frequency,
-        eval_episodes=args.eval_episodes,
-        eval_report_path=args.eval_report_path,
-        num_env_runners=args.num_env_runners,
-        num_learners=args.num_learners,
-        num_gpus_per_learner=args.num_gpus_per_learner,
-        train_batch_size_per_learner=args.train_batch_size_per_learner,
-        minibatch_size=args.minibatch_size,
-        num_epochs=args.num_epochs,
-    )
+    summary = train_ppo(config=load_config(args.config, overrides))
     print(json.dumps(summary, indent=2, sort_keys=True))
 
 

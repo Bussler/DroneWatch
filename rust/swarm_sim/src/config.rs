@@ -1,10 +1,13 @@
 //! Configuration types and validation for the Rust simulation core.
 
+use serde::Deserialize;
+
 /// String-backed result type used simulator API.
 pub type SimResult<T> = Result<T, String>;
 
 /// Continuous world bounds and timestep settings.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct WorldConfig {
     /// World width in continuous coordinate units.
     pub width: f64,
@@ -15,7 +18,8 @@ pub struct WorldConfig {
 }
 
 /// Homogeneous agent settings for the default swarm.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct AgentConfig {
     /// Number of agents spawned on reset.
     pub count: usize,
@@ -30,7 +34,8 @@ pub struct AgentConfig {
 }
 
 /// Static target settings.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct TargetConfig {
     /// Number of targets spawned on reset.
     pub count: usize,
@@ -39,7 +44,8 @@ pub struct TargetConfig {
 }
 
 /// Circular no-fly obstacle settings.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ObstacleConfig {
     /// Number of circular obstacles spawned on reset.
     pub count: usize,
@@ -50,7 +56,8 @@ pub struct ObstacleConfig {
 }
 
 /// Coverage grid settings used by the simulator metrics.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct CoverageConfig {
     /// Number of grid cells along the x-axis.
     pub grid_width: usize,
@@ -61,7 +68,8 @@ pub struct CoverageConfig {
 }
 
 /// Full simulator configuration for the Rust core.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct SimulationConfig {
     /// Maximum number of successful steps in one episode.
     pub max_episode_steps: usize,
@@ -195,5 +203,55 @@ mod tests {
         config.coverage.grid_width = 0;
 
         assert!(config.validate().unwrap_err().contains("coverage grid"));
+    }
+
+    #[test]
+    fn deserializes_valid_json_config() {
+        let json = r#"
+        {
+            "max_episode_steps": 5,
+            "world": {"width": 10.0, "height": 20.0, "dt": 1.0},
+            "agents": {
+                "count": 4,
+                "max_speed": 2.0,
+                "collision_radius": 0.75,
+                "sensing_radius": 15.0,
+                "communication_radius": 20.0
+            },
+            "targets": {"count": 3, "discovery_radius": 2.0},
+            "obstacles": {"count": 1, "min_radius": 2.0, "max_radius": 3.0},
+            "coverage": {"grid_width": 10, "grid_height": 10, "sensing_radius": 10.0}
+        }
+        "#;
+
+        let config: SimulationConfig = serde_json::from_str(json).unwrap();
+
+        assert_eq!(config.max_episode_steps, 5);
+        assert_eq!(config.agents.count, 4);
+        config.validate().unwrap();
+    }
+
+    #[test]
+    fn rejects_unknown_json_fields() {
+        let json = r#"
+        {
+            "max_episode_steps": 5,
+            "world": {"width": 10.0, "height": 20.0, "dt": 1.0, "unexpected": 1},
+            "agents": {
+                "count": 4,
+                "max_speed": 2.0,
+                "collision_radius": 0.75,
+                "sensing_radius": 15.0,
+                "communication_radius": 20.0
+            },
+            "targets": {"count": 3, "discovery_radius": 2.0},
+            "obstacles": {"count": 1, "min_radius": 2.0, "max_radius": 3.0},
+            "coverage": {"grid_width": 10, "grid_height": 10, "sensing_radius": 10.0}
+        }
+        "#;
+
+        let error = serde_json::from_str::<SimulationConfig>(json).unwrap_err();
+
+        assert!(error.to_string().contains("unknown field"));
     }
 }

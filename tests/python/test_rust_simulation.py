@@ -1,7 +1,15 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
+from dronewatch.config.schema import (
+    AgentConfig,
+    EnvConfig,
+    ObstacleConfig,
+    TargetConfig,
+)
 from dronewatch.sim import SwarmSimulation
 
 
@@ -51,3 +59,20 @@ def test_scripted_rollout_finishes_with_bounded_metrics() -> None:
     assert 0.0 <= metrics["target_discovery_rate"] <= 1.0
     assert 0.0 <= metrics["coverage_ratio"] <= 1.0
     assert 0.0 <= metrics["connectivity_ratio"] <= 1.0
+
+
+def test_rust_world_accepts_configured_simulation_values() -> None:
+    config = EnvConfig(
+        agents=AgentConfig(count=4),
+        max_episode_steps=5,
+        targets=TargetConfig(count=3),
+        obstacles=ObstacleConfig(count=1, min_radius=2.0, max_radius=3.0),
+    )
+    sim = SwarmSimulation(seed=123, config=config)
+    state = sim.state()
+    metrics = sim.metrics()
+
+    assert len(state["agents"]) == 4
+    assert len(state["targets"]) == 3
+    assert len(state["obstacles"]) == 1
+    assert metrics["max_episode_steps"] == 5

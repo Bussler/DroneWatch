@@ -1,0 +1,44 @@
+env:
+  name: SwarmSearch2D
+
+  simulation:
+    max_episode_steps: 200
+
+    world:
+      width: 100.0
+      height: 100.0
+      dt: 1.0
+
+    agents:
+      count: 16
+      max_speed: 2.0
+      collision_radius: 0.75
+      sensing_radius: 15.0
+      communication_radius: 20.0
+
+    targets:
+      count: 20
+      discovery_radius: 2.0
+
+    obstacles:
+      count: 8
+      min_radius: 2.0
+      max_radius: 6.0
+
+    coverage:
+      grid_width: 50
+      grid_height: 50
+      sensing_radius: 10.0
+
+  observation:
+    max_visible_agents: 5
+    max_visible_targets: 5
+    max_visible_obstacles: 5
+    include_communication_summary: true
+
+  reward:
+    target_discovered: 5.0
+    new_coverage_cell: 0.02
+    agent_collision: -0.25
+    obstacle_collision: -0.5
+    step_penalty: -0.001

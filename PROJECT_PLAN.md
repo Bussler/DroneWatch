@@ -315,7 +315,9 @@ Use Gymnasium/RLlib-compatible `terminated` and `truncated` semantics.
 MVP default:
 
 ```yaml
-num_agents: 16
+simulation:
+  agents:
+    count: 16
 ```
 
 Agents are homogeneous in v1.
@@ -703,7 +705,7 @@ defaults:
 
 project:
   name: DroneWatch
-  seed: 42
+  seed: 133742
 
 runtime:
   output_dir: outputs
@@ -716,33 +718,35 @@ runtime:
 # configs/env/swarm_search_v1.yaml
 env:
   name: SwarmSearch2D
-  num_agents: 16
-  max_episode_steps: 200
 
-  world:
-    width: 100.0
-    height: 100.0
-    dt: 1.0
+  simulation:
+    max_episode_steps: 200
 
-  agents:
-    max_speed: 2.0
-    collision_radius: 0.75
-    sensing_radius: 15.0
-    communication_radius: 20.0
+    world:
+      width: 100.0
+      height: 100.0
+      dt: 1.0
 
-  targets:
-    count: 20
-    discovery_radius: 2.0
+    agents:
+      count: 16
+      max_speed: 2.0
+      collision_radius: 0.75
+      sensing_radius: 15.0
+      communication_radius: 20.0
 
-  obstacles:
-    count: 8
-    min_radius: 2.0
-    max_radius: 6.0
+    targets:
+      count: 20
+      discovery_radius: 2.0
 
-  coverage:
-    grid_width: 50
-    grid_height: 50
-    sensing_radius: 10.0
+    obstacles:
+      count: 8
+      min_radius: 2.0
+      max_radius: 6.0
+
+    coverage:
+      grid_width: 50
+      grid_height: 50
+      sensing_radius: 10.0
 
   observation:
     max_visible_agents: 5
@@ -763,9 +767,7 @@ env:
 ```yaml
 # configs/model/ppo_lstm.yaml
 model:
-  algorithm: PPO
-  shared_policy: true
-
+  kind: lstm
   network:
     use_lstm: true
     lstm_cell_size: 128
@@ -791,17 +793,17 @@ model:
 # configs/training/local_ppo.yaml
 training:
   stop:
-    timesteps_total: 2000000
+    iterations: 10
 
   ray:
     num_env_runners: 4
     num_envs_per_env_runner: 1
-    num_cpus: 8
-    num_gpus: 0
+    num_learners: 0
+    num_gpus_per_learner: 0
 
   checkpoint:
+    directory: artifacts/checkpoints/ppo
     frequency_iters: 25
-    keep_last: 5
 
   evaluation:
     interval_iters: 10
@@ -1079,10 +1081,10 @@ tune:
 	python -m dronewatch.training.tune_ppo --config configs/config.yaml
 
 evaluate:
-	python -m dronewatch.evaluation.evaluate --config configs/config.yaml
+  python -m dronewatch.evaluation.evaluate --config configs/evaluate.yaml
 
 render-random:
-	python -m dronewatch.rendering.render_episode --policy random --config configs/config.yaml
+  python -m dronewatch.baselines.random_policy --config configs/random_policy.yaml random_policy.render=true
 
 docker-build:
 	docker build -t dronewatch:latest .

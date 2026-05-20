@@ -44,9 +44,13 @@ struct SwarmWorld {
 #[pymethods]
 impl SwarmWorld {
     #[new]
-    #[pyo3(signature = (seed=None))]
-    fn new(seed: Option<u64>) -> PyResult<Self> {
-        let world = World::new(SimulationConfig::default(), resolve_seed(seed))
+    #[pyo3(signature = (seed=None, config=None))]
+    fn new(seed: Option<u64>, config: Option<String>) -> PyResult<Self> {
+        let simulation_config = match config {
+            Some(json) => simulation_config_from_json(&json)?,
+            None => SimulationConfig::default(),
+        };
+        let world = World::new(simulation_config, resolve_seed(seed))
             .map_err(pyo3::exceptions::PyValueError::new_err)?;
         Ok(Self { world })
     }
@@ -118,6 +122,16 @@ impl SwarmWorld {
     fn is_done(&self) -> bool {
         self.world.is_done()
     }
+}
+
+fn simulation_config_from_json(config_json: &str) -> PyResult<SimulationConfig> {
+    let config: SimulationConfig = serde_json::from_str(config_json).map_err(|error| {
+        pyo3::exceptions::PyValueError::new_err(format!("invalid simulation config JSON: {error}"))
+    })?;
+    config.validate().map_err(|error| {
+        pyo3::exceptions::PyValueError::new_err(format!("invalid simulation config: {error}"))
+    })?;
+    Ok(config)
 }
 
 fn metrics_to_py(py: Python<'_>, metrics: &SimulationMetrics) -> PyResult<Py<PyDict>> {

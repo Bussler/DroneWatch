@@ -5,7 +5,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any
 
-from .spaces import REWARD_WEIGHTS, RewardWeights
+from dronewatch.config.schema import RewardWeights
+
+from .spaces import REWARD_WEIGHTS
 
 
 def calculate_team_reward(

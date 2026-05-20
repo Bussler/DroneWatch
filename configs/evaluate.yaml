@@ -1,0 +1,12 @@
+defaults:
+  - env: swarm_search_v1
+  - model: ppo_feedforward
+  - evaluation: eval_default
+  - rendering: default
+
+project:
+  name: DroneWatch
+  seed: 133742
+  output_dir: outputs
+  artifact_dir: artifacts
+  resolved_config_filename: resolved_config.yaml

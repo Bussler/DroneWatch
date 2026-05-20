@@ -8,13 +8,12 @@ from typing import Any
 import numpy as np
 from ray.rllib.env.multi_agent_env import MultiAgentEnv
 
+from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.sim import SwarmSimulation
 
 from .observation_builder import ObservationBuilder
 from .reward import calculate_team_reward
 from .spaces import (
-    AGENT_DEFAULTS,
-    SwarmSearchEnvConfig,
     action_space,
     agent_ids,
     observation_space,
@@ -26,11 +25,16 @@ class SwarmSearchEnv(MultiAgentEnv):
 
     metadata = {"name": "SwarmSearch2D"}
 
-    def __init__(self, env_config: SwarmSearchEnvConfig | Mapping[str, Any] | None = None) -> None:
-        """Create an environment and validate RLlib configuration with Pydantic.
+    def __init__(
+        self,
+        env_config: SwarmSearchEnvConfig | Mapping[str, Any] | None = None,
+        seed: int | None = None,
+    ) -> None:
+        """Create an environment and validate structural RLlib configuration with Pydantic.
 
         Args:
             env_config: Optional `SwarmSearchEnvConfig` or RLlib-provided dictionary.
+            seed: Optional runtime seed for simulator initialization and default resets.
 
         Raises:
             pydantic.ValidationError: If the config contains unsupported keys or invalid values.
@@ -41,29 +45,28 @@ class SwarmSearchEnv(MultiAgentEnv):
             if isinstance(env_config, SwarmSearchEnvConfig)
             else SwarmSearchEnvConfig.model_validate(env_config or {})
         )
-        self._initial_seed: int | None = self._config.seed
-        self._simulation = SwarmSimulation(seed=self._initial_seed)
-        self._observation_builder = ObservationBuilder()
-        self._agent_ids = agent_ids(AGENT_DEFAULTS.count)
+        self._initial_seed = seed
+        self._simulation = SwarmSimulation(seed=self._initial_seed, config=self._config.simulation)
+        self._observation_builder = ObservationBuilder(self._config.simulation, self._config.observation)
+        self._agent_ids = agent_ids(self._config.simulation.agents.count)
         self.possible_agents = list(self._agent_ids)
         self.agents = list(self._agent_ids)
         self.action_space = action_space()
-        self.observation_space = observation_space()
+        self.observation_space = observation_space(self._config.observation)
         self.action_spaces = {agent_id: self.action_space for agent_id in self._agent_ids}
         self.observation_spaces = {agent_id: self.observation_space for agent_id in self._agent_ids}
         self._episode_reward = 0.0
 
     def reset(
         self,
-        *,
         seed: int | None = None,
         options: Mapping[str, Any] | None = None,
     ) -> tuple[dict[str, np.ndarray], dict[str, dict[str, Any]]]:
         """Reset the Rust simulator and return RLlib observations plus infos.
 
         Args:
-            seed: Optional reset seed supplied by RLlib. When omitted, the validated environment
-                config seed is used. A value of `None` delegates seed resolution to Rust.
+            seed: Optional reset seed supplied by RLlib. When omitted, the constructor seed is used.
+                A value of `None` delegates seed resolution to Rust if no constructor seed exists.
             options: Reserved for Gymnasium/RLlib compatibility and ignored in Phase 2.
         """
         del options
@@ -99,7 +102,7 @@ class SwarmSearchEnv(MultiAgentEnv):
         state = result["state"]
 
         observations = self._observation_builder.build(state, metrics)
-        team_reward = calculate_team_reward(events)
+        team_reward = calculate_team_reward(events, self._config.reward)
         self._episode_reward += team_reward
 
         terminated = bool(metrics.get("all_targets_discovered", False))

@@ -26,7 +26,6 @@ def episode_summary(episode_reward: float, metrics: dict[str, Any]) -> dict[str,
 
 def aggregate_report(
     episode_summaries: list[dict[str, float]],
-    *,
     policy: str,
     extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:

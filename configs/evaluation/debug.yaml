@@ -1,0 +1,7 @@
+evaluation:
+  checkpoint: null
+  episodes: 1
+  report_path: reports/ppo_debug_eval_report.json
+  render: true
+  gif_path: gifs/ppo_debug_eval_episode.gif
+  render_stride: 4

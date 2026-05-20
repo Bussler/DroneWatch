@@ -14,6 +14,10 @@ from ray.rllib.core.columns import Columns
 from ray.rllib.core.rl_module.rl_module import RLModule
 from ray.rllib.utils.numpy import convert_to_numpy
 
+from dronewatch.config.loader import (
+    load_evaluation_config,
+)
+from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.envs import SwarmSearchEnv
 from dronewatch.evaluation.reporting import (
     aggregate_report,
@@ -25,21 +29,23 @@ from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_se
 
 
 def evaluate_checkpoint(
-    *,
     checkpoint: str | Path,
     episodes: int = 10,
-    seed: int = 42,
+    seed: int = 133742,
     report_path: str | Path | None = None,
     model: str | None = None,
     render: bool = False,
     gif_path: str | Path | None = None,
     render_stride: int = 4,
+    env_config: SwarmSearchEnvConfig | None = None,
+    render_fps: int = 12,
 ) -> dict[str, Any]:
     """Evaluate a checkpoint and optionally write a JSON report."""
     if episodes <= 0:
         raise ValueError("episodes must be greater than zero")
 
-    register_swarm_search_env()
+    env_config = env_config or SwarmSearchEnvConfig()
+    register_swarm_search_env(env_config.name)
     checkpoint_path = Path(checkpoint).resolve()
     algorithm = Algorithm.from_checkpoint(str(checkpoint_path))
     try:
@@ -52,6 +58,8 @@ def evaluate_checkpoint(
             render=render,
             gif_path=gif_path,
             render_stride=render_stride,
+            env_config=env_config,
+            render_fps=render_fps,
         )
     finally:
         algorithm.stop()
@@ -62,7 +70,6 @@ def evaluate_checkpoint(
 
 
 def evaluate_algorithm(
-    *,
     algorithm: Algorithm,
     episodes: int,
     seed: int,
@@ -71,6 +78,8 @@ def evaluate_algorithm(
     render: bool = False,
     gif_path: str | Path | None = None,
     render_stride: int = 4,
+    env_config: SwarmSearchEnvConfig | None = None,
+    render_fps: int = 12,
 ) -> dict[str, Any]:
     """Evaluate an instantiated RLlib algorithm on fresh simulator episodes."""
     if episodes <= 0:
@@ -80,10 +89,11 @@ def evaluate_algorithm(
     initial_state = _initial_module_state(module)
     episode_summaries: list[dict[str, float]] = []
     first_episode_frames: list[SimulationFrame] = []
+    env_config = env_config or SwarmSearchEnvConfig()
 
     for episode_index in range(episodes):
         episode_seed = seed + episode_index
-        env = SwarmSearchEnv({"seed": episode_seed})
+        env = SwarmSearchEnv(env_config, seed=episode_seed)
         observations, _infos = env.reset(seed=episode_seed)
         policy_states = {agent_id: _copy_state(initial_state) for agent_id in observations}
         done = False
@@ -120,7 +130,7 @@ def evaluate_algorithm(
         extra["model"] = model
     report = aggregate_report(episode_summaries, policy="ppo", extra=extra)
     if render:
-        render_episode_gif(first_episode_frames, gif_path)
+        render_episode_gif(first_episode_frames, gif_path, fps=render_fps, env_config=env_config.simulation)
     return report
 
 
@@ -185,25 +195,23 @@ def _action_from_module_output(module: RLModule, output: dict[str, Any]) -> np.n
 def main() -> None:
     """Command-line entry point for PPO checkpoint evaluation."""
     parser = argparse.ArgumentParser(description="Evaluate a DroneWatch RLlib PPO checkpoint.")
-    parser.add_argument("--checkpoint", type=Path, required=True)
-    parser.add_argument("--episodes", type=int, default=10)
-    parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--report-path", type=Path, default=Path("artifacts/reports/ppo_eval_report.json"))
-    parser.add_argument("--model", choices=["feedforward", "lstm"], default=None)
-    parser.add_argument("--render", action="store_true")
-    parser.add_argument("--gif-path", type=Path, default=Path("artifacts/gifs/ppo_eval_episode.gif"))
-    parser.add_argument("--render-stride", type=int, default=4)
-    args = parser.parse_args()
+    parser.add_argument("--config", type=Path, default=Path("configs/evaluate.yaml"))
+    args, overrides = parser.parse_known_args()
+    config = load_evaluation_config(args.config, overrides)
+    if config.evaluation.checkpoint is None:
+        raise ValueError("evaluation.checkpoint must be set via config or CLI override")
 
     report = evaluate_checkpoint(
-        checkpoint=args.checkpoint,
-        episodes=args.episodes,
-        seed=args.seed,
-        report_path=args.report_path,
-        model=args.model,
-        render=args.render,
-        gif_path=args.gif_path,
-        render_stride=args.render_stride,
+        checkpoint=config.evaluation.checkpoint,
+        episodes=config.evaluation.episodes,
+        seed=config.project.seed or 0,
+        report_path=config.project.artifact_dir / config.evaluation.report_path,
+        model=config.model.kind,
+        render=config.evaluation.render,
+        gif_path=config.project.artifact_dir / config.evaluation.gif_path,
+        render_stride=config.evaluation.render_stride,
+        env_config=config.env,
+        render_fps=config.rendering.fps,
     )
     print(json.dumps(report, indent=2, sort_keys=True))
 
