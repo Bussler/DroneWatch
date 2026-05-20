@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dronewatch.baselines.random_policy import run_random_policy
 from dronewatch.rendering import SimulationFrame, render_episode_gif
 from dronewatch.sim import SwarmSimulation
+from scripts.random_policy import run_random_policy
 
 
 def test_random_policy_rollout_writes_report_and_gif(tmp_path: Path) -> None:

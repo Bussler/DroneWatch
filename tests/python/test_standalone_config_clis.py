@@ -7,8 +7,8 @@ from typing import Any
 
 import pytest
 
-import dronewatch.baselines.random_policy as random_policy_module
 import dronewatch.evaluation.evaluate as evaluate_module
+import scripts.random_policy as random_policy_module
 
 
 def test_random_policy_main_uses_standalone_config(

@@ -29,10 +29,10 @@ rollout-rust:
 	uv run python scripts/run_rust_rollout.py
 
 rollout-random:
-	uv run python -m dronewatch.baselines.random_policy --config configs/random_policy.yaml
+	uv run python -m scripts.random_policy --config configs/random_policy.yaml
 
 render-random:
-	uv run python -m dronewatch.baselines.random_policy --config configs/random_policy.yaml random_policy.render=true
+	uv run python -m scripts.random_policy --config configs/random_policy.yaml random_policy.render=true
 
 train-ppo:
 	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml
