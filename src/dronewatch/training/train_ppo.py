@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -25,7 +26,19 @@ from dronewatch.logging import (
     start_mlflow_run,
 )
 from dronewatch.training.callbacks import TASK_METRIC_KEYS
-from dronewatch.training.rllib_config import build_ppo_config
+from dronewatch.training.rllib_config import SHARED_POLICY_ID, build_ppo_config
+
+LEARNER_METRIC_KEYS = (
+    "policy_loss",
+    "vf_loss",
+    "vf_loss_unclipped",
+    "total_loss",
+    "entropy",
+    "mean_kl_loss",
+    "vf_explained_var",
+    "curr_entropy_coeff",
+    "curr_kl_coeff",
+)
 
 
 def train_ppo(
@@ -76,8 +89,10 @@ def train_ppo(
                 for iteration in range(1, iterations + 1):
                     last_result = algorithm.train()
                     progress = _training_progress(iteration, last_result)
+                    learner_progress = _learner_progress(last_result)
                     print(json.dumps(progress, sort_keys=True))
                     log_metrics(progress, prefix="train", step=iteration)
+                    log_metrics(learner_progress, prefix="learn", step=iteration)
 
                     if iteration % checkpoint_frequency == 0:
                         checkpoint = _save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
@@ -156,6 +171,28 @@ def _training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]
         if value is not None:
             progress[metric_name] = value
     return progress
+
+
+def _learner_progress(result: Mapping[str, Any]) -> dict[str, Any]:
+    """Extract PPO learner metrics from an RLlib training result.
+
+    Merges aggregate (`__all_modules__`) counters with per-module losses/diagnostics
+    for the shared policy. Non-finite/non-numeric filtering is delegated to the MLflow
+    logger.
+    """
+    learners = result.get("learners")
+    if not isinstance(learners, Mapping):
+        return {}
+
+    merged: dict[str, Any] = {}
+    aggregate = learners.get("__all_modules__")
+    if isinstance(aggregate, Mapping):
+        merged.update(aggregate)
+    policy = learners.get(SHARED_POLICY_ID)
+    if isinstance(policy, Mapping):
+        merged.update(policy)
+
+    return {key: merged[key] for key in LEARNER_METRIC_KEYS if key in merged}
 
 
 def main() -> None:
