@@ -1,6 +1,6 @@
 services:
   mlflow:
-    image: ghcr.io/mlflow/mlflow:v2.22.5
+    image: ghcr.io/mlflow/mlflow:v2.22.0
     container_name: dronewatch-mlflow
     command:
       - mlflow
