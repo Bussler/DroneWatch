@@ -5,6 +5,8 @@ from pathlib import Path
 from dronewatch.config.schema import (
     CheckpointConfig,
     DroneWatchConfig,
+    LoggingConfig,
+    MlflowConfig,
     PPOHyperparameters,
     RayConfig,
     TrainingConfig,
@@ -27,6 +29,7 @@ def test_train_ppo_single_iteration_logs_metrics_and_keeps_distinct_checkpoints(
             checkpoint=CheckpointConfig(directory=tmp_path / "checkpoints", frequency_iters=1),
             evaluation=TrainingEvaluationConfig(enabled=False, episodes=0),
         ),
+        logging=LoggingConfig(mlflow=MlflowConfig(enabled=False)),
     )
     summary = train_ppo(config=config)
 

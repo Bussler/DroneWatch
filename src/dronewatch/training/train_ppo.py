@@ -16,6 +16,14 @@ from dronewatch.config.loader import (
 )
 from dronewatch.config.schema import DroneWatchConfig
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
+from dronewatch.logging import (
+    log_artifact_if_enabled,
+    log_config_params,
+    log_evaluation_report,
+    log_metrics,
+    set_mlflow_tags,
+    start_mlflow_run,
+)
 from dronewatch.training.rllib_config import build_ppo_config
 
 
@@ -32,55 +40,76 @@ def train_ppo(
     if checkpoint_frequency <= 0:
         raise ValueError("checkpoint_frequency must be greater than zero")
 
-    output_dir = config.project.artifact_dir / config.training.checkpoint.directory
-    output_dir.mkdir(parents=True, exist_ok=True)
-    saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
-
-    ray.init(ignore_reinit_error=True, include_dashboard=False)
-    algorithm = build_ppo_config(
-        training=config.training,
-        env_config=config.env,
-        model=config.model,
-        seed=seed,
-    ).build_algo()
-
     checkpoints: list[str] = []
     last_result: dict[str, Any] = {}
     final_checkpoint = ""
-    try:
-        for iteration in range(1, iterations + 1):
-            last_result = algorithm.train()
-            print(json.dumps(_training_progress(iteration, last_result), sort_keys=True))
-
-            if iteration % checkpoint_frequency == 0:
-                checkpoint = _save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
-                checkpoints.append(checkpoint)
-                print(f"saved checkpoint: {checkpoint}")
-
-        final_checkpoint = _save_checkpoint(algorithm, output_dir / "final")
-        if final_checkpoint not in checkpoints:
-            checkpoints.append(final_checkpoint)
-        print(f"saved final checkpoint: {final_checkpoint}")
-    finally:
-        algorithm.stop()
-
     evaluation_report: dict[str, Any] | None = None
-    train_eval = config.training.evaluation
-    if train_eval.enabled and train_eval.episodes > 0:
-        evaluation_report = evaluate_checkpoint(
-            checkpoint=final_checkpoint,
-            episodes=train_eval.episodes,
-            seed=seed if seed is not None else 0,
-            report_path=config.project.artifact_dir / train_eval.report_path,
-            model=model,
-            render=train_eval.render,
-            gif_path=config.project.artifact_dir / train_eval.gif_path,
-            render_stride=train_eval.render_stride,
-            env_config=config.env,
-            render_fps=config.rendering.fps,
-        )
+    output_dir = config.project.artifact_dir / config.training.checkpoint.directory
+    report_path = config.project.artifact_dir / config.training.evaluation.report_path
 
-    ray.shutdown()
+    mlflow_config = config.logging.mlflow
+    with start_mlflow_run(
+        mlflow_config,
+        tags={
+            "project": config.project.name,
+            "entrypoint": "train_ppo",
+            "environment": config.env.name,
+            "model": model,
+        },
+    ):
+        output_dir.mkdir(parents=True, exist_ok=True)
+        saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
+        log_config_params(config)
+        if mlflow_config.log_config_artifact:
+            log_artifact_if_enabled(mlflow_config, saved_config_path, artifact_path="config")
+
+        ray.init(ignore_reinit_error=True, include_dashboard=False)
+        try:
+            algorithm = build_ppo_config(
+                training=config.training,
+                env_config=config.env,
+                model=config.model,
+                seed=seed,
+            ).build_algo()
+            try:
+                for iteration in range(1, iterations + 1):
+                    last_result = algorithm.train()
+                    progress = _training_progress(iteration, last_result)
+                    print(json.dumps(progress, sort_keys=True))
+                    log_metrics(progress, prefix="train", step=iteration)
+
+                    if iteration % checkpoint_frequency == 0:
+                        checkpoint = _save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
+                        checkpoints.append(checkpoint)
+                        print(f"saved checkpoint: {checkpoint}")
+
+                final_checkpoint = _save_checkpoint(algorithm, output_dir / "final")
+                if final_checkpoint not in checkpoints:
+                    checkpoints.append(final_checkpoint)
+                set_mlflow_tags({"final_checkpoint": final_checkpoint})
+                print(f"saved final checkpoint: {final_checkpoint}")
+            finally:
+                algorithm.stop()
+
+            train_eval = config.training.evaluation
+            if train_eval.enabled and train_eval.episodes > 0:
+                evaluation_report = evaluate_checkpoint(
+                    checkpoint=final_checkpoint,
+                    episodes=train_eval.episodes,
+                    seed=seed if seed is not None else 0,
+                    report_path=report_path,
+                    model=model,
+                    render=train_eval.render,
+                    gif_path=config.project.artifact_dir / train_eval.gif_path,
+                    render_stride=train_eval.render_stride,
+                    env_config=config.env,
+                    render_fps=config.rendering.fps,
+                )
+                log_evaluation_report(evaluation_report, prefix="eval")
+                if mlflow_config.log_report_artifact:
+                    log_artifact_if_enabled(mlflow_config, report_path, artifact_path="reports")
+        finally:
+            ray.shutdown()
 
     return {
         "iterations": iterations,
@@ -118,18 +147,23 @@ def _training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]
 
     # The new RLlib API stack exposes callback metrics under env_runners.
     # Fall back to custom_metrics for compatibility with older result layouts.
-    target_discovery_rate = env_runners.get(
-        "dronewatch/target_discovery_rate",
-        custom_metrics.get("dronewatch/target_discovery_rate_mean"),
-    )
-    coverage_ratio = env_runners.get(
-        "dronewatch/coverage_ratio",
-        custom_metrics.get("dronewatch/coverage_ratio_mean"),
-    )
-    if target_discovery_rate is not None:
-        progress["target_discovery_rate"] = target_discovery_rate
-    if coverage_ratio is not None:
-        progress["coverage_ratio"] = coverage_ratio
+    for metric_name in (
+        "target_discovery_rate",
+        "discovered_target_count",
+        "coverage_ratio",
+        "collision_count",
+        "obstacle_violation_count",
+        "connectivity_ratio",
+        "average_communication_neighbors",
+        "episode_length",
+        "success_rate",
+    ):
+        value = env_runners.get(
+            f"dronewatch/{metric_name}",
+            custom_metrics.get(f"dronewatch/{metric_name}_mean"),
+        )
+        if value is not None:
+            progress[metric_name] = value
     return progress
 
 

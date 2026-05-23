@@ -214,6 +214,33 @@ class RenderingConfig(_FrozenModel):
     fps: int = Field(default=12, gt=0)
 
 
+class MlflowConfig(_FrozenModel):
+    """Local MLflow tracking settings."""
+
+    enabled: bool = True
+    tracking_uri: str = Field(default="file:./outputs/mlruns", min_length=1)
+    experiment_name: str = Field(default="dronewatch-swarm-search-ppo", min_length=1)
+    run_name: str | None = None
+    log_system_metrics: bool = False
+    log_config_artifact: bool = True
+    log_report_artifact: bool = True
+    log_checkpoint_artifacts: bool = False
+    log_gif_artifacts: bool = False
+
+
+class ConsoleLoggingConfig(_FrozenModel):
+    """Console logging settings."""
+
+    enabled: bool = True
+
+
+class LoggingConfig(_FrozenModel):
+    """Experiment logging settings."""
+
+    mlflow: MlflowConfig = Field(default_factory=MlflowConfig)
+    console: ConsoleLoggingConfig = Field(default_factory=ConsoleLoggingConfig)
+
+
 class TuneConfig(_FrozenModel):
     """Validated Ray Tune metadata and search-space placeholder for later phases."""
 
@@ -231,6 +258,7 @@ class DroneWatchConfig(_FrozenModel):
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     training: TrainingConfig = Field(default_factory=TrainingConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
     rendering: RenderingConfig = Field(default_factory=RenderingConfig)
     tune: TuneConfig = Field(default_factory=TuneConfig)
 
@@ -242,6 +270,7 @@ class DroneWatchEvaluationConfig(_FrozenModel):
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
     model: ModelConfig = Field(default_factory=ModelConfig)
     evaluation: EvaluationConfig = Field(default_factory=EvaluationConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
     rendering: RenderingConfig = Field(default_factory=RenderingConfig)
 
 

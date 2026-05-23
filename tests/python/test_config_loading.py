@@ -21,6 +21,8 @@ def test_load_config_composes_default_groups() -> None:
     assert config.env.simulation.agents.count == 16
     assert config.model.kind == "feedforward"
     assert config.training.stop.iterations == 10
+    assert config.logging.mlflow.enabled is True
+    assert config.logging.mlflow.tracking_uri == "file:./outputs/mlruns"
     assert not hasattr(config, "evaluation")
     assert not hasattr(config, "baseline")
 
@@ -34,6 +36,7 @@ def test_load_config_supports_group_and_field_overrides() -> None:
             "env.simulation.agents.count=4",
             "env.simulation.max_episode_steps=12",
             "model.fcnet_hiddens=[64,64]",
+            "logging.mlflow.enabled=false",
             "project.seed=7",
         ],
     )
@@ -43,6 +46,7 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.training.stop.iterations == 1
     assert config.env.simulation.agents.count == 4
     assert config.env.simulation.max_episode_steps == 12
+    assert config.logging.mlflow.enabled is False
     assert config.project.seed == 7
 
 
@@ -54,6 +58,7 @@ def test_load_evaluation_config_composes_standalone_groups() -> None:
             "evaluation=debug",
             "evaluation.checkpoint=artifacts/checkpoints/ppo/final",
             "evaluation.render=false",
+            "logging.mlflow.enabled=false",
             "project.seed=99",
         ],
     )
@@ -62,6 +67,7 @@ def test_load_evaluation_config_composes_standalone_groups() -> None:
     assert config.evaluation.episodes == 1
     assert config.evaluation.checkpoint == Path("artifacts/checkpoints/ppo/final")
     assert config.evaluation.render is False
+    assert config.logging.mlflow.enabled is False
     assert config.project.seed == 99
     assert not hasattr(config, "training")
 
