@@ -16,8 +16,6 @@ from ray.rllib.utils.numpy import convert_to_numpy
 
 from dronewatch.config.loader import (
     load_evaluation_config,
-    resolved_config_path,
-    save_resolved_config,
 )
 from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.envs import SwarmSearchEnv
