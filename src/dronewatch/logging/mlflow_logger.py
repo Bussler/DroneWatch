@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import importlib
 import json
 import math
 from collections.abc import Iterator, Mapping
@@ -11,6 +10,7 @@ from numbers import Real
 from pathlib import Path
 from typing import Any
 
+import mlflow
 from pydantic import BaseModel
 
 from dronewatch.config.schema import MlflowConfig
@@ -25,7 +25,6 @@ def start_mlflow_run(config: MlflowConfig, tags: Mapping[str, Any] | None = None
         yield None
         return
 
-    mlflow = _mlflow()
     mlflow.set_tracking_uri(config.tracking_uri)
     mlflow.set_experiment(config.experiment_name)
 
@@ -37,7 +36,6 @@ def start_mlflow_run(config: MlflowConfig, tags: Mapping[str, Any] | None = None
 
 def set_mlflow_tags(tags: Mapping[str, Any]) -> None:
     """Set tags on the active MLflow run when one exists."""
-    mlflow = _mlflow()
     if mlflow.active_run() is None:
         return
     mlflow.set_tags(_string_values(tags))
@@ -45,7 +43,6 @@ def set_mlflow_tags(tags: Mapping[str, Any]) -> None:
 
 def log_config_params(config: BaseModel | Mapping[str, Any], prefix: str = "config") -> None:
     """Log a flattened config model or mapping as MLflow parameters."""
-    mlflow = _mlflow()
     if mlflow.active_run() is None:
         return
 
@@ -56,7 +53,6 @@ def log_config_params(config: BaseModel | Mapping[str, Any], prefix: str = "conf
 
 def log_metrics(metrics: Mapping[str, Any], prefix: str, step: int | None = None) -> None:
     """Log numeric metrics under a prefix on the active MLflow run."""
-    mlflow = _mlflow()
     if mlflow.active_run() is None:
         return
 
@@ -79,7 +75,6 @@ def log_artifact_if_enabled(config: MlflowConfig, path: str | Path | None, artif
     if not output_path.exists():
         return
 
-    mlflow = _mlflow()
     if mlflow.active_run() is None:
         return
     mlflow.log_artifact(str(output_path), artifact_path=artifact_path)
@@ -137,7 +132,3 @@ def _chunks(data: Mapping[str, str], size: int) -> Iterator[dict[str, str]]:
     items = list(data.items())
     for index in range(0, len(items), size):
         yield dict(items[index : index + size])
-
-
-def _mlflow() -> Any:
-    return importlib.import_module("mlflow")
