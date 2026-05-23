@@ -55,11 +55,11 @@ def test_learner_progress_extracts_shared_policy_and_aggregate_metrics() -> None
         }
     )
 
-    assert progress["learner_policy_loss"] == -0.1
-    assert progress["learner_vf_loss"] == 0.2
-    assert progress["learner_entropy"] == 1.5
-    assert progress["learner_mean_kl_loss"] == 0.03
-    assert "learner_ignored_metric" not in progress
+    assert progress["policy_loss"] == -0.1
+    assert progress["vf_loss"] == 0.2
+    assert progress["entropy"] == 1.5
+    assert progress["mean_kl_loss"] == 0.03
+    assert "ignored_metric" not in progress
 
 
 def test_learner_progress_returns_empty_when_learners_missing() -> None:
