@@ -25,20 +25,8 @@ from dronewatch.logging import (
     set_mlflow_tags,
     start_mlflow_run,
 )
-from dronewatch.training.callbacks import TASK_METRIC_KEYS
+from dronewatch.training.callbacks import LEARNER_METRIC_KEYS, TASK_METRIC_KEYS
 from dronewatch.training.rllib_config import SHARED_POLICY_ID, build_ppo_config
-
-LEARNER_METRIC_KEYS = (
-    "policy_loss",
-    "vf_loss",
-    "vf_loss_unclipped",
-    "total_loss",
-    "entropy",
-    "mean_kl_loss",
-    "vf_explained_var",
-    "curr_entropy_coeff",
-    "curr_kl_coeff",
-)
 
 
 def train_ppo(
