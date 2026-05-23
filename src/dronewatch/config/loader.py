@@ -17,8 +17,8 @@ from .schema import (
 
 ConfigModel = TypeVar("ConfigModel", bound=BaseModel)
 
-TRAINING_GROUP_NAMES = {"env", "model", "training", "rendering", "tune"}
-EVALUATION_GROUP_NAMES = {"env", "model", "evaluation", "rendering"}
+TRAINING_GROUP_NAMES = {"env", "model", "training", "logging", "rendering", "tune"}
+EVALUATION_GROUP_NAMES = {"env", "model", "evaluation", "logging", "rendering"}
 RANDOM_POLICY_GROUP_NAMES = {"env", "random_policy", "rendering"}
 
 

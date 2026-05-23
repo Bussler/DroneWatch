@@ -1,4 +1,4 @@
-.PHONY: help sync install develop-rust rollout-rust rollout-random render-random train-ppo evaluate-ppo render-ppo ppo-smoke test-rust test-python test clean docker-build
+.PHONY: help sync install develop-rust rollout-rust rollout-random render-random train-ppo evaluate-ppo render-ppo ppo-smoke mlflow-up mlflow-down mlflow-ui test-rust test-python test clean docker-build
 
 help:
 	@echo "Available targets:"
@@ -11,6 +11,9 @@ help:
 	@echo "  train-ppo      Train shared-policy PPO locally"
 	@echo "  evaluate-ppo   Evaluate PPO checkpoint; pass CHECKPOINT=path"
 	@echo "  ppo-smoke      Run one tiny PPO training/evaluation smoke check"
+	@echo "  mlflow-up      Start the MLflow tracking UI with Docker Compose"
+	@echo "  mlflow-down    Stop the Docker Compose MLflow service"
+	@echo "  mlflow-ui      Start a local MLflow UI without Docker"
 	@echo "  test-rust     Run Rust tests"
 	@echo "  test-python   Run Python tests"
 	@echo "  test          Run Rust and Python tests"
@@ -45,6 +48,15 @@ endif
 
 ppo-smoke:
 	uv run python -m dronewatch.training.train_ppo --config configs/debug.yaml
+
+mlflow-up:
+	docker compose up mlflow
+
+mlflow-down:
+	docker compose down
+
+mlflow-ui:
+	uv run mlflow ui --backend-store-uri outputs/mlruns
 
 test-rust:
 	cargo test --manifest-path rust/swarm_sim/Cargo.toml

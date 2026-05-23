@@ -2,11 +2,11 @@
 
 DroneWatch is a MARL engineering showcase where 16 cooperative drones learn, via RLlib PPO and later MAPPO-style centralized critic training, to discover targets in a partially observable continuous 2D environment with obstacles, collisions, local sensing, and short-range communication.
 
-The repository is currently implementing Phase 4 of the project plan: OmegaConf-based experiment configuration on top of the completed Rust simulation core, Python multi-agent environment wrapper, and RLlib PPO path.
+The repository is currently implementing Phase 5 of the project plan: local MLflow tracking on top of the completed Rust simulation core, Python multi-agent environment wrapper, RLlib PPO path, and OmegaConf experiment configuration.
 
 ## Current Phase
 
-Phase 4 establishes structured YAML configs, CLI overrides, resolved-config artifacts, and fast debug training before MLflow logging, Ray Tune execution, and Docker training workflows are expanded.
+Phase 5 establishes local MLflow experiment tracking, config/report artifact logging, training and evaluation metric logging, and a Docker Compose MLflow UI for inspecting runs.
 
 Implemented in this slice:
 
@@ -34,6 +34,10 @@ Implemented in this slice:
 - Pydantic config validation in `dronewatch.config`
 - CLI `key=value` overrides for training, evaluation, random rollout, and rendering settings
 - resolved config snapshots saved with run artifacts
+- local MLflow tracking under `outputs/mlruns`
+- training metrics logged to MLflow
+- checkpoint evaluation reports logged to MLflow
+- Docker Compose MLflow UI service
 - PPO checkpoint saving under `artifacts/checkpoints/ppo/`
 - PPO evaluation reports under `artifacts/reports/`
 - uv dependency management
@@ -102,9 +106,9 @@ The root configs are:
 - `configs/evaluate.yaml` for standalone PPO checkpoint evaluation.
 - `configs/random_policy.yaml` for standalone random-policy baseline runs.
 
-Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/random_policy`, `configs/rendering`, and `configs/tune`. Training, standalone evaluation, and random-policy runs each load their own root config, so standalone random-policy overrides use `random_policy.*` and standalone checkpoint evaluation overrides use `evaluation.*`.
+Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/random_policy`, `configs/logging`, `configs/rendering`, and `configs/tune`. Training, standalone evaluation, and random-policy runs each load their own root config, so standalone random-policy overrides use `random_policy.*` and standalone checkpoint evaluation overrides use `evaluation.*`.
 
-Each training run writes a resolved YAML snapshot named `resolved_config.yaml` beside its run/report artifacts.
+Each training run writes a resolved YAML snapshot named `resolved_config.yaml` beside its checkpoint artifacts. Standalone checkpoint evaluation writes the same snapshot beside its report artifact.
 
 ## PPO Training
 
@@ -123,7 +127,7 @@ uv run python -m dronewatch.training.train_ppo \
 	model=ppo_feedforward \
 	training.checkpoint.frequency_iters=5 \
 	training.evaluation.episodes=5 \
-	training.evaluation.report_path=artifacts/reports/ppo_eval_report.json
+	training.evaluation.report_path=reports/ppo_eval_report.json
 ```
 
 Run the LSTM PPO smoke path after the feedforward path is working:
@@ -132,7 +136,7 @@ Run the LSTM PPO smoke path after the feedforward path is working:
 uv run python -m dronewatch.training.train_ppo \
 	--config configs/debug.yaml \
 	model=ppo_lstm \
-	training.checkpoint.directory=artifacts/checkpoints/ppo/lstm_smoke \
+	training.checkpoint.directory=checkpoints/ppo/lstm_smoke \
 	training.evaluation.episodes=1 \
 	training.ray.num_env_runners=0
 ```
@@ -153,6 +157,34 @@ uv run python -m dronewatch.evaluation.evaluate \
 ```
 
 PPO reports use the same task-metric schema as the random baseline, which makes it straightforward to compare target discovery rate, coverage ratio, collisions, obstacle violations, connectivity, and success rate.
+
+## MLflow Tracking
+
+Training and standalone checkpoint evaluation log parameters, task metrics, resolved config artifacts, and evaluation report artifacts to MLflow by default. The local tracking store is:
+
+```text
+outputs/mlruns
+```
+
+Start the Docker Compose MLflow server and open `http://localhost:5000`:
+
+```bash
+make mlflow-up
+```
+
+Stop it with:
+
+```bash
+make mlflow-down
+```
+
+You can also run the MLflow UI directly without Docker:
+
+```bash
+make mlflow-ui
+```
+
+PPO checkpoints and GIFs remain local files under `artifacts/` by default rather than being copied into MLflow.
 
 ## Tests
 
@@ -178,3 +210,5 @@ make docker-build
 ```
 
 The image installs the uv-managed project, builds the PyO3 extension, and defaults to `make test`.
+
+The Docker Compose MLflow service is independent from the validation image and reads runs from `outputs/mlruns`.

@@ -76,6 +76,7 @@ def test_evaluate_main_uses_standalone_config(
             "evaluation.episodes=3",
             f"evaluation.report_path={report_path}",
             "evaluation.render=false",
+            "logging.mlflow.enabled=false",
             "project.seed=123",
         ],
     )

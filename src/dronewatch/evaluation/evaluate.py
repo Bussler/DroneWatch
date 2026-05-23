@@ -24,6 +24,12 @@ from dronewatch.evaluation.reporting import (
     episode_summary,
     write_json_report,
 )
+from dronewatch.logging import (
+    log_artifact_if_enabled,
+    log_config_params,
+    log_evaluation_report,
+    start_mlflow_run,
+)
 from dronewatch.rendering import SimulationFrame, render_episode_gif
 from dronewatch.training.rllib_config import SHARED_POLICY_ID, register_swarm_search_env
 
@@ -201,18 +207,36 @@ def main() -> None:
     if config.evaluation.checkpoint is None:
         raise ValueError("evaluation.checkpoint must be set via config or CLI override")
 
-    report = evaluate_checkpoint(
-        checkpoint=config.evaluation.checkpoint,
-        episodes=config.evaluation.episodes,
-        seed=config.project.seed or 0,
-        report_path=config.project.artifact_dir / config.evaluation.report_path,
-        model=config.model.kind,
-        render=config.evaluation.render,
-        gif_path=config.project.artifact_dir / config.evaluation.gif_path,
-        render_stride=config.evaluation.render_stride,
-        env_config=config.env,
-        render_fps=config.rendering.fps,
-    )
+    report_path = config.project.artifact_dir / config.evaluation.report_path
+    mlflow_config = config.logging.mlflow
+
+    with start_mlflow_run(
+        mlflow_config,
+        tags={
+            "project": config.project.name,
+            "entrypoint": "evaluate",
+            "environment": config.env.name,
+            "model": config.model.kind,
+            "checkpoint": config.evaluation.checkpoint,
+        },
+    ):
+        log_config_params(config)
+
+        report = evaluate_checkpoint(
+            checkpoint=config.evaluation.checkpoint,
+            episodes=config.evaluation.episodes,
+            seed=config.project.seed or 0,
+            report_path=report_path,
+            model=config.model.kind,
+            render=config.evaluation.render,
+            gif_path=config.project.artifact_dir / config.evaluation.gif_path,
+            render_stride=config.evaluation.render_stride,
+            env_config=config.env,
+            render_fps=config.rendering.fps,
+        )
+        log_evaluation_report(report, prefix="eval")
+        if mlflow_config.log_report_artifact:
+            log_artifact_if_enabled(mlflow_config, report_path, artifact_path="reports")
     print(json.dumps(report, indent=2, sort_keys=True))
 
 

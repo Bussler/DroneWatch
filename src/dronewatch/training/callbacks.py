@@ -17,6 +17,18 @@ TASK_METRIC_KEYS = {
     "episode_length": "timestep",
 }
 
+LEARNER_METRIC_KEYS = (
+    "policy_loss",
+    "vf_loss",
+    "vf_loss_unclipped",
+    "total_loss",
+    "entropy",
+    "mean_kl_loss",
+    "vf_explained_var",
+    "curr_entropy_coeff",
+    "curr_kl_coeff",
+)
+
 
 class SwarmSearchMetricsCallback(RLlibCallback):
     """Log simulator task metrics at episode end."""
