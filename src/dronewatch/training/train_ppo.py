@@ -24,6 +24,7 @@ from dronewatch.logging import (
     set_mlflow_tags,
     start_mlflow_run,
 )
+from dronewatch.training.callbacks import TASK_METRIC_KEYS
 from dronewatch.training.rllib_config import build_ppo_config
 
 
@@ -147,17 +148,7 @@ def _training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]
 
     # The new RLlib API stack exposes callback metrics under env_runners.
     # Fall back to custom_metrics for compatibility with older result layouts.
-    for metric_name in (
-        "target_discovery_rate",
-        "discovered_target_count",
-        "coverage_ratio",
-        "collision_count",
-        "obstacle_violation_count",
-        "connectivity_ratio",
-        "average_communication_neighbors",
-        "episode_length",
-        "success_rate",
-    ):
+    for metric_name in (*TASK_METRIC_KEYS, "success_rate"):
         value = env_runners.get(
             f"dronewatch/{metric_name}",
             custom_metrics.get(f"dronewatch/{metric_name}_mean"),
