@@ -18,3 +18,5 @@ services:
     volumes:
       - ./outputs/mlruns:/mlflow/mlruns
       - ./artifacts/mlflow:/mlflow/artifacts
+      # For Artifact mlflow logging
+      - ${PWD}/outputs/mlruns:${PWD}/outputs/mlruns
