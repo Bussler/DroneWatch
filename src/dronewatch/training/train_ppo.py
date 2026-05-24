@@ -24,16 +24,12 @@ from dronewatch.logging import (
     set_mlflow_tags,
     start_mlflow_run,
 )
-from dronewatch.training._progress import (
-    learner_progress as _learner_progress,
-)
-from dronewatch.training._progress import (
-    save_checkpoint as _save_checkpoint,
-)
-from dronewatch.training._progress import (
-    training_progress as _training_progress,
-)
 from dronewatch.training.rllib_config import build_ppo_config
+from dronewatch.training.utils import (
+    learner_progress,
+    save_checkpoint,
+    training_progress,
+)
 
 
 def train_ppo(
@@ -83,18 +79,18 @@ def train_ppo(
             try:
                 for iteration in range(1, iterations + 1):
                     last_result = algorithm.train()
-                    progress = _training_progress(iteration, last_result)
-                    learner_progress = _learner_progress(last_result)
+                    progress = training_progress(iteration, last_result)
+                    l_progress = learner_progress(last_result)
                     print(json.dumps(progress, sort_keys=True))
                     log_metrics(progress, prefix="train", step=iteration)
-                    log_metrics(learner_progress, prefix="learn", step=iteration)
+                    log_metrics(l_progress, prefix="learn", step=iteration)
 
                     if iteration % checkpoint_frequency == 0:
-                        checkpoint = _save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
+                        checkpoint = save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
                         checkpoints.append(checkpoint)
                         print(f"saved checkpoint: {checkpoint}")
 
-                final_checkpoint = _save_checkpoint(algorithm, output_dir / "final")
+                final_checkpoint = save_checkpoint(algorithm, output_dir / "final")
                 if final_checkpoint not in checkpoints:
                     checkpoints.append(final_checkpoint)
                 set_mlflow_tags({"final_checkpoint": final_checkpoint})
@@ -130,7 +126,7 @@ def train_ppo(
         "resolved_config_path": str(saved_config_path),
         "checkpoints": checkpoints,
         "final_checkpoint": final_checkpoint,
-        "last_result": _training_progress(iterations, last_result),
+        "last_result": training_progress(iterations, last_result),
         "evaluation_report": evaluation_report,
     }
 

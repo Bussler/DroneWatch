@@ -31,12 +31,12 @@ from dronewatch.logging import (
     start_child_mlflow_run,
     start_mlflow_run,
 )
-from dronewatch.training._progress import (
+from dronewatch.training.rllib_config import build_ppo_config
+from dronewatch.training.utils import (
     learner_progress,
     save_checkpoint,
     training_progress,
 )
-from dronewatch.training.rllib_config import build_ppo_config
 
 
 def tune_ppo(config: DroneWatchConfig) -> dict[str, Any]:

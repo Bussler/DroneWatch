@@ -2,7 +2,7 @@ tune:
   enabled: true
   metric: target_discovery_rate
   mode: max
-  num_samples: 12
+  num_samples: 100
   scheduler: fifo
   storage_path: ray_tune
   report_path: reports/tune_search_results.json
@@ -11,13 +11,13 @@ tune:
     training.ppo.lr:
       type: loguniform
       lower: 0.0001
-      upper: 0.001
+      upper: 0.005
     training.ppo.entropy_coeff:
       type: choice
       values: [0.0, 0.005, 0.01, 0.02]
     training.ppo.train_batch_size_per_learner:
       type: choice
-      values: [512, 1024]
+      values: [512, 1024, 2048]
     training.ppo.num_epochs:
       type: choice
-      values: [3, 5]
+      values: [3, 5, 8]
