@@ -9,6 +9,7 @@ from dronewatch.config.loader import (
     load_config,
     load_evaluation_config,
     load_random_policy_config,
+    load_tune_config,
     save_resolved_config,
 )
 
@@ -23,6 +24,7 @@ def test_load_config_composes_default_groups() -> None:
     assert config.training.stop.iterations == 10
     assert config.logging.mlflow.enabled is True
     assert config.logging.mlflow.tracking_uri == "file:./outputs/mlruns"
+    assert not hasattr(config, "tune")
     assert not hasattr(config, "evaluation")
     assert not hasattr(config, "baseline")
 
@@ -50,10 +52,9 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.project.seed == 7
 
 
-def test_load_config_composes_tune_group_and_training_preset() -> None:
-    config = load_config("configs/config.yaml", ["training=tune_ppo"])
+def test_load_tune_config_composes_tune_group_and_training_preset() -> None:
+    config = load_tune_config("configs/tune_ppo.yaml")
 
-    assert config.tune.enabled is True
     assert config.tune.metric == "target_discovery_rate"
     assert config.tune.scheduler == "fifo"
     assert config.tune.report_path == Path("reports/tune_search_results.json")
@@ -115,8 +116,17 @@ def test_load_config_rejects_invalid_overrides() -> None:
     with pytest.raises(ValidationError):
         load_config("configs/config.yaml", ["training.stop.timesteps_total=10"])
 
+    with pytest.raises(ValidationError):
+        load_config("configs/config.yaml", ["tune.num_samples=2"])
+
     with pytest.raises(ValueError, match="key=value"):
         load_config("configs/config.yaml", ["training.debug"])
+
+
+def test_load_tune_config_supports_tune_overrides() -> None:
+    config = load_tune_config("configs/tune_ppo.yaml", ["tune.num_samples=2"])
+
+    assert config.tune.num_samples == 2
 
 
 def test_save_resolved_config_writes_yaml(tmp_path: Path) -> None:

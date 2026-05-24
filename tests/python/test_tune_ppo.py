@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from dronewatch.config.loader import load_config
+from dronewatch.config.loader import load_tune_config
 from dronewatch.training.tune_ppo import (
     _apply_sampled_config,
     _search_summary,
@@ -48,7 +48,7 @@ def test_to_ray_search_space_rejects_invalid_specs() -> None:
 
 
 def test_apply_sampled_config_updates_and_revalidates_config() -> None:
-    config = load_config("configs/config.yaml", ["training=tune_ppo"])
+    config = load_tune_config("configs/tune_ppo.yaml")
 
     sampled = _apply_sampled_config(
         config.model_dump(mode="json"),
@@ -69,7 +69,7 @@ def test_apply_sampled_config_updates_and_revalidates_config() -> None:
 
 
 def test_apply_sampled_config_rejects_invalid_combination() -> None:
-    config = load_config("configs/config.yaml", ["training=tune_ppo"])
+    config = load_tune_config("configs/tune_ppo.yaml")
 
     with pytest.raises(ValidationError):
         _apply_sampled_config(
@@ -82,7 +82,7 @@ def test_apply_sampled_config_rejects_invalid_combination() -> None:
 
 
 def test_trial_base_config_uses_absolute_artifact_paths() -> None:
-    config = load_config("configs/config.yaml", ["training=tune_ppo"])
+    config = load_tune_config("configs/tune_ppo.yaml")
     data = _trial_base_config(config)
 
     assert Path(data["project"]["artifact_dir"]).is_absolute()

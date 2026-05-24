@@ -15,11 +15,11 @@ from ray.tune import RunConfig
 from ray.tune.schedulers import ASHAScheduler, FIFOScheduler
 
 from dronewatch.config.loader import (
-    load_config,
+    load_tune_config,
     resolved_config_path,
     save_resolved_config,
 )
-from dronewatch.config.schema import DroneWatchConfig
+from dronewatch.config.schema import DroneWatchTuneConfig
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
 from dronewatch.evaluation.reporting import write_json_report
 from dronewatch.logging import (
@@ -39,7 +39,7 @@ from dronewatch.training.utils import (
 )
 
 
-def tune_ppo(config: DroneWatchConfig) -> dict[str, Any]:
+def tune_ppo(config: DroneWatchTuneConfig) -> dict[str, Any]:
     """Run a Ray Tune PPO sweep and return a compact summary."""
     if not config.tune.search_space:
         raise ValueError("tune.search_space must contain at least one parameter")
@@ -241,17 +241,17 @@ def _to_ray_sampler(path: str, spec: Any) -> Any:
     raise ValueError(f"unsupported search_space.{path}.type: {sampler_type!r}")
 
 
-def _apply_sampled_config(base_config: Mapping[str, Any], sampled_params: Mapping[str, Any]) -> DroneWatchConfig:
+def _apply_sampled_config(base_config: Mapping[str, Any], sampled_params: Mapping[str, Any]) -> DroneWatchTuneConfig:
     composed = OmegaConf.create(base_config)
     for path, value in sampled_params.items():
         OmegaConf.update(composed, path, value, merge=False)
     data = OmegaConf.to_container(composed, resolve=True)
     if not isinstance(data, dict):
         raise ValueError("sampled config did not resolve to a mapping")
-    return DroneWatchConfig.model_validate(data)
+    return DroneWatchTuneConfig.model_validate(data)
 
 
-def _trial_base_config(config: DroneWatchConfig) -> dict[str, Any]:
+def _trial_base_config(config: DroneWatchTuneConfig) -> dict[str, Any]:
     data = config.model_dump(mode="json")
     data["project"]["artifact_dir"] = str(config.project.artifact_dir.resolve())
     data["project"]["output_dir"] = str(config.project.output_dir.resolve())
@@ -327,10 +327,10 @@ def _compact_metrics(metrics: Mapping[str, Any]) -> dict[str, Any]:
 def main() -> None:
     """Command-line entry point for Ray Tune PPO search."""
     parser = argparse.ArgumentParser(description="Tune DroneWatch shared-policy PPO with Ray Tune.")
-    parser.add_argument("--config", type=Path, default=Path("configs/config.yaml"))
+    parser.add_argument("--config", type=Path, default=Path("configs/tune_ppo.yaml"))
     args, overrides = parser.parse_known_args()
 
-    summary = tune_ppo(config=load_config(args.config, overrides))
+    summary = tune_ppo(config=load_tune_config(args.config, overrides))
     print(json.dumps(summary, indent=2, sort_keys=True))
 
 

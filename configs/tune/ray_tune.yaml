@@ -1,5 +1,4 @@
 tune:
-  enabled: true
   metric: target_discovery_rate
   mode: max
   num_samples: 100

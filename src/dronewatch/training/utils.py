@@ -31,8 +31,7 @@ def training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]:
         "num_env_steps_sampled_lifetime": result.get("num_env_steps_sampled_lifetime"),
     }
 
-    # RLlib's new API stack exposes callback metrics under env_runners.
-    # Fall back to custom_metrics for compatibility with older result layouts.
+    # RLlib's new API stack exposes callback metrics under env_runners
     for metric_name in (*TASK_METRIC_KEYS, "success_rate"):
         value = env_runners.get(
             f"dronewatch/{metric_name}",

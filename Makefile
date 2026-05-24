@@ -43,10 +43,10 @@ train-ppo:
 	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml
 
 tune-ppo:
-	uv run python -m dronewatch.training.tune_ppo --config configs/config.yaml training=tune_ppo
+	uv run python -m dronewatch.training.tune_ppo --config configs/tune_ppo.yaml
 
 tune-ppo-smoke:
-	uv run python -m dronewatch.training.tune_ppo --config configs/config.yaml training=tune_ppo tune.num_samples=2 training.stop.iterations=1 training.evaluation.enabled=false logging.mlflow.enabled=false
+	uv run python -m dronewatch.training.tune_ppo --config configs/tune_ppo.yaml tune.num_samples=2 training.stop.iterations=1 training.evaluation.enabled=false logging.mlflow.enabled=false
 
 evaluate-ppo:
 ifndef CHECKPOINT

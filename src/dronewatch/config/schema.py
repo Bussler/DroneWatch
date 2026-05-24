@@ -243,7 +243,6 @@ class LoggingConfig(_FrozenModel):
 class TuneConfig(_FrozenModel):
     """Ray Tune sweep settings for PPO hyperparameter search."""
 
-    enabled: bool = False
     metric: str = "target_discovery_rate"
     mode: Literal["max", "min"] = "max"
     num_samples: int = Field(default=1, gt=0)
@@ -256,6 +255,17 @@ class TuneConfig(_FrozenModel):
 
 class DroneWatchConfig(_FrozenModel):
     """Fully composed and validated DroneWatch PPO training configuration."""
+
+    project: ProjectConfig = Field(default_factory=ProjectConfig)
+    env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
+    model: ModelConfig = Field(default_factory=ModelConfig)
+    training: TrainingConfig = Field(default_factory=TrainingConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    rendering: RenderingConfig = Field(default_factory=RenderingConfig)
+
+
+class DroneWatchTuneConfig(_FrozenModel):
+    """Fully composed and validated Ray Tune PPO search configuration."""
 
     project: ProjectConfig = Field(default_factory=ProjectConfig)
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)

@@ -4,7 +4,6 @@ defaults:
   - training: debug
   - logging: mlflow_local
   - rendering: default
-  - tune: ray_tune
 
 project:
   name: DebugDroneWatch

@@ -112,8 +112,7 @@ def test_tune_ppo_main_uses_training_config(
         [
             "tune_ppo",
             "--config",
-            "configs/config.yaml",
-            "training=tune_ppo",
+            "configs/tune_ppo.yaml",
             "tune.num_samples=2",
             "logging.mlflow.enabled=false",
         ],

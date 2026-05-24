@@ -182,6 +182,8 @@ make tune-ppo-smoke
 
 The sweep optimizes the training-time metric configured at `tune.metric`, currently `target_discovery_rate`. Search results are written to `artifacts/reports/tune_search_results.json`; trial checkpoints are written under `artifacts/checkpoints/ppo/tune/`. When training evaluation is enabled for the tuning preset, the best checkpoint is evaluated with the existing PPO evaluation path and written to `artifacts/reports/tune_best_trial_report.json`.
 
+Ray Tune uses the dedicated root config at `configs/tune_ppo.yaml`; the normal PPO training configs do not include the `tune` section.
+
 Search spaces use explicit Ray-style sampler specs:
 
 ```yaml
