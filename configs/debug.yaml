@@ -7,7 +7,7 @@ defaults:
   - tune: ray_tune
 
 project:
-  name: DroneWatch
+  name: DebugDroneWatch
   seed: 133742
   output_dir: outputs
   artifact_dir: artifacts

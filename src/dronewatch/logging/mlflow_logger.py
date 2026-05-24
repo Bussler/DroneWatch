@@ -6,6 +6,7 @@ import json
 import math
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
+from datetime import datetime
 from numbers import Real
 from pathlib import Path
 from typing import Any
@@ -30,7 +31,8 @@ def start_mlflow_run(
     mlflow.set_tracking_uri(config.tracking_uri)
     mlflow.set_experiment(experiment_name)
 
-    with mlflow.start_run(run_name=config.run_name, tags=_string_values(tags or {})) as run:
+    run_name = _timestamped_run_name(config.run_name)
+    with mlflow.start_run(run_name=run_name, tags=_string_values(tags or {})) as run:
         if config.log_system_metrics and hasattr(mlflow, "enable_system_metrics_logging"):
             mlflow.enable_system_metrics_logging()
         yield run
@@ -58,7 +60,7 @@ def start_child_mlflow_run(
         run_tags["dronewatch_parent_run_id"] = parent_run_id
 
     with mlflow.start_run(
-        run_name=run_name or config.run_name,
+        run_name=_timestamped_run_name(run_name or config.run_name),
         nested=mlflow.active_run() is not None,
         tags=_string_values(run_tags),
     ) as run:
@@ -157,6 +159,13 @@ def _param_value(value: str) -> str:
 
 def _string_values(values: Mapping[str, Any]) -> dict[str, str]:
     return {str(key): str(value) for key, value in values.items() if value is not None}
+
+
+def _timestamped_run_name(run_name: str | None) -> str:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if run_name is None:
+        return timestamp
+    return f"{run_name}_{timestamp}"
 
 
 def _chunks(data: Mapping[str, str], size: int) -> Iterator[dict[str, str]]:
