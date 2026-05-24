@@ -1,6 +1,6 @@
 training:
   stop:
-    iterations: 10
+    iterations: 5000
   ray:
     num_env_runners: 0
     num_envs_per_env_runner: 1
@@ -19,7 +19,7 @@ training:
     rollout_fragment_length: auto
   checkpoint:
     directory: checkpoints/ppo
-    frequency_iters: 5
+    frequency_iters: 500
   evaluation:
     enabled: true
     episodes: 5
