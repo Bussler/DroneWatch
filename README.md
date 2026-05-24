@@ -2,11 +2,11 @@
 
 DroneWatch is a MARL engineering showcase where 16 cooperative drones learn, via RLlib PPO and later MAPPO-style centralized critic training, to discover targets in a partially observable continuous 2D environment with obstacles, collisions, local sensing, and short-range communication.
 
-The repository is currently implementing Phase 5 of the project plan: local MLflow tracking on top of the completed Rust simulation core, Python multi-agent environment wrapper, RLlib PPO path, and OmegaConf experiment configuration.
+The repository is currently implementing Phase 6 of the project plan: Ray Tune hyperparameter search on top of the completed Rust simulation core, Python multi-agent environment wrapper, RLlib PPO path, OmegaConf experiment configuration, and local MLflow tracking.
 
 ## Current Phase
 
-Phase 5 establishes local MLflow experiment tracking, config/report artifact logging, training and evaluation metric logging, and a Docker Compose MLflow UI for inspecting runs.
+Phase 6 establishes a local Ray Tune workflow for PPO hyperparameter search, best-trial reporting, stable checkpoint artifacts, and MLflow parent/child run tracking for sweeps.
 
 Implemented in this slice:
 
@@ -38,6 +38,10 @@ Implemented in this slice:
 - training metrics logged to MLflow
 - checkpoint evaluation reports logged to MLflow
 - Docker Compose MLflow UI service
+- Ray Tune PPO hyperparameter search CLI
+- Ray-style Tune search-space configuration
+- Tune search summary reports under `artifacts/reports/`
+- Tune trial checkpoints under `artifacts/checkpoints/ppo/tune/`
 - PPO checkpoint saving under `artifacts/checkpoints/ppo/`
 - PPO evaluation reports under `artifacts/reports/`
 - uv dependency management
@@ -80,11 +84,13 @@ make rollout-rust
 make rollout-random
 make render-random
 make ppo-smoke
+make tune-ppo-smoke
 ```
 
 `make rollout-random` writes a random policy report to `artifacts/reports/random_policy_report.json`.
 `make render-random` writes the same report plus `artifacts/gifs/random_policy_episode.gif`.
 `make ppo-smoke` runs one tiny feedforward PPO iteration, saves a checkpoint, and writes `artifacts/reports/ppo_smoke_report.json`.
+`make tune-ppo-smoke` runs two tiny Ray Tune PPO trials and writes `artifacts/reports/tune_search_results.json`.
 
 ## Configuration
 
@@ -105,6 +111,8 @@ The root configs are:
 - `configs/debug.yaml` for a one-iteration smoke path.
 - `configs/evaluate.yaml` for standalone PPO checkpoint evaluation.
 - `configs/random_policy.yaml` for standalone random-policy baseline runs.
+
+Ray Tune search-space settings live in `configs/tune/ray_tune.yaml`, and the local tuning training preset lives in `configs/training/tune_ppo.yaml`.
 
 Config groups live under `configs/env`, `configs/model`, `configs/training`, `configs/evaluation`, `configs/random_policy`, `configs/logging`, `configs/rendering`, and `configs/tune`. Training, standalone evaluation, and random-policy runs each load their own root config, so standalone random-policy overrides use `random_policy.*` and standalone checkpoint evaluation overrides use `evaluation.*`.
 
@@ -157,6 +165,39 @@ uv run python -m dronewatch.evaluation.evaluate \
 ```
 
 PPO reports use the same task-metric schema as the random baseline, which makes it straightforward to compare target discovery rate, coverage ratio, collisions, obstacle violations, connectivity, and success rate.
+
+## Ray Tune Search
+
+Run a local PPO hyperparameter search:
+
+```bash
+make tune-ppo
+```
+
+Run the small plumbing check:
+
+```bash
+make tune-ppo-smoke
+```
+
+The sweep optimizes the training-time metric configured at `tune.metric`, currently `target_discovery_rate`. Search results are written to `artifacts/reports/tune_search_results.json`; trial checkpoints are written under `artifacts/checkpoints/ppo/tune/`. When training evaluation is enabled for the tuning preset, the best checkpoint is evaluated with the existing PPO evaluation path and written to `artifacts/reports/tune_best_trial_report.json`.
+
+Search spaces use explicit Ray-style sampler specs:
+
+```yaml
+tune:
+	metric: target_discovery_rate
+	mode: max
+	num_samples: 12
+	search_space:
+		training.ppo.lr:
+			type: loguniform
+			lower: 0.0001
+			upper: 0.001
+		training.ppo.entropy_coeff:
+			type: choice
+			values: [0.0, 0.005, 0.01, 0.02]
+```
 
 ## MLflow Tracking
 

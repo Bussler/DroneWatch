@@ -242,12 +242,16 @@ class LoggingConfig(_FrozenModel):
 
 
 class TuneConfig(_FrozenModel):
-    """Validated Ray Tune metadata and search-space placeholder for later phases."""
+    """Ray Tune sweep settings for PPO hyperparameter search."""
 
     enabled: bool = False
-    metric: str = "mean_target_discovery_rate"
+    metric: str = "target_discovery_rate"
     mode: Literal["max", "min"] = "max"
     num_samples: int = Field(default=1, gt=0)
+    scheduler: str = Field(default="fifo", min_length=1)
+    storage_path: Path = Path("ray_tune")
+    report_path: Path = Path("reports/tune_search_results.json")
+    best_report_path: Path = Path("reports/tune_best_trial_report.json")
     search_space: dict[str, Any] = Field(default_factory=dict)
 
 

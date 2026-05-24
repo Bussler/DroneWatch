@@ -34,6 +34,34 @@ def start_mlflow_run(config: MlflowConfig, tags: Mapping[str, Any] | None = None
         yield run
 
 
+@contextmanager
+def start_child_mlflow_run(
+    config: MlflowConfig,
+    parent_run_id: str | None = None,
+    tags: Mapping[str, Any] | None = None,
+    run_name: str | None = None,
+) -> Iterator[Any | None]:
+    """Start an MLflow child run when enabled, otherwise yield None."""
+    if not config.enabled:
+        yield None
+        return
+
+    mlflow.set_tracking_uri(config.tracking_uri)
+    mlflow.set_experiment(config.experiment_name)
+
+    run_tags = dict(tags or {})
+    if parent_run_id is not None:
+        run_tags["mlflow.parentRunId"] = parent_run_id
+        run_tags["dronewatch_parent_run_id"] = parent_run_id
+
+    with mlflow.start_run(
+        run_name=run_name or config.run_name,
+        nested=mlflow.active_run() is not None,
+        tags=_string_values(run_tags),
+    ) as run:
+        yield run
+
+
 def set_mlflow_tags(tags: Mapping[str, Any]) -> None:
     """Set tags on the active MLflow run when one exists."""
     if mlflow.active_run() is None:

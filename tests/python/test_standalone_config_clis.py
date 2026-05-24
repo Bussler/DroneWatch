@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 import dronewatch.evaluation.evaluate as evaluate_module
+import dronewatch.training.tune_ppo as tune_ppo_module
 import scripts.random_policy as random_policy_module
 
 
@@ -92,3 +93,36 @@ def test_evaluate_main_uses_standalone_config(
     assert captured["model"] == "lstm"
     assert captured["render"] is False
     assert captured["env_config"].name == "SwarmSearch2D"
+
+
+def test_tune_ppo_main_uses_training_config(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_tune_ppo(config: Any) -> dict[str, Any]:
+        captured["config"] = config
+        return {"metric": config.tune.metric, "num_samples": config.tune.num_samples}
+
+    monkeypatch.setattr(tune_ppo_module, "tune_ppo", fake_tune_ppo)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "tune_ppo",
+            "--config",
+            "configs/config.yaml",
+            "training=tune_ppo",
+            "tune.num_samples=2",
+            "logging.mlflow.enabled=false",
+        ],
+    )
+
+    tune_ppo_module.main()
+
+    output = json.loads(capsys.readouterr().out)
+    assert output["metric"] == "target_discovery_rate"
+    assert output["num_samples"] == 2
+    assert captured["config"].training.evaluation.enabled is False
+    assert captured["config"].logging.mlflow.enabled is False

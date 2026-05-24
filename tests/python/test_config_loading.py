@@ -50,6 +50,20 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.project.seed == 7
 
 
+def test_load_config_composes_tune_group_and_training_preset() -> None:
+    config = load_config("configs/config.yaml", ["training=tune_ppo"])
+
+    assert config.tune.enabled is True
+    assert config.tune.metric == "target_discovery_rate"
+    assert config.tune.scheduler == "fifo"
+    assert config.tune.report_path == Path("reports/tune_search_results.json")
+    assert config.tune.search_space["training.ppo.lr"]["type"] == "loguniform"
+    assert config.tune.search_space["training.ppo.entropy_coeff"]["type"] == "choice"
+    assert config.training.stop.iterations == 10
+    assert config.training.evaluation.enabled is False
+    assert config.training.checkpoint.directory == Path("checkpoints/ppo/tune")
+
+
 def test_load_evaluation_config_composes_standalone_groups() -> None:
     config = load_evaluation_config(
         "configs/evaluate.yaml",

@@ -7,6 +7,7 @@ from .mlflow_logger import (
     log_evaluation_report,
     log_metrics,
     set_mlflow_tags,
+    start_child_mlflow_run,
     start_mlflow_run,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "log_evaluation_report",
     "log_metrics",
     "set_mlflow_tags",
+    "start_child_mlflow_run",
     "start_mlflow_run",
 ]

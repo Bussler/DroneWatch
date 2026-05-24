@@ -1,8 +1,23 @@
 tune:
-  enabled: false
-  metric: mean_target_discovery_rate
+  enabled: true
+  metric: target_discovery_rate
   mode: max
-  num_samples: 1
+  num_samples: 12
+  scheduler: fifo
+  storage_path: ray_tune
+  report_path: reports/tune_search_results.json
+  best_report_path: reports/tune_best_trial_report.json
   search_space:
-    training.ppo.lr: [0.0001, 0.0003, 0.001]
-    training.ppo.entropy_coeff: [0.0, 0.01, 0.02]
+    training.ppo.lr:
+      type: loguniform
+      lower: 0.0001
+      upper: 0.001
+    training.ppo.entropy_coeff:
+      type: choice
+      values: [0.0, 0.005, 0.01, 0.02]
+    training.ppo.train_batch_size_per_learner:
+      type: choice
+      values: [512, 1024]
+    training.ppo.num_epochs:
+      type: choice
+      values: [3, 5]
