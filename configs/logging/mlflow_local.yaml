@@ -2,7 +2,6 @@ logging:
   mlflow:
     enabled: true
     tracking_uri: file:./outputs/mlruns
-    experiment_name: dronewatch-swarm-search-ppo
     run_name: null
     log_system_metrics: false
     log_config_artifact: true

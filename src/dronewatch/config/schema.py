@@ -219,7 +219,6 @@ class MlflowConfig(_FrozenModel):
 
     enabled: bool = True
     tracking_uri: str = Field(default="file:./outputs/mlruns", min_length=1)
-    experiment_name: str = Field(default="dronewatch-swarm-search-ppo", min_length=1)
     run_name: str | None = None
     log_system_metrics: bool = False
     log_config_artifact: bool = True
@@ -242,17 +241,31 @@ class LoggingConfig(_FrozenModel):
 
 
 class TuneConfig(_FrozenModel):
-    """Validated Ray Tune metadata and search-space placeholder for later phases."""
+    """Ray Tune sweep settings for PPO hyperparameter search."""
 
-    enabled: bool = False
-    metric: str = "mean_target_discovery_rate"
+    metric: str = "target_discovery_rate"
     mode: Literal["max", "min"] = "max"
     num_samples: int = Field(default=1, gt=0)
+    scheduler: str = Field(default="fifo", min_length=1)
+    storage_path: Path = Path("ray_tune")
+    report_path: Path = Path("reports/tune_search_results.json")
+    best_report_path: Path = Path("reports/tune_best_trial_report.json")
     search_space: dict[str, Any] = Field(default_factory=dict)
 
 
 class DroneWatchConfig(_FrozenModel):
     """Fully composed and validated DroneWatch PPO training configuration."""
+
+    project: ProjectConfig = Field(default_factory=ProjectConfig)
+    env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)
+    model: ModelConfig = Field(default_factory=ModelConfig)
+    training: TrainingConfig = Field(default_factory=TrainingConfig)
+    logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    rendering: RenderingConfig = Field(default_factory=RenderingConfig)
+
+
+class DroneWatchTuneConfig(_FrozenModel):
+    """Fully composed and validated Ray Tune PPO search configuration."""
 
     project: ProjectConfig = Field(default_factory=ProjectConfig)
     env: SwarmSearchEnvConfig = Field(default_factory=SwarmSearchEnvConfig)

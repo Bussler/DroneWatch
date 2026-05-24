@@ -9,6 +9,7 @@ from dronewatch.config.loader import (
     load_config,
     load_evaluation_config,
     load_random_policy_config,
+    load_tune_config,
     save_resolved_config,
 )
 
@@ -23,6 +24,7 @@ def test_load_config_composes_default_groups() -> None:
     assert config.training.stop.iterations == 10
     assert config.logging.mlflow.enabled is True
     assert config.logging.mlflow.tracking_uri == "file:./outputs/mlruns"
+    assert not hasattr(config, "tune")
     assert not hasattr(config, "evaluation")
     assert not hasattr(config, "baseline")
 
@@ -48,6 +50,19 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.env.simulation.max_episode_steps == 12
     assert config.logging.mlflow.enabled is False
     assert config.project.seed == 7
+
+
+def test_load_tune_config_composes_tune_group_and_training_preset() -> None:
+    config = load_tune_config("configs/tune_ppo.yaml")
+
+    assert config.tune.metric == "target_discovery_rate"
+    assert config.tune.scheduler == "fifo"
+    assert config.tune.report_path == Path("reports/tune_search_results.json")
+    assert config.tune.search_space["training.ppo.lr"]["type"] == "loguniform"
+    assert config.tune.search_space["training.ppo.entropy_coeff"]["type"] == "choice"
+    assert config.training.stop.iterations == 10
+    assert config.training.evaluation.enabled is False
+    assert config.training.checkpoint.directory == Path("checkpoints/ppo/tune")
 
 
 def test_load_evaluation_config_composes_standalone_groups() -> None:
@@ -101,8 +116,17 @@ def test_load_config_rejects_invalid_overrides() -> None:
     with pytest.raises(ValidationError):
         load_config("configs/config.yaml", ["training.stop.timesteps_total=10"])
 
+    with pytest.raises(ValidationError):
+        load_config("configs/config.yaml", ["tune.num_samples=2"])
+
     with pytest.raises(ValueError, match="key=value"):
         load_config("configs/config.yaml", ["training.debug"])
+
+
+def test_load_tune_config_supports_tune_overrides() -> None:
+    config = load_tune_config("configs/tune_ppo.yaml", ["tune.num_samples=2"])
+
+    assert config.tune.num_samples == 2
 
 
 def test_save_resolved_config_writes_yaml(tmp_path: Path) -> None:

@@ -6,6 +6,7 @@ import json
 import math
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
+from datetime import datetime
 from numbers import Real
 from pathlib import Path
 from typing import Any
@@ -19,18 +20,50 @@ MAX_PARAM_VALUE_LENGTH = 5000
 
 
 @contextmanager
-def start_mlflow_run(config: MlflowConfig, tags: Mapping[str, Any] | None = None) -> Iterator[Any | None]:
+def start_mlflow_run(
+    experiment_name: str, config: MlflowConfig, tags: Mapping[str, Any] | None = None
+) -> Iterator[Any | None]:
     """Start an MLflow run when enabled, otherwise yield None."""
     if not config.enabled:
         yield None
         return
 
     mlflow.set_tracking_uri(config.tracking_uri)
-    mlflow.set_experiment(config.experiment_name)
+    mlflow.set_experiment(experiment_name)
 
-    with mlflow.start_run(run_name=config.run_name, tags=_string_values(tags or {})) as run:
+    run_name = _timestamped_run_name(config.run_name)
+    with mlflow.start_run(run_name=run_name, tags=_string_values(tags or {})) as run:
         if config.log_system_metrics and hasattr(mlflow, "enable_system_metrics_logging"):
             mlflow.enable_system_metrics_logging()
+        yield run
+
+
+@contextmanager
+def start_child_mlflow_run(
+    experiment_name: str,
+    config: MlflowConfig,
+    parent_run_id: str | None = None,
+    tags: Mapping[str, Any] | None = None,
+    run_name: str | None = None,
+) -> Iterator[Any | None]:
+    """Start an MLflow child run when enabled, otherwise yield None."""
+    if not config.enabled:
+        yield None
+        return
+
+    mlflow.set_tracking_uri(config.tracking_uri)
+    mlflow.set_experiment(experiment_name)
+
+    run_tags = dict(tags or {})
+    if parent_run_id is not None:
+        run_tags["mlflow.parentRunId"] = parent_run_id
+        run_tags["dronewatch_parent_run_id"] = parent_run_id
+
+    with mlflow.start_run(
+        run_name=_timestamped_run_name(run_name or config.run_name),
+        nested=mlflow.active_run() is not None,
+        tags=_string_values(run_tags),
+    ) as run:
         yield run
 
 
@@ -67,10 +100,8 @@ def log_evaluation_report(report: Mapping[str, Any], prefix: str = "eval") -> No
     log_metrics(aggregate_metrics, prefix=prefix)
 
 
-def log_artifact_if_enabled(config: MlflowConfig, path: str | Path | None, artifact_path: str) -> None:
-    """Log an artifact path when MLflow is active and the file exists."""
-    if not config.enabled or path is None:
-        return
+def log_artifact(path: str | Path | None, artifact_path: str) -> None:
+    """Log an artifact path when the file exists."""
     output_path = Path(path)
     if not output_path.exists():
         return
@@ -126,6 +157,13 @@ def _param_value(value: str) -> str:
 
 def _string_values(values: Mapping[str, Any]) -> dict[str, str]:
     return {str(key): str(value) for key, value in values.items() if value is not None}
+
+
+def _timestamped_run_name(run_name: str | None) -> str:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if run_name is None:
+        return timestamp
+    return f"{run_name}_{timestamp}"
 
 
 def _chunks(data: Mapping[str, str], size: int) -> Iterator[dict[str, str]]:

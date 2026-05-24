@@ -1,4 +1,4 @@
-.PHONY: help sync install develop-rust rollout-rust rollout-random render-random train-ppo evaluate-ppo render-ppo ppo-smoke mlflow-up mlflow-down mlflow-ui test-rust test-python test clean docker-build
+.PHONY: help sync install develop-rust rollout-rust rollout-random render-random train-ppo tune-ppo tune-ppo-smoke evaluate-ppo render-ppo ppo-smoke mlflow-up mlflow-down mlflow-ui test-rust test-python test clean docker-build
 
 help:
 	@echo "Available targets:"
@@ -9,6 +9,8 @@ help:
 	@echo "  rollout-random Run a random policy rollout and write a JSON report"
 	@echo "  render-random  Run a random policy rollout and write a report plus GIF"
 	@echo "  train-ppo      Train shared-policy PPO locally"
+	@echo "  tune-ppo       Run a local Ray Tune PPO hyperparameter search"
+	@echo "  tune-ppo-smoke Run a tiny Ray Tune PPO smoke check"
 	@echo "  evaluate-ppo   Evaluate PPO checkpoint; pass CHECKPOINT=path"
 	@echo "  ppo-smoke      Run one tiny PPO training/evaluation smoke check"
 	@echo "  mlflow-up      Start the MLflow tracking UI with Docker Compose"
@@ -39,6 +41,12 @@ render-random:
 
 train-ppo:
 	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml
+
+tune-ppo:
+	uv run python -m dronewatch.training.tune_ppo --config configs/tune_ppo.yaml
+
+tune-ppo-smoke:
+	uv run python -m dronewatch.training.tune_ppo --config configs/tune_ppo.yaml tune.num_samples=2 training.stop.iterations=1 training.evaluation.enabled=false logging.mlflow.enabled=false
 
 evaluate-ppo:
 ifndef CHECKPOINT

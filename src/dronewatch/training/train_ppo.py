@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
@@ -18,15 +17,19 @@ from dronewatch.config.loader import (
 from dronewatch.config.schema import DroneWatchConfig
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
 from dronewatch.logging import (
-    log_artifact_if_enabled,
+    log_artifact,
     log_config_params,
     log_evaluation_report,
     log_metrics,
     set_mlflow_tags,
     start_mlflow_run,
 )
-from dronewatch.training.callbacks import LEARNER_METRIC_KEYS, TASK_METRIC_KEYS
-from dronewatch.training.rllib_config import SHARED_POLICY_ID, build_ppo_config
+from dronewatch.training.rllib_config import build_ppo_config
+from dronewatch.training.utils import (
+    learner_progress,
+    save_checkpoint,
+    training_progress,
+)
 
 
 def train_ppo(
@@ -51,6 +54,7 @@ def train_ppo(
 
     mlflow_config = config.logging.mlflow
     with start_mlflow_run(
+        config.project.name,
         mlflow_config,
         tags={
             "project": config.project.name,
@@ -62,8 +66,8 @@ def train_ppo(
         output_dir.mkdir(parents=True, exist_ok=True)
         saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
         log_config_params(config)
-        if mlflow_config.log_config_artifact:
-            log_artifact_if_enabled(mlflow_config, saved_config_path, artifact_path="config")
+        if mlflow_config.enabled and mlflow_config.log_config_artifact:
+            log_artifact(saved_config_path, artifact_path="config")
 
         ray.init(ignore_reinit_error=True, include_dashboard=False)
         try:
@@ -76,18 +80,18 @@ def train_ppo(
             try:
                 for iteration in range(1, iterations + 1):
                     last_result = algorithm.train()
-                    progress = _training_progress(iteration, last_result)
-                    learner_progress = _learner_progress(last_result)
+                    progress = training_progress(iteration, last_result)
+                    l_progress = learner_progress(last_result)
                     print(json.dumps(progress, sort_keys=True))
                     log_metrics(progress, prefix="train", step=iteration)
-                    log_metrics(learner_progress, prefix="learn", step=iteration)
+                    log_metrics(l_progress, prefix="learn", step=iteration)
 
                     if iteration % checkpoint_frequency == 0:
-                        checkpoint = _save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
+                        checkpoint = save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
                         checkpoints.append(checkpoint)
                         print(f"saved checkpoint: {checkpoint}")
 
-                final_checkpoint = _save_checkpoint(algorithm, output_dir / "final")
+                final_checkpoint = save_checkpoint(algorithm, output_dir / "final")
                 if final_checkpoint not in checkpoints:
                     checkpoints.append(final_checkpoint)
                 set_mlflow_tags({"final_checkpoint": final_checkpoint})
@@ -110,8 +114,8 @@ def train_ppo(
                     render_fps=config.rendering.fps,
                 )
                 log_evaluation_report(evaluation_report, prefix="eval")
-                if mlflow_config.log_report_artifact:
-                    log_artifact_if_enabled(mlflow_config, report_path, artifact_path="reports")
+                if mlflow_config.enabled and mlflow_config.log_report_artifact:
+                    log_artifact(report_path, artifact_path="reports")
         finally:
             ray.shutdown()
 
@@ -123,64 +127,9 @@ def train_ppo(
         "resolved_config_path": str(saved_config_path),
         "checkpoints": checkpoints,
         "final_checkpoint": final_checkpoint,
-        "last_result": _training_progress(iterations, last_result),
+        "last_result": training_progress(iterations, last_result),
         "evaluation_report": evaluation_report,
     }
-
-
-def _save_checkpoint(algorithm: Any, checkpoint_dir: Path) -> str:
-    """Save an RLlib Algorithm checkpoint and return its path as a string."""
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    saved = algorithm.save(str(checkpoint_dir.resolve()))
-    if hasattr(saved, "checkpoint") and hasattr(saved.checkpoint, "path"):
-        return str(saved.checkpoint.path)
-    if hasattr(saved, "path"):
-        return str(saved.path)
-    return str(saved)
-
-
-def _training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]:
-    """Extract a compact progress summary from an RLlib training result."""
-    env_runners = result.get("env_runners", {})
-    custom_metrics = result.get("custom_metrics", {})
-    progress: dict[str, Any] = {
-        "iteration": iteration,
-        "episode_return_mean": env_runners.get("episode_return_mean", result.get("episode_reward_mean")),
-        "num_env_steps_sampled_lifetime": result.get("num_env_steps_sampled_lifetime"),
-    }
-
-    # The new RLlib API stack exposes callback metrics under env_runners.
-    # Fall back to custom_metrics for compatibility with older result layouts.
-    for metric_name in (*TASK_METRIC_KEYS, "success_rate"):
-        value = env_runners.get(
-            f"dronewatch/{metric_name}",
-            custom_metrics.get(f"dronewatch/{metric_name}_mean"),
-        )
-        if value is not None:
-            progress[metric_name] = value
-    return progress
-
-
-def _learner_progress(result: Mapping[str, Any]) -> dict[str, Any]:
-    """Extract PPO learner metrics from an RLlib training result.
-
-    Merges aggregate (`__all_modules__`) counters with per-module losses/diagnostics
-    for the shared policy. Non-finite/non-numeric filtering is delegated to the MLflow
-    logger.
-    """
-    learners = result.get("learners")
-    if not isinstance(learners, Mapping):
-        return {}
-
-    merged: dict[str, Any] = {}
-    aggregate = learners.get("__all_modules__")
-    if isinstance(aggregate, Mapping):
-        merged.update(aggregate)
-    policy = learners.get(SHARED_POLICY_ID)
-    if isinstance(policy, Mapping):
-        merged.update(policy)
-
-    return {key: merged[key] for key in LEARNER_METRIC_KEYS if key in merged}
 
 
 def main() -> None:

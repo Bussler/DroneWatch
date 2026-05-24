@@ -13,11 +13,13 @@ from .schema import (
     DroneWatchConfig,
     DroneWatchEvaluationConfig,
     DroneWatchRandomPolicyConfig,
+    DroneWatchTuneConfig,
 )
 
 ConfigModel = TypeVar("ConfigModel", bound=BaseModel)
 
-TRAINING_GROUP_NAMES = {"env", "model", "training", "logging", "rendering", "tune"}
+TRAINING_GROUP_NAMES = {"env", "model", "training", "logging", "rendering"}
+TUNE_GROUP_NAMES = {"env", "model", "training", "logging", "rendering", "tune"}
 EVALUATION_GROUP_NAMES = {"env", "model", "evaluation", "logging", "rendering"}
 RANDOM_POLICY_GROUP_NAMES = {"env", "random_policy", "rendering"}
 
@@ -25,6 +27,11 @@ RANDOM_POLICY_GROUP_NAMES = {"env", "random_policy", "rendering"}
 def load_config(config_path: str | Path, overrides: Iterable[str] | None = None) -> DroneWatchConfig:
     """Load, compose, override, resolve, and validate a PPO training config."""
     return _load_typed_config(config_path, overrides, DroneWatchConfig, TRAINING_GROUP_NAMES)
+
+
+def load_tune_config(config_path: str | Path, overrides: Iterable[str] | None = None) -> DroneWatchTuneConfig:
+    """Load, compose, override, resolve, and validate a Ray Tune PPO search config."""
+    return _load_typed_config(config_path, overrides, DroneWatchTuneConfig, TUNE_GROUP_NAMES)
 
 
 def load_evaluation_config(
@@ -53,7 +60,8 @@ def save_resolved_config(config: BaseModel, path: str | Path) -> Path:
 
 
 def resolved_config_path(
-    base_dir: str | Path, config: DroneWatchConfig | DroneWatchEvaluationConfig | DroneWatchRandomPolicyConfig
+    base_dir: str | Path,
+    config: DroneWatchConfig | DroneWatchTuneConfig | DroneWatchEvaluationConfig | DroneWatchRandomPolicyConfig,
 ) -> Path:
     """Return the standard resolved-config path for a run artifact directory."""
     return Path(base_dir) / config.project.resolved_config_filename

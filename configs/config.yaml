@@ -4,7 +4,6 @@ defaults:
   - training: local_ppo
   - logging: mlflow_local
   - rendering: default
-  - tune: ray_tune
 
 project:
   name: DroneWatch
