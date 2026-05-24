@@ -17,7 +17,7 @@ from dronewatch.config.loader import (
 from dronewatch.config.schema import DroneWatchConfig
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
 from dronewatch.logging import (
-    log_artifact_if_enabled,
+    log_artifact,
     log_config_params,
     log_evaluation_report,
     log_metrics,
@@ -66,8 +66,8 @@ def train_ppo(
         output_dir.mkdir(parents=True, exist_ok=True)
         saved_config_path = save_resolved_config(config, resolved_config_path(output_dir, config))
         log_config_params(config)
-        if mlflow_config.log_config_artifact:
-            log_artifact_if_enabled(mlflow_config, saved_config_path, artifact_path="config")
+        if mlflow_config.enabled and mlflow_config.log_config_artifact:
+            log_artifact(saved_config_path, artifact_path="config")
 
         ray.init(ignore_reinit_error=True, include_dashboard=False)
         try:
@@ -114,8 +114,8 @@ def train_ppo(
                     render_fps=config.rendering.fps,
                 )
                 log_evaluation_report(evaluation_report, prefix="eval")
-                if mlflow_config.log_report_artifact:
-                    log_artifact_if_enabled(mlflow_config, report_path, artifact_path="reports")
+                if mlflow_config.enabled and mlflow_config.log_report_artifact:
+                    log_artifact(report_path, artifact_path="reports")
         finally:
             ray.shutdown()
 

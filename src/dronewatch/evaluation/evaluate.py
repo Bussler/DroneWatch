@@ -25,7 +25,7 @@ from dronewatch.evaluation.reporting import (
     write_json_report,
 )
 from dronewatch.logging import (
-    log_artifact_if_enabled,
+    log_artifact,
     log_config_params,
     log_evaluation_report,
     start_mlflow_run,
@@ -236,8 +236,8 @@ def main() -> None:
             render_fps=config.rendering.fps,
         )
         log_evaluation_report(report, prefix="eval")
-        if mlflow_config.log_report_artifact:
-            log_artifact_if_enabled(mlflow_config, report_path, artifact_path="reports")
+        if mlflow_config.enabled and mlflow_config.log_report_artifact:
+            log_artifact(report_path, artifact_path="reports")
     print(json.dumps(report, indent=2, sort_keys=True))
 
 

@@ -100,10 +100,8 @@ def log_evaluation_report(report: Mapping[str, Any], prefix: str = "eval") -> No
     log_metrics(aggregate_metrics, prefix=prefix)
 
 
-def log_artifact_if_enabled(config: MlflowConfig, path: str | Path | None, artifact_path: str) -> None:
-    """Log an artifact path when MLflow is active and the file exists."""
-    if not config.enabled or path is None:
-        return
+def log_artifact(path: str | Path | None, artifact_path: str) -> None:
+    """Log an artifact path when the file exists."""
     output_path = Path(path)
     if not output_path.exists():
         return

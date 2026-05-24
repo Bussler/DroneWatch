@@ -2,7 +2,7 @@
 
 from .mlflow_logger import (
     flatten_params,
-    log_artifact_if_enabled,
+    log_artifact,
     log_config_params,
     log_evaluation_report,
     log_metrics,
@@ -13,7 +13,7 @@ from .mlflow_logger import (
 
 __all__ = [
     "flatten_params",
-    "log_artifact_if_enabled",
+    "log_artifact",
     "log_config_params",
     "log_evaluation_report",
     "log_metrics",

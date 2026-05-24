@@ -23,7 +23,7 @@ from dronewatch.config.schema import DroneWatchConfig
 from dronewatch.evaluation.evaluate import evaluate_checkpoint
 from dronewatch.evaluation.reporting import write_json_report
 from dronewatch.logging import (
-    log_artifact_if_enabled,
+    log_artifact,
     log_config_params,
     log_evaluation_report,
     log_metrics,
@@ -68,8 +68,8 @@ def tune_ppo(config: DroneWatchConfig) -> dict[str, Any]:
             parent_run_id = run.info.run_id
         saved_config_path = save_resolved_config(config, saved_config_path)
         log_config_params(config)
-        if mlflow_config.log_config_artifact:
-            log_artifact_if_enabled(mlflow_config, saved_config_path, artifact_path="config")
+        if mlflow_config.enabled and mlflow_config.log_config_artifact:
+            log_artifact(saved_config_path, artifact_path="config")
 
         ray.init(ignore_reinit_error=True, include_dashboard=False, runtime_env=_ray_runtime_env())
         try:
@@ -97,8 +97,8 @@ def tune_ppo(config: DroneWatchConfig) -> dict[str, Any]:
 
         summary = _search_summary(results, metric=config.tune.metric, mode=config.tune.mode)
         write_json_report(report_path, summary)
-        if mlflow_config.log_report_artifact:
-            log_artifact_if_enabled(mlflow_config, report_path, artifact_path="reports")
+        if mlflow_config.enabled and mlflow_config.log_report_artifact:
+            log_artifact(report_path, artifact_path="reports")
 
         best_checkpoint = summary.get("best_checkpoint", "")
         if best_checkpoint and config.training.evaluation.enabled and config.training.evaluation.episodes > 0:
@@ -115,8 +115,8 @@ def tune_ppo(config: DroneWatchConfig) -> dict[str, Any]:
                 render_fps=config.rendering.fps,
             )
             log_evaluation_report(evaluation_report, prefix="eval")
-            if mlflow_config.log_report_artifact:
-                log_artifact_if_enabled(mlflow_config, best_report_path, artifact_path="reports")
+            if mlflow_config.enabled and mlflow_config.log_report_artifact:
+                log_artifact(best_report_path, artifact_path="reports")
 
         set_mlflow_tags(
             {

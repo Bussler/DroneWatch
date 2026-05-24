@@ -8,7 +8,7 @@ from mlflow.tracking import MlflowClient
 from dronewatch.config.schema import MlflowConfig
 from dronewatch.logging import (
     flatten_params,
-    log_artifact_if_enabled,
+    log_artifact,
     log_config_params,
     log_evaluation_report,
     log_metrics,
@@ -56,7 +56,7 @@ def test_mlflow_logger_records_params_metrics_and_artifacts(tmp_path: Path) -> N
             },
             prefix="eval",
         )
-        log_artifact_if_enabled(config, artifact_path, artifact_path="config")
+        log_artifact(artifact_path, artifact_path="config")
 
     client = MlflowClient(tracking_uri=tracking_uri)
     run_data = client.get_run(run_id).data
