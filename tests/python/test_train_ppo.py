@@ -14,14 +14,14 @@ from dronewatch.config.schema import (
     TrainingStopConfig,
 )
 from dronewatch.training.train_ppo import (
-    _learner_progress,
-    _training_progress,
+    learner_progress,
     train_ppo,
+    training_progress,
 )
 
 
 def test_training_progress_extracts_env_runner_task_metrics() -> None:
-    progress = _training_progress(
+    progress = training_progress(
         3,
         {
             "env_runners": {
@@ -37,7 +37,7 @@ def test_training_progress_extracts_env_runner_task_metrics() -> None:
 
 
 def test_learner_progress_extracts_shared_policy_and_aggregate_metrics() -> None:
-    progress = _learner_progress(
+    progress = learner_progress(
         {
             "learners": {
                 "__all_modules__": {
@@ -63,8 +63,8 @@ def test_learner_progress_extracts_shared_policy_and_aggregate_metrics() -> None
 
 
 def test_learner_progress_returns_empty_when_learners_missing() -> None:
-    assert _learner_progress({}) == {}
-    assert _learner_progress({"learners": None}) == {}
+    assert learner_progress({}) == {}
+    assert learner_progress({"learners": None}) == {}
 
 
 def test_train_ppo_single_iteration_logs_metrics_and_keeps_distinct_checkpoints(tmp_path: Path) -> None:
