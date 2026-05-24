@@ -1,6 +1,6 @@
 defaults:
   - env: swarm_search_v1
-  - model: ppo_feedforward
+  - model: ppo_lstm
   - training: local_ppo
   - logging: mlflow_local
   - rendering: default

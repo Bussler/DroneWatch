@@ -93,6 +93,9 @@ class RewardWeights(_FrozenModel):
     agent_collision: float = Field(default=-0.25, le=0.0)
     obstacle_collision: float = Field(default=-0.5, le=0.0)
     step_penalty: float = Field(default=-0.001, le=0.0)
+    success_bonus: float = Field(default=50.0, ge=0.0)
+    remaining_target_penalty: float = Field(default=-0.02, le=0.0)
+    visible_target_approach: float = Field(default=0.05, ge=0.0)
 
 
 class EnvConfig(_FrozenModel):

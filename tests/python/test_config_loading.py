@@ -20,8 +20,11 @@ def test_load_config_composes_default_groups() -> None:
     assert config.project.name == "DroneWatch"
     assert config.env.name == "SwarmSearch2D"
     assert config.env.simulation.agents.count == 16
+    assert config.env.reward.success_bonus == 50.0
+    assert config.env.reward.remaining_target_penalty == -0.02
+    assert config.env.reward.visible_target_approach == 0.05
     assert config.model.kind == "feedforward"
-    assert config.training.stop.iterations == 10
+    assert config.training.stop.iterations == 5000
     assert config.logging.mlflow.enabled is True
     assert config.logging.mlflow.tracking_uri == "file:./outputs/mlruns"
     assert not hasattr(config, "tune")
