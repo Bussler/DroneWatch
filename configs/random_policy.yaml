@@ -4,7 +4,7 @@ defaults:
   - rendering: default
 
 project:
-  name: DroneWatch
+  name: RandomDroneWatch
   seed: 133742
   output_dir: outputs
   artifact_dir: artifacts

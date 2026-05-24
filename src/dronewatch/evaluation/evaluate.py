@@ -211,6 +211,7 @@ def main() -> None:
     mlflow_config = config.logging.mlflow
 
     with start_mlflow_run(
+        config.project.name,
         mlflow_config,
         tags={
             "project": config.project.name,

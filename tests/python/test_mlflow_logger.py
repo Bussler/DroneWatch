@@ -35,13 +35,12 @@ def test_mlflow_logger_records_params_metrics_and_artifacts(tmp_path: Path) -> N
     tracking_uri = f"file:{tmp_path / 'mlruns'}"
     config = MlflowConfig(
         tracking_uri=tracking_uri,
-        experiment_name="dronewatch-test",
         run_name="logger-test",
     )
     artifact_path = tmp_path / "resolved_config.yaml"
     artifact_path.write_text("project:\n  name: DroneWatch\n", encoding="utf-8")
 
-    with start_mlflow_run(config, tags={"entrypoint": "test"}) as run:
+    with start_mlflow_run("dronewatch-test", config, tags={"entrypoint": "test"}) as run:
         assert run is not None
         run_id = run.info.run_id
         log_config_params({"project": {"name": "DroneWatch"}}, prefix="config")
@@ -72,5 +71,5 @@ def test_mlflow_logger_records_params_metrics_and_artifacts(tmp_path: Path) -> N
 
 
 def test_mlflow_run_disabled_is_noop() -> None:
-    with start_mlflow_run(MlflowConfig(enabled=False)) as run:
+    with start_mlflow_run("dronewatch-test", MlflowConfig(enabled=False)) as run:
         assert run is None

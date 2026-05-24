@@ -219,7 +219,6 @@ class MlflowConfig(_FrozenModel):
 
     enabled: bool = True
     tracking_uri: str = Field(default="file:./outputs/mlruns", min_length=1)
-    experiment_name: str = Field(default="dronewatch-swarm-search-ppo", min_length=1)
     run_name: str | None = None
     log_system_metrics: bool = False
     log_config_artifact: bool = True

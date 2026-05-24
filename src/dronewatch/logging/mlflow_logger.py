@@ -19,14 +19,16 @@ MAX_PARAM_VALUE_LENGTH = 5000
 
 
 @contextmanager
-def start_mlflow_run(config: MlflowConfig, tags: Mapping[str, Any] | None = None) -> Iterator[Any | None]:
+def start_mlflow_run(
+    experiment_name: str, config: MlflowConfig, tags: Mapping[str, Any] | None = None
+) -> Iterator[Any | None]:
     """Start an MLflow run when enabled, otherwise yield None."""
     if not config.enabled:
         yield None
         return
 
     mlflow.set_tracking_uri(config.tracking_uri)
-    mlflow.set_experiment(config.experiment_name)
+    mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run(run_name=config.run_name, tags=_string_values(tags or {})) as run:
         if config.log_system_metrics and hasattr(mlflow, "enable_system_metrics_logging"):
@@ -36,6 +38,7 @@ def start_mlflow_run(config: MlflowConfig, tags: Mapping[str, Any] | None = None
 
 @contextmanager
 def start_child_mlflow_run(
+    experiment_name: str,
     config: MlflowConfig,
     parent_run_id: str | None = None,
     tags: Mapping[str, Any] | None = None,
@@ -47,7 +50,7 @@ def start_child_mlflow_run(
         return
 
     mlflow.set_tracking_uri(config.tracking_uri)
-    mlflow.set_experiment(config.experiment_name)
+    mlflow.set_experiment(experiment_name)
 
     run_tags = dict(tags or {})
     if parent_run_id is not None:

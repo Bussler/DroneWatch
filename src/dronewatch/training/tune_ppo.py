@@ -53,6 +53,7 @@ def tune_ppo(config: DroneWatchConfig) -> dict[str, Any]:
     evaluation_report: dict[str, Any] | None = None
 
     with start_mlflow_run(
+        config.project.name,
         mlflow_config,
         tags={
             "project": config.project.name,
@@ -151,6 +152,7 @@ def _run_trial(
     last_metrics: dict[str, Any] = {}
 
     with start_child_mlflow_run(
+        config.project.name,
         config.logging.mlflow,
         parent_run_id=parent_run_id,
         run_name=f"tune-{trial_id}",
