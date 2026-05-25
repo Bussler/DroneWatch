@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -49,7 +50,12 @@ def train_ppo(
     last_result: dict[str, Any] = {}
     final_checkpoint = ""
     evaluation_report: dict[str, Any] | None = None
-    output_dir = config.project.artifact_dir / config.training.checkpoint.directory
+    output_dir = (
+        config.project.artifact_dir
+        / config.training.checkpoint.directory
+        / config.project.name
+        / datetime.now().strftime("%Y%m%d_%H%M%S")
+    )
     report_path = config.project.artifact_dir / config.training.evaluation.report_path
 
     mlflow_config = config.logging.mlflow
