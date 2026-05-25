@@ -135,6 +135,7 @@ class PPOHyperparameters(_FrozenModel):
     lambda_: float = Field(default=0.95, ge=0.0, le=1.0)
     lr: float = Field(default=3e-4, gt=0.0)
     clip_param: float = Field(default=0.2, gt=0.0)
+    grad_clip: float = Field(default=0.5, gt=0.0)
     entropy_coeff: float = Field(default=0.01, ge=0.0)
     vf_loss_coeff: float = Field(default=1.0, ge=0.0)
     train_batch_size_per_learner: int = Field(default=1024, gt=0)

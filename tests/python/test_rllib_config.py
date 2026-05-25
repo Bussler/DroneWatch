@@ -36,6 +36,7 @@ def test_build_ppo_config_uses_swarm_search_env_and_env_step_counting() -> None:
     assert config.env == SwarmSearchEnvConfig().name
     assert config.env_config["seed"] == 7
     assert config.env_config["simulation"]["agents"]["count"] == 16
+    assert config.grad_clip == 0.5
     assert config.count_steps_by == "env_steps"
     assert SHARED_POLICY_ID in config.policies
 

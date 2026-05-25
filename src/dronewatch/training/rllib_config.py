@@ -63,6 +63,7 @@ def build_ppo_config(
             lambda_=ppo.lambda_,
             lr=ppo.lr,
             clip_param=ppo.clip_param,
+            grad_clip=ppo.grad_clip,
             entropy_coeff=ppo.entropy_coeff,
             vf_loss_coeff=ppo.vf_loss_coeff,
             train_batch_size_per_learner=ppo.train_batch_size_per_learner,
