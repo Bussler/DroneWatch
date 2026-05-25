@@ -94,7 +94,7 @@ def evaluate_algorithm(
     module = algorithm.get_module(SHARED_POLICY_ID)
     initial_state = _initial_module_state(module)
     episode_summaries: list[dict[str, float]] = []
-    first_episode_frames: list[SimulationFrame] = []
+    episode_frames: list[list[SimulationFrame]] = []
     env_config = env_config or SwarmSearchEnvConfig()
 
     for episode_index in range(episodes):
@@ -106,8 +106,9 @@ def evaluate_algorithm(
         episode_reward = 0.0
         final_metrics: dict[str, Any] = {}
 
-        if render and episode_index == 0:
-            first_episode_frames.append(_capture_frame(env))
+        if render:
+            episode_frames.append([])
+            episode_frames[-1].append(_capture_frame(env))
 
         while not done:
             actions: dict[str, np.ndarray] = {}
@@ -121,11 +122,9 @@ def evaluate_algorithm(
             done = bool(terminateds["__all__"] or truncateds["__all__"])
             final_metrics = dict(next(iter(infos.values()))["metrics"])
 
-            should_capture = (
-                render and episode_index == 0 and (done or int(final_metrics["timestep"]) % render_stride == 0)
-            )
+            should_capture = render and (done or int(final_metrics["timestep"]) % render_stride == 0)
             if should_capture:
-                first_episode_frames.append(_capture_frame(env, final_metrics))
+                episode_frames[-1].append(_capture_frame(env, final_metrics))
 
         episode_summaries.append(episode_summary(episode_reward, final_metrics))
 
@@ -136,7 +135,13 @@ def evaluate_algorithm(
         extra["model"] = model
     report = aggregate_report(episode_summaries, policy="ppo", extra=extra)
     if render:
-        render_episode_gif(first_episode_frames, gif_path, fps=render_fps, env_config=env_config.simulation)
+        for episode_index, episode_frames in enumerate(episode_frames):
+            render_episode_gif(
+                episode_frames,
+                gif_path.with_name(f"{gif_path.stem}_episode_{episode_index + 1:02d}{gif_path.suffix}"),
+                fps=render_fps,
+                env_config=env_config.simulation,
+            )
     return report
 
 
