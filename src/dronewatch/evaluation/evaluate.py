@@ -117,7 +117,7 @@ def evaluate_algorithm(
                 actions[agent_id] = np.asarray(action, dtype=np.float32)
 
             observations, rewards, terminateds, truncateds, infos = env.step(actions)
-            episode_reward += float(next(iter(rewards.values())))
+            episode_reward += float(sum(rewards.values()))
             done = bool(terminateds["__all__"] or truncateds["__all__"])
             final_metrics = dict(next(iter(infos.values()))["metrics"])
 

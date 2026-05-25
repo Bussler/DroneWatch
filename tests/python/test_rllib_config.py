@@ -66,6 +66,7 @@ def test_build_ppo_config_accepts_env_and_model_values() -> None:
         activation="tanh",
         lstm_cell_size=64,
         max_seq_len=8,
+        log_std_clip_param=1.5,
     )
 
     config = build_ppo_config(env_config=env_config, model=model)
@@ -73,6 +74,7 @@ def test_build_ppo_config_accepts_env_and_model_values() -> None:
     assert config.env_config["simulation"]["agents"]["count"] == 4
     assert config.env_config["seed"] == 133742
     assert config.model_config["fcnet_hiddens"] == [32, 16]
+    assert config.model_config["log_std_clip_param"] == 1.5
     assert config.model_config["use_lstm"] is True
     assert config.model_config["lstm_cell_size"] == 64
 

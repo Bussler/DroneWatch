@@ -115,11 +115,12 @@ class SwarmSearchEnv(MultiAgentEnv):
         )
         reward_terms = calculate_reward_terms(events, metrics, approach_signal, self._config.reward)
         team_reward = calculate_team_reward(events, metrics, approach_signal, self._config.reward)
+        per_agent_reward = team_reward / max(len(self._agent_ids), 1)
         self._episode_reward += team_reward
 
         terminated = bool(metrics.get("all_targets_discovered", False))
         truncated = bool(metrics.get("horizon_reached", False)) and not terminated
-        rewards = {agent_id: team_reward for agent_id in self._agent_ids}
+        rewards = {agent_id: per_agent_reward for agent_id in self._agent_ids}
         terminateds = {agent_id: terminated for agent_id in self._agent_ids}
         truncateds = {agent_id: truncated for agent_id in self._agent_ids}
         terminateds["__all__"] = terminated
@@ -135,6 +136,8 @@ class SwarmSearchEnv(MultiAgentEnv):
                 "events": events,
                 "metrics": metrics,
                 "reward_terms": reward_terms,
+                "team_reward": team_reward,
+                "per_agent_reward": per_agent_reward,
                 "episode_reward": self._episode_reward,
                 "episode_length": metrics["timestep"],
             }

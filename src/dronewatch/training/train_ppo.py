@@ -15,8 +15,9 @@ from dronewatch.config.loader import (
     resolved_config_path,
     save_resolved_config,
 )
-from dronewatch.config.schema import DroneWatchConfig
-from dronewatch.evaluation.evaluate import evaluate_checkpoint
+from dronewatch.config.schema import DroneWatchConfig, TrainingEvaluationConfig
+from dronewatch.evaluation.evaluate import evaluate_algorithm, evaluate_checkpoint
+from dronewatch.evaluation.reporting import write_json_report
 from dronewatch.logging import (
     log_artifact,
     log_config_params,
@@ -50,6 +51,7 @@ def train_ppo(
     last_result: dict[str, Any] = {}
     final_checkpoint = ""
     evaluation_report: dict[str, Any] | None = None
+    periodic_evaluation_reports: list[dict[str, Any]] = []
     output_dir = (
         config.project.artifact_dir
         / config.training.checkpoint.directory
@@ -75,6 +77,7 @@ def train_ppo(
         if mlflow_config.enabled and mlflow_config.log_config_artifact:
             log_artifact(saved_config_path, artifact_path="config")
 
+        train_eval = config.training.evaluation
         ray.init(ignore_reinit_error=True, include_dashboard=False)
         try:
             algorithm = build_ppo_config(
@@ -98,6 +101,25 @@ def train_ppo(
                         checkpoint = save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
                         checkpoints.append(checkpoint)
                         print(f"saved checkpoint: {checkpoint}")
+                        if _should_evaluate_iteration(train_eval, iteration):
+                            periodic_report_path = _iteration_report_path(report_path, iteration)
+                            periodic_report = evaluate_algorithm(
+                                algorithm=algorithm,
+                                episodes=train_eval.episodes,
+                                seed=seed if seed is not None else 0,
+                                checkpoint=checkpoint,
+                                model=model,
+                                render=False,
+                                gif_path=None,
+                                render_stride=train_eval.render_stride,
+                                env_config=config.env,
+                                render_fps=config.rendering.fps,
+                            )
+                            periodic_evaluation_reports.append(periodic_report)
+                            write_json_report(periodic_report_path, periodic_report)
+                            log_evaluation_report(periodic_report, prefix="eval", step=iteration)
+                            if mlflow_config.enabled and mlflow_config.log_report_artifact:
+                                log_artifact(periodic_report_path, artifact_path="reports")
 
                 final_checkpoint = save_checkpoint(algorithm, output_dir / "final")
                 if final_checkpoint not in checkpoints:
@@ -107,7 +129,6 @@ def train_ppo(
             finally:
                 algorithm.stop()
 
-            train_eval = config.training.evaluation
             if train_eval.enabled and train_eval.episodes > 0:
                 evaluation_report = evaluate_checkpoint(
                     checkpoint=final_checkpoint,
@@ -121,7 +142,7 @@ def train_ppo(
                     env_config=config.env,
                     render_fps=config.rendering.fps,
                 )
-                log_evaluation_report(evaluation_report, prefix="eval")
+                log_evaluation_report(evaluation_report, prefix="eval", step=iterations)
                 if mlflow_config.enabled and mlflow_config.log_report_artifact:
                     log_artifact(report_path, artifact_path="reports")
         finally:
@@ -137,7 +158,25 @@ def train_ppo(
         "final_checkpoint": final_checkpoint,
         "last_result": training_progress(iterations, last_result),
         "evaluation_report": evaluation_report,
+        "periodic_evaluation_reports": periodic_evaluation_reports,
     }
+
+
+def _should_evaluate_iteration(evaluation: TrainingEvaluationConfig, iteration: int) -> bool:
+    """Return whether an in-training checkpoint evaluation should run."""
+    return (
+        evaluation.enabled
+        and evaluation.episodes > 0
+        and evaluation.frequency_iters is not None
+        and iteration % evaluation.frequency_iters == 0
+    )
+
+
+def _iteration_report_path(report_path: Path, iteration: int) -> Path:
+    """Return a report path that preserves the base report and labels the checkpoint iteration."""
+    suffix = report_path.suffix or ".json"
+    stem = report_path.stem if report_path.suffix else report_path.name
+    return report_path.with_name(f"{stem}_iteration_{iteration:04d}{suffix}")
 
 
 def main() -> None:

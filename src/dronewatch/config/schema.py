@@ -126,6 +126,7 @@ class ModelConfig(_FrozenModel):
     max_seq_len: int = Field(default=20, gt=0)
     fcnet_hiddens: list[int] = Field(default_factory=lambda: [256, 256])
     activation: str = Field(default="tanh", min_length=1)
+    log_std_clip_param: float = Field(default=2.0, gt=0.0)
 
 
 class PPOHyperparameters(_FrozenModel):
@@ -180,6 +181,7 @@ class TrainingEvaluationConfig(_FrozenModel):
 
     enabled: bool = True
     episodes: int = Field(default=5, ge=0)
+    frequency_iters: int | None = Field(default=None, gt=0)
     report_path: Path = Path("reports/ppo_eval_report.json")
     render: bool = True
     gif_path: Path = Path("gifs/ppo_eval_episode.gif")

@@ -4,3 +4,4 @@ model:
   max_seq_len: 20
   fcnet_hiddens: [256, 256]
   activation: tanh
+  log_std_clip_param: 2.0

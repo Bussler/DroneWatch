@@ -86,11 +86,16 @@ def _model_config(model_config: ModelConfig | None = None) -> DefaultModelConfig
     """Return the default RLlib model config for the requested model kind."""
     network = model_config or ModelConfig()
     if network.kind == "feedforward":
-        return DefaultModelConfig(fcnet_hiddens=network.fcnet_hiddens, fcnet_activation=network.activation)
+        return DefaultModelConfig(
+            fcnet_hiddens=network.fcnet_hiddens,
+            fcnet_activation=network.activation,
+            log_std_clip_param=network.log_std_clip_param,
+        )
     if network.kind == "lstm":
         return DefaultModelConfig(
             fcnet_hiddens=network.fcnet_hiddens,
             fcnet_activation=network.activation,
+            log_std_clip_param=network.log_std_clip_param,
             use_lstm=True,
             lstm_cell_size=network.lstm_cell_size,
             max_seq_len=network.max_seq_len,
