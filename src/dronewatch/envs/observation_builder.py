@@ -66,10 +66,13 @@ class ObservationBuilder:
         """Build and validate the complete observation vector for one agent."""
         position = _array2(agent["position"])
         velocity = _array2(agent["velocity"])
+        agent_index = float(int(agent["id"]))
+        agent_id_scale = max(float(self._env_config.agents.count - 1), 1.0)
         timestep = float(metrics.get("timestep", 0.0))
         horizon = max(float(metrics.get("max_episode_steps", self._env_config.max_episode_steps)), 1.0)
 
         values: list[float] = [
+            agent_index / agent_id_scale,
             position[0] / self._env_config.world.width,
             position[1] / self._env_config.world.height,
             velocity[0] / self._env_config.agents.max_speed,

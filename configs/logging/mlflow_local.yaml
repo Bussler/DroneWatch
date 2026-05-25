@@ -8,5 +8,3 @@ logging:
     log_report_artifact: true
     log_checkpoint_artifacts: false
     log_gif_artifacts: false
-  console:
-    enabled: true
