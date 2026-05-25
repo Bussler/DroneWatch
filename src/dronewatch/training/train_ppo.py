@@ -86,11 +86,13 @@ def train_ppo(
             try:
                 for iteration in range(1, iterations + 1):
                     last_result = algorithm.train()
-                    progress = training_progress(iteration, last_result)
-                    l_progress = learner_progress(last_result)
-                    print(json.dumps(progress, sort_keys=True))
-                    log_metrics(progress, prefix="train", step=iteration)
-                    log_metrics(l_progress, prefix="learn", step=iteration)
+
+                    if iteration % mlflow_config.log_interval_iters == 0:
+                        progress = training_progress(iteration, last_result)
+                        l_progress = learner_progress(last_result)
+                        print(json.dumps(progress, sort_keys=True))
+                        log_metrics(progress, prefix="train", step=iteration)
+                        log_metrics(l_progress, prefix="learn", step=iteration)
 
                     if iteration % checkpoint_frequency == 0:
                         checkpoint = save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")

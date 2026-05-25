@@ -221,6 +221,7 @@ class MlflowConfig(_FrozenModel):
     """Local MLflow tracking settings."""
 
     enabled: bool = True
+    log_interval_iters: int = Field(default=10, gt=0)
     tracking_uri: str = Field(default="file:./outputs/mlruns", min_length=1)
     run_name: str | None = None
     log_system_metrics: bool = False
@@ -230,17 +231,10 @@ class MlflowConfig(_FrozenModel):
     log_gif_artifacts: bool = False
 
 
-class ConsoleLoggingConfig(_FrozenModel):
-    """Console logging settings."""
-
-    enabled: bool = True
-
-
 class LoggingConfig(_FrozenModel):
     """Experiment logging settings."""
 
     mlflow: MlflowConfig = Field(default_factory=MlflowConfig)
-    console: ConsoleLoggingConfig = Field(default_factory=ConsoleLoggingConfig)
 
 
 class TuneConfig(_FrozenModel):
