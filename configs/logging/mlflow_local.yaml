@@ -3,6 +3,7 @@ logging:
     enabled: true
     tracking_uri: file:./outputs/mlruns
     run_name: null
+    log_interval_iters: 5
     log_system_metrics: false
     log_config_artifact: true
     log_report_artifact: true
