@@ -6,8 +6,8 @@ defaults:
   - rendering: default
 
 project:
-  name: DroneWatchLSTM
-  seed: 133742
+  name: DroneWatchLSTMGeneralizationSmall
+  seed: null
   output_dir: outputs
   artifact_dir: artifacts
   resolved_config_filename: resolved_config.yaml

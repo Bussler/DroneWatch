@@ -1,6 +1,6 @@
 training:
   stop:
-    iterations: 1000
+    iterations: 700
   ray:
     num_env_runners: 0
     num_envs_per_env_runner: 1
@@ -9,10 +9,10 @@ training:
   ppo:
     gamma: 0.99
     lambda_: 0.95
-    lr: 0.0003
-    clip_param: 0.2
+    lr: 0.0001
+    clip_param: 0.1
     grad_clip: 0.5
-    entropy_coeff: 0.001
+    entropy_coeff: 0.002
     vf_loss_coeff: 1.0
     train_batch_size_per_learner: 4096
     minibatch_size: 512
@@ -23,7 +23,7 @@ training:
     frequency_iters: 50
   evaluation:
     enabled: true
-    episodes: 1
+    episodes: 10
     frequency_iters: 50
     report_path: reports/ppo_eval_report.json
     render: true
