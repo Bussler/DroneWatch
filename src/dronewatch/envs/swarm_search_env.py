@@ -12,7 +12,11 @@ from dronewatch.config.schema import SwarmSearchEnvConfig
 from dronewatch.sim import SwarmSimulation
 
 from .observation_builder import ObservationBuilder
-from .reward import calculate_team_reward
+from .reward import (
+    calculate_reward_terms,
+    calculate_team_reward,
+    calculate_visible_target_approach,
+)
 from .spaces import (
     action_space,
     agent_ids,
@@ -96,18 +100,27 @@ class SwarmSearchEnv(MultiAgentEnv):
         multi-agent payload.
         """
         actions = self._ordered_actions(action_dict)
+        previous_state = self._simulation.state()
         result = self._simulation.step(actions)
         events = dict(result["events"])
         metrics = dict(result["metrics"])
         state = result["state"]
 
         observations = self._observation_builder.build(state, metrics)
-        team_reward = calculate_team_reward(events, self._config.reward)
+        approach_signal = calculate_visible_target_approach(
+            previous_state=previous_state,
+            next_state=state,
+            sensing_radius=self._config.simulation.agents.sensing_radius,
+            max_displacement=self._config.simulation.agents.max_speed * self._config.simulation.world.dt,
+        )
+        reward_terms = calculate_reward_terms(events, metrics, approach_signal, self._config.reward)
+        team_reward = calculate_team_reward(events, metrics, approach_signal, self._config.reward)
+        per_agent_reward = team_reward / max(len(self._agent_ids), 1)
         self._episode_reward += team_reward
 
         terminated = bool(metrics.get("all_targets_discovered", False))
         truncated = bool(metrics.get("horizon_reached", False)) and not terminated
-        rewards = {agent_id: team_reward for agent_id in self._agent_ids}
+        rewards = {agent_id: per_agent_reward for agent_id in self._agent_ids}
         terminateds = {agent_id: terminated for agent_id in self._agent_ids}
         truncateds = {agent_id: truncated for agent_id in self._agent_ids}
         terminateds["__all__"] = terminated
@@ -122,6 +135,9 @@ class SwarmSearchEnv(MultiAgentEnv):
             agent_id: {
                 "events": events,
                 "metrics": metrics,
+                "reward_terms": reward_terms,
+                "team_reward": team_reward,
+                "per_agent_reward": per_agent_reward,
                 "episode_reward": self._episode_reward,
                 "episode_length": metrics["timestep"],
             }

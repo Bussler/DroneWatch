@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +16,8 @@ from dronewatch.config.loader import (
     save_resolved_config,
 )
 from dronewatch.config.schema import DroneWatchConfig
-from dronewatch.evaluation.evaluate import evaluate_checkpoint
+from dronewatch.evaluation.evaluate import evaluate_algorithm, evaluate_checkpoint
+from dronewatch.evaluation.reporting import write_json_report
 from dronewatch.logging import (
     log_artifact,
     log_config_params,
@@ -49,7 +51,13 @@ def train_ppo(
     last_result: dict[str, Any] = {}
     final_checkpoint = ""
     evaluation_report: dict[str, Any] | None = None
-    output_dir = config.project.artifact_dir / config.training.checkpoint.directory
+    periodic_evaluation_reports: list[dict[str, Any]] = []
+    output_dir = (
+        config.project.artifact_dir
+        / config.training.checkpoint.directory
+        / config.project.name
+        / datetime.now().strftime("%Y%m%d_%H%M%S")
+    )
     report_path = config.project.artifact_dir / config.training.evaluation.report_path
 
     mlflow_config = config.logging.mlflow
@@ -69,6 +77,7 @@ def train_ppo(
         if mlflow_config.enabled and mlflow_config.log_config_artifact:
             log_artifact(saved_config_path, artifact_path="config")
 
+        train_eval = config.training.evaluation
         ray.init(ignore_reinit_error=True, include_dashboard=False)
         try:
             algorithm = build_ppo_config(
@@ -80,16 +89,44 @@ def train_ppo(
             try:
                 for iteration in range(1, iterations + 1):
                     last_result = algorithm.train()
-                    progress = training_progress(iteration, last_result)
-                    l_progress = learner_progress(last_result)
-                    print(json.dumps(progress, sort_keys=True))
-                    log_metrics(progress, prefix="train", step=iteration)
-                    log_metrics(l_progress, prefix="learn", step=iteration)
 
+                    # Logging
+                    if iteration % mlflow_config.log_interval_iters == 0:
+                        progress = training_progress(iteration, last_result)
+                        l_progress = learner_progress(last_result)
+                        print(json.dumps(progress, sort_keys=True))
+                        log_metrics(progress, prefix="train", step=iteration)
+                        log_metrics(l_progress, prefix="learn", step=iteration)
+
+                    # Deterministic evalution and checkpointing
                     if iteration % checkpoint_frequency == 0:
                         checkpoint = save_checkpoint(algorithm, output_dir / f"iteration_{iteration:04d}")
                         checkpoints.append(checkpoint)
                         print(f"saved checkpoint: {checkpoint}")
+                        if (
+                            train_eval.enabled
+                            and train_eval.episodes > 0
+                            and train_eval.frequency_iters is not None
+                            and iteration % train_eval.frequency_iters == 0
+                        ):
+                            periodic_report_path = report_path / config.project.name / f"iteration_{iteration:04d}.json"
+                            periodic_report = evaluate_algorithm(
+                                algorithm=algorithm,
+                                episodes=train_eval.episodes,
+                                seed=seed if seed is not None else 0,
+                                checkpoint=checkpoint,
+                                model=model,
+                                render=False,
+                                gif_path=None,
+                                render_stride=train_eval.render_stride,
+                                env_config=config.env,
+                                render_fps=config.rendering.fps,
+                            )
+                            periodic_evaluation_reports.append(periodic_report)
+                            write_json_report(periodic_report_path, periodic_report)
+                            log_evaluation_report(periodic_report, prefix="eval", step=iteration)
+                            if mlflow_config.enabled and mlflow_config.log_report_artifact:
+                                log_artifact(periodic_report_path, artifact_path="reports")
 
                 final_checkpoint = save_checkpoint(algorithm, output_dir / "final")
                 if final_checkpoint not in checkpoints:
@@ -98,24 +135,6 @@ def train_ppo(
                 print(f"saved final checkpoint: {final_checkpoint}")
             finally:
                 algorithm.stop()
-
-            train_eval = config.training.evaluation
-            if train_eval.enabled and train_eval.episodes > 0:
-                evaluation_report = evaluate_checkpoint(
-                    checkpoint=final_checkpoint,
-                    episodes=train_eval.episodes,
-                    seed=seed if seed is not None else 0,
-                    report_path=report_path,
-                    model=model,
-                    render=train_eval.render,
-                    gif_path=config.project.artifact_dir / train_eval.gif_path,
-                    render_stride=train_eval.render_stride,
-                    env_config=config.env,
-                    render_fps=config.rendering.fps,
-                )
-                log_evaluation_report(evaluation_report, prefix="eval")
-                if mlflow_config.enabled and mlflow_config.log_report_artifact:
-                    log_artifact(report_path, artifact_path="reports")
         finally:
             ray.shutdown()
 
@@ -129,6 +148,7 @@ def train_ppo(
         "final_checkpoint": final_checkpoint,
         "last_result": training_progress(iterations, last_result),
         "evaluation_report": evaluation_report,
+        "periodic_evaluation_reports": periodic_evaluation_reports,
     }
 
 

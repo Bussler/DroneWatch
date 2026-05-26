@@ -9,7 +9,7 @@ from dronewatch.config.schema import ObservationConfig, RewardWeights
 
 REWARD_WEIGHTS = RewardWeights()
 
-OWN_STATE_SIZE = 5
+OWN_STATE_SIZE = 6
 VISIBLE_AGENT_FEATURES = 6
 VISIBLE_TARGET_FEATURES = 5
 VISIBLE_OBSTACLE_FEATURES = 5

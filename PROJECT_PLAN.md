@@ -820,9 +820,6 @@ logging:
     tracking_uri: file:./outputs/mlruns
     experiment_name: dronewatch-swarm-search-ppo
     log_system_metrics: false
-
-  console:
-    enabled: true
 ```
 
 ---

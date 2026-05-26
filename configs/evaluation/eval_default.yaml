@@ -1,7 +1,7 @@
 evaluation:
   checkpoint: null
   episodes: 10
-  report_path: reports/ppo_eval_report.json
+  report_path: reports/eval
   render: true
-  gif_path: gifs/ppo_eval_episode.gif
+  gif_path: gifs/eval
   render_stride: 4

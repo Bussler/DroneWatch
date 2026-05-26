@@ -1,13 +1,13 @@
 defaults:
-  - env: swarm_search_v1
-  - model: ppo_feedforward
+  - env: swarm_search_easy
+  - model: ppo_lstm
   - training: local_ppo
   - logging: mlflow_local
   - rendering: default
 
 project:
-  name: DroneWatch
-  seed: 133742
+  name: DroneWatchLSTMGeneralizationSmall
+  seed: null
   output_dir: outputs
   artifact_dir: artifacts
   resolved_config_filename: resolved_config.yaml

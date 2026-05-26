@@ -13,7 +13,7 @@ tune:
       upper: 0.005
     training.ppo.entropy_coeff:
       type: choice
-      values: [0.0, 0.005, 0.01, 0.02]
+      values: [0.0, 0.0005, 0.001, 0.005]
     training.ppo.train_batch_size_per_learner:
       type: choice
       values: [512, 1024, 2048]

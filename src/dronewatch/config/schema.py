@@ -93,6 +93,9 @@ class RewardWeights(_FrozenModel):
     agent_collision: float = Field(default=-0.25, le=0.0)
     obstacle_collision: float = Field(default=-0.5, le=0.0)
     step_penalty: float = Field(default=-0.001, le=0.0)
+    success_bonus: float = Field(default=50.0, ge=0.0)
+    remaining_target_penalty: float = Field(default=-0.02, le=0.0)
+    visible_target_approach: float = Field(default=0.05, ge=0.0)
 
 
 class EnvConfig(_FrozenModel):
@@ -123,6 +126,7 @@ class ModelConfig(_FrozenModel):
     max_seq_len: int = Field(default=20, gt=0)
     fcnet_hiddens: list[int] = Field(default_factory=lambda: [256, 256])
     activation: str = Field(default="tanh", min_length=1)
+    log_std_clip_param: float = Field(default=2.0, gt=0.0)
 
 
 class PPOHyperparameters(_FrozenModel):
@@ -132,6 +136,7 @@ class PPOHyperparameters(_FrozenModel):
     lambda_: float = Field(default=0.95, ge=0.0, le=1.0)
     lr: float = Field(default=3e-4, gt=0.0)
     clip_param: float = Field(default=0.2, gt=0.0)
+    grad_clip: float = Field(default=0.5, gt=0.0)
     entropy_coeff: float = Field(default=0.01, ge=0.0)
     vf_loss_coeff: float = Field(default=1.0, ge=0.0)
     train_batch_size_per_learner: int = Field(default=1024, gt=0)
@@ -176,9 +181,10 @@ class TrainingEvaluationConfig(_FrozenModel):
 
     enabled: bool = True
     episodes: int = Field(default=5, ge=0)
-    report_path: Path = Path("reports/ppo_eval_report.json")
+    frequency_iters: int | None = Field(default=None, gt=0)
+    report_path: Path = Path("reports/")
     render: bool = True
-    gif_path: Path = Path("gifs/ppo_eval_episode.gif")
+    gif_path: Path = Path("gifs/")
     render_stride: int = Field(default=4, gt=0)
 
 
@@ -218,6 +224,7 @@ class MlflowConfig(_FrozenModel):
     """Local MLflow tracking settings."""
 
     enabled: bool = True
+    log_interval_iters: int = Field(default=10, gt=0)
     tracking_uri: str = Field(default="file:./outputs/mlruns", min_length=1)
     run_name: str | None = None
     log_system_metrics: bool = False
@@ -227,17 +234,10 @@ class MlflowConfig(_FrozenModel):
     log_gif_artifacts: bool = False
 
 
-class ConsoleLoggingConfig(_FrozenModel):
-    """Console logging settings."""
-
-    enabled: bool = True
-
-
 class LoggingConfig(_FrozenModel):
     """Experiment logging settings."""
 
     mlflow: MlflowConfig = Field(default_factory=MlflowConfig)
-    console: ConsoleLoggingConfig = Field(default_factory=ConsoleLoggingConfig)
 
 
 class TuneConfig(_FrozenModel):

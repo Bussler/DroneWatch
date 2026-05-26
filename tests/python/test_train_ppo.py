@@ -14,6 +14,8 @@ from dronewatch.config.schema import (
     TrainingStopConfig,
 )
 from dronewatch.training.train_ppo import (
+    _iteration_report_path,
+    _should_evaluate_iteration,
     learner_progress,
     train_ppo,
     training_progress,
@@ -65,6 +67,21 @@ def test_learner_progress_extracts_shared_policy_and_aggregate_metrics() -> None
 def test_learner_progress_returns_empty_when_learners_missing() -> None:
     assert learner_progress({}) == {}
     assert learner_progress({"learners": None}) == {}
+
+
+def test_periodic_evaluation_helpers() -> None:
+    evaluation = TrainingEvaluationConfig(enabled=True, episodes=2, frequency_iters=50)
+
+    assert _should_evaluate_iteration(evaluation, 50) is True
+    assert _should_evaluate_iteration(evaluation, 75) is False
+    assert _should_evaluate_iteration(TrainingEvaluationConfig(enabled=False, frequency_iters=50), 50) is False
+    assert (
+        _should_evaluate_iteration(TrainingEvaluationConfig(enabled=True, episodes=0, frequency_iters=50), 50) is False
+    )
+    assert _should_evaluate_iteration(TrainingEvaluationConfig(enabled=True, frequency_iters=None), 50) is False
+    assert _iteration_report_path(Path("reports/ppo_eval_report.json"), 100) == Path(
+        "reports/ppo_eval_report_iteration_0100.json"
+    )
 
 
 def test_train_ppo_single_iteration_logs_metrics_and_keeps_distinct_checkpoints(tmp_path: Path) -> None:

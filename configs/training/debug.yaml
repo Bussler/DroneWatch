@@ -11,6 +11,7 @@ training:
     lambda_: 0.95
     lr: 0.0003
     clip_param: 0.2
+    grad_clip: 0.5
     entropy_coeff: 0.01
     vf_loss_coeff: 1.0
     train_batch_size_per_learner: 200
@@ -23,7 +24,7 @@ training:
   evaluation:
     enabled: true
     episodes: 1
-    report_path: reports/ppo_smoke_report.json
+    report_path: reports/
     render: true
-    gif_path: gifs/ppo_smoke_episode.gif
+    gif_path: gifs/
     render_stride: 4

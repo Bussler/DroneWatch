@@ -1,6 +1,6 @@
 training:
   stop:
-    iterations: 5000
+    iterations: 700
   ray:
     num_env_runners: 0
     num_envs_per_env_runner: 1
@@ -9,21 +9,23 @@ training:
   ppo:
     gamma: 0.99
     lambda_: 0.95
-    lr: 0.0003
-    clip_param: 0.2
-    entropy_coeff: 0.01
+    lr: 0.0001
+    clip_param: 0.1
+    grad_clip: 0.5
+    entropy_coeff: 0.002
     vf_loss_coeff: 1.0
-    train_batch_size_per_learner: 1024
-    minibatch_size: 256
+    train_batch_size_per_learner: 4096
+    minibatch_size: 512
     num_epochs: 5
     rollout_fragment_length: auto
   checkpoint:
     directory: checkpoints/ppo
-    frequency_iters: 500
+    frequency_iters: 50
   evaluation:
     enabled: true
-    episodes: 5
-    report_path: reports/ppo_eval_report.json
+    episodes: 10
+    frequency_iters: 50
+    report_path: reports/
     render: true
-    gif_path: gifs/ppo_eval_episode.gif
+    gif_path: gifs/
     render_stride: 4

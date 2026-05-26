@@ -38,6 +38,29 @@ def test_observation_builder_is_deterministic_for_same_state() -> None:
         np.testing.assert_array_equal(first[agent_id], second[agent_id])
 
 
+def test_observation_builder_includes_normalized_agent_id() -> None:
+    config = SwarmSearchEnvConfig(simulation=EnvConfig(agents=AgentConfig(count=4)))
+    state = {
+        "agents": [
+            {"id": 0, "position": [10.0, 10.0], "velocity": [0.0, 0.0]},
+            {"id": 1, "position": [10.0, 10.0], "velocity": [0.0, 0.0]},
+            {"id": 2, "position": [10.0, 10.0], "velocity": [0.0, 0.0]},
+            {"id": 3, "position": [10.0, 10.0], "velocity": [0.0, 0.0]},
+        ],
+        "targets": [],
+        "obstacles": [],
+    }
+    metrics = {"timestep": 0, "max_episode_steps": 200}
+    builder = ObservationBuilder(config.simulation, config.observation)
+
+    observations = builder.build(state, metrics)
+
+    assert observations["agent_0"][0] == 0.0
+    assert observations["agent_1"][0] == np.float32(1.0 / 3.0)
+    assert observations["agent_2"][0] == np.float32(2.0 / 3.0)
+    assert observations["agent_3"][0] == 1.0
+
+
 def test_observation_builder_keeps_normalized_values_within_unit_range() -> None:
     builder = ObservationBuilder()
     state = {

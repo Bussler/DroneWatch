@@ -94,10 +94,10 @@ def log_metrics(metrics: Mapping[str, Any], prefix: str, step: int | None = None
         mlflow.log_metrics(numeric_metrics, step=step)
 
 
-def log_evaluation_report(report: Mapping[str, Any], prefix: str = "eval") -> None:
+def log_evaluation_report(report: Mapping[str, Any], prefix: str = "eval", step: int | None = None) -> None:
     """Log aggregate numeric metrics from an evaluation report."""
     aggregate_metrics = {key: value for key, value in report.items() if key != "episodes"}
-    log_metrics(aggregate_metrics, prefix=prefix)
+    log_metrics(aggregate_metrics, prefix=prefix, step=step)
 
 
 def log_artifact(path: str | Path | None, artifact_path: str) -> None:

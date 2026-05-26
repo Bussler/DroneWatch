@@ -32,6 +32,7 @@ def test_config_models_construct_with_expected_values() -> None:
     assert env_config.obstacles.max_radius == 6.0
     assert observation_config.max_visible_agents == 5
     assert RewardWeights().target_discovered == 5.0
+    assert RewardWeights().success_bonus == 50.0
     training_config = DroneWatchConfig()
     tune_config = DroneWatchTuneConfig()
     evaluation_config = DroneWatchEvaluationConfig()
@@ -62,6 +63,10 @@ def test_default_models_reject_invalid_numeric_values() -> None:
         ObservationConfig(max_visible_targets=0)
     with pytest.raises(ValidationError):
         RewardWeights(agent_collision=0.25)
+    with pytest.raises(ValidationError):
+        RewardWeights(success_bonus=-1.0)
+    with pytest.raises(ValidationError):
+        RewardWeights(remaining_target_penalty=0.01)
     with pytest.raises(ValidationError):
         DroneWatchConfig.model_validate({"evaluation": {}})
     with pytest.raises(ValidationError):
