@@ -1,12 +1,12 @@
 defaults:
-  - env: swarm_search_v1
+  - env: swarm_search_easy
   - model: ppo_lstm
   - training: local_ppo
   - logging: mlflow_local
   - rendering: default
 
 project:
-  name: DroneWatchLSTMGeneralization
+  name: DroneWatchLSTMGeneralizationSmall
   seed: null
   output_dir: outputs
   artifact_dir: artifacts

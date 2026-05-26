@@ -21,7 +21,7 @@ env:
       discovery_radius: 2.0
 
     obstacles:
-      count: 8
+      count: 0
       min_radius: 2.0
       max_radius: 6.0
 
@@ -37,11 +37,11 @@ env:
     include_communication_summary: true
 
   reward:
-    target_discovered: 5.0
+    target_discovered: 15.0
     new_coverage_cell: 0.02
     agent_collision: -0.25
-    obstacle_collision: -0.5
+    obstacle_collision: -0.2
     step_penalty: -0.001
-    success_bonus: 50.0
+    success_bonus: 100.0
     remaining_target_penalty: -0.02
-    visible_target_approach: 0.05
+    visible_target_approach: 0.1
