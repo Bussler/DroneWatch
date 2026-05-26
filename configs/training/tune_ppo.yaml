@@ -24,7 +24,7 @@ training:
   evaluation:
     enabled: false
     episodes: 3
-    report_path: reports/tune_best_trial_report.json
+    report_path: reports/tune
     render: false
-    gif_path: gifs/tune_best_trial_episode.gif
+    gif_path: gifs/tune
     render_stride: 4

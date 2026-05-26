@@ -25,7 +25,7 @@ training:
     enabled: true
     episodes: 10
     frequency_iters: 50
-    report_path: reports/ppo_eval_report.json
+    report_path: reports/
     render: true
-    gif_path: gifs/ppo_eval_episode.gif
+    gif_path: gifs/
     render_stride: 4

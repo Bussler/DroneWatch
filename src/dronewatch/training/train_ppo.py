@@ -109,9 +109,7 @@ def train_ppo(
                             and train_eval.frequency_iters is not None
                             and iteration % train_eval.frequency_iters == 0
                         ):
-                            periodic_report_path = report_path.with_name(
-                                f"{report_path.stem}_iteration_{iteration:04d}{report_path.suffix}"
-                            )
+                            periodic_report_path = report_path / config.project.name / f"iteration_{iteration:04d}.json"
                             periodic_report = evaluate_algorithm(
                                 algorithm=algorithm,
                                 episodes=train_eval.episodes,
@@ -137,23 +135,6 @@ def train_ppo(
                 print(f"saved final checkpoint: {final_checkpoint}")
             finally:
                 algorithm.stop()
-
-            if train_eval.enabled and train_eval.episodes > 0:
-                evaluation_report = evaluate_checkpoint(
-                    checkpoint=final_checkpoint,
-                    episodes=train_eval.episodes,
-                    seed=seed if seed is not None else 0,
-                    report_path=report_path,
-                    model=model,
-                    render=train_eval.render,
-                    gif_path=config.project.artifact_dir / train_eval.gif_path,
-                    render_stride=train_eval.render_stride,
-                    env_config=config.env,
-                    render_fps=config.rendering.fps,
-                )
-                log_evaluation_report(evaluation_report, prefix="eval", step=iterations)
-                if mlflow_config.enabled and mlflow_config.log_report_artifact:
-                    log_artifact(report_path, artifact_path="reports")
         finally:
             ray.shutdown()
 

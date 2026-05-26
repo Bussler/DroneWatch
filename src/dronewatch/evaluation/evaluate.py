@@ -138,7 +138,7 @@ def evaluate_algorithm(
         for episode_index, episode_frames in enumerate(episode_frames):
             render_episode_gif(
                 episode_frames,
-                gif_path.with_name(f"{gif_path.stem}_episode_{episode_index + 1:02d}{gif_path.suffix}"),
+                gif_path.with_name(f"{gif_path.stem}_episode_{episode_index + 1:02d}.gif"),
                 fps=render_fps,
                 env_config=env_config.simulation,
             )
@@ -212,7 +212,9 @@ def main() -> None:
     if config.evaluation.checkpoint is None:
         raise ValueError("evaluation.checkpoint must be set via config or CLI override")
 
-    report_path = config.project.artifact_dir / config.evaluation.report_path
+    report_path = (
+        config.project.artifact_dir / config.evaluation.report_path / config.project.name / "evaluation_report.json"
+    )
     mlflow_config = config.logging.mlflow
 
     with start_mlflow_run(
@@ -235,7 +237,7 @@ def main() -> None:
             report_path=report_path,
             model=config.model.kind,
             render=config.evaluation.render,
-            gif_path=config.project.artifact_dir / config.evaluation.gif_path,
+            gif_path=config.project.artifact_dir / config.evaluation.gif_path / config.project.name,
             render_stride=config.evaluation.render_stride,
             env_config=config.env,
             render_fps=config.rendering.fps,

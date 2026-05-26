@@ -182,9 +182,9 @@ class TrainingEvaluationConfig(_FrozenModel):
     enabled: bool = True
     episodes: int = Field(default=5, ge=0)
     frequency_iters: int | None = Field(default=None, gt=0)
-    report_path: Path = Path("reports/ppo_eval_report.json")
+    report_path: Path = Path("reports/")
     render: bool = True
-    gif_path: Path = Path("gifs/ppo_eval_episode.gif")
+    gif_path: Path = Path("gifs/")
     render_stride: int = Field(default=4, gt=0)
 
 
