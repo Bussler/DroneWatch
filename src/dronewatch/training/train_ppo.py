@@ -58,7 +58,7 @@ def train_ppo(
         / config.project.name
         / datetime.now().strftime("%Y%m%d_%H%M%S")
     )
-    report_path = config.project.artifact_dir / config.training.evaluation.report_path
+    report_path = config.project.artifact_dir / config.training.evaluation.report_path / config.project.name
 
     mlflow_config = config.logging.mlflow
     with start_mlflow_run(
@@ -109,7 +109,7 @@ def train_ppo(
                             and train_eval.frequency_iters is not None
                             and iteration % train_eval.frequency_iters == 0
                         ):
-                            periodic_report_path = report_path / config.project.name / f"iteration_{iteration:04d}.json"
+                            periodic_report_path = report_path / f"iteration_{iteration:04d}.json"
                             periodic_report = evaluate_algorithm(
                                 algorithm=algorithm,
                                 episodes=train_eval.episodes,
