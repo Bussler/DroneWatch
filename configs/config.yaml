@@ -6,7 +6,7 @@ defaults:
   - rendering: default
 
 project:
-  name: DroneWatchLSTMGeneralization
+  name: DroneWatchLSTMGeneralizationMixedReward
   seed: null
   output_dir: outputs
   artifact_dir: artifacts

@@ -59,6 +59,7 @@ def run_random_policy(
         done = False
         episode_reward = 0.0
         final_metrics: dict[str, Any] = {}
+        final_info: dict[str, Any] = {}
 
         if render and episode_index == 0:
             state_snapshot, metrics_snapshot = env.snapshot()
@@ -67,9 +68,10 @@ def run_random_policy(
         while not done:
             actions = {agent_id: policy.compute_action() for agent_id in observations}
             observations, rewards, terminateds, truncateds, infos = env.step(actions)
-            episode_reward += float(next(iter(rewards.values())))
+            episode_reward += float(sum(rewards.values()))
             done = bool(terminateds["__all__"] or truncateds["__all__"])
-            final_metrics = dict(next(iter(infos.values()))["metrics"])
+            final_info = dict(next(iter(infos.values())))
+            final_metrics = dict(final_info["metrics"])
 
             should_capture = (
                 render and episode_index == 0 and (done or int(final_metrics["timestep"]) % render_stride == 0)
@@ -78,7 +80,7 @@ def run_random_policy(
                 state_snapshot, _metrics_snapshot = env.snapshot()
                 first_episode_frames.append(SimulationFrame.from_snapshots(state_snapshot, final_metrics))
 
-        episode_summaries.append(episode_summary(episode_reward, final_metrics))
+        episode_summaries.append(episode_summary(episode_reward, final_metrics, final_info))
 
     report = aggregate_report(episode_summaries, policy="random")
     if report_path is not None:

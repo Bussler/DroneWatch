@@ -13,9 +13,15 @@ from dronewatch.sim import SwarmSimulation
 
 from .observation_builder import ObservationBuilder
 from .reward import (
+    REWARD_TERM_KEYS,
+    aggregate_agent_reward_terms,
+    calculate_agent_reward_terms,
     calculate_reward_terms,
+    calculate_shared_reward_terms,
     calculate_team_reward,
     calculate_visible_target_approach,
+    combine_reward_terms,
+    empty_reward_terms,
 )
 from .spaces import (
     action_space,
@@ -60,6 +66,11 @@ class SwarmSearchEnv(MultiAgentEnv):
         self.action_spaces = {agent_id: self.action_space for agent_id in self._agent_ids}
         self.observation_spaces = {agent_id: self.observation_space for agent_id in self._agent_ids}
         self._episode_reward = 0.0
+        self._episode_shared_reward = 0.0
+        self._episode_local_reward = 0.0
+        self._episode_reward_terms = empty_reward_terms()
+        self._episode_shared_reward_terms = empty_reward_terms()
+        self._episode_local_reward_terms = empty_reward_terms()
 
     def reset(
         self,
@@ -79,6 +90,11 @@ class SwarmSearchEnv(MultiAgentEnv):
         state = self._simulation.state()
         self.agents = list(self._agent_ids)
         self._episode_reward = 0.0
+        self._episode_shared_reward = 0.0
+        self._episode_local_reward = 0.0
+        self._episode_reward_terms = empty_reward_terms()
+        self._episode_shared_reward_terms = empty_reward_terms()
+        self._episode_local_reward_terms = empty_reward_terms()
         observations = self._observation_builder.build(state, metrics)
         infos = {agent_id: {"metrics": dict(metrics)} for agent_id in self._agent_ids}
         return observations, infos
@@ -107,20 +123,64 @@ class SwarmSearchEnv(MultiAgentEnv):
         state = result["state"]
 
         observations = self._observation_builder.build(state, metrics)
-        approach_signal = calculate_visible_target_approach(
-            previous_state=previous_state,
-            next_state=state,
-            sensing_radius=self._config.simulation.agents.sensing_radius,
-            max_displacement=self._config.simulation.agents.max_speed * self._config.simulation.world.dt,
-        )
-        reward_terms = calculate_reward_terms(events, metrics, approach_signal, self._config.reward)
-        team_reward = calculate_team_reward(events, metrics, approach_signal, self._config.reward)
-        per_agent_reward = team_reward / max(len(self._agent_ids), 1)
+        max_displacement = self._config.simulation.agents.max_speed * self._config.simulation.world.dt
+        num_agents = max(len(self._agent_ids), 1)
+
+        if self._config.reward.mode == "mixed":
+            shared_reward_terms = calculate_shared_reward_terms(events, metrics, self._config.reward)
+            local_reward_terms_by_agent = calculate_agent_reward_terms(
+                previous_state=previous_state,
+                next_state=state,
+                sensing_radius=self._config.simulation.agents.sensing_radius,
+                discovery_radius=self._config.simulation.targets.discovery_radius,
+                collision_radius=self._config.simulation.agents.collision_radius,
+                max_displacement=max_displacement,
+                weights=self._config.reward,
+            )
+            local_reward_terms = aggregate_agent_reward_terms(local_reward_terms_by_agent)
+            reward_terms = combine_reward_terms(shared_reward_terms, local_reward_terms)
+            shared_reward = float(sum(shared_reward_terms.values()))
+            local_reward = float(sum(local_reward_terms.values()))
+            team_reward = float(sum(reward_terms.values()))
+            shared_reward_per_agent = shared_reward / num_agents
+            rewards = {
+                agent_id: shared_reward_per_agent + float(sum(local_reward_terms_by_agent.get(index, {}).values()))
+                for index, agent_id in enumerate(self._agent_ids)
+            }
+        else:
+            approach_signal = calculate_visible_target_approach(
+                previous_state=previous_state,
+                next_state=state,
+                sensing_radius=self._config.simulation.agents.sensing_radius,
+                max_displacement=max_displacement,
+            )
+            reward_terms = calculate_reward_terms(events, metrics, approach_signal, self._config.reward)
+            team_reward = calculate_team_reward(events, metrics, approach_signal, self._config.reward)
+            shared_reward_terms = dict(reward_terms)
+            local_reward_terms_by_agent = {
+                index: {
+                    "target_discovery": 0.0,
+                    "agent_collision": 0.0,
+                    "obstacle_collision": 0.0,
+                    "visible_target_approach": 0.0,
+                }
+                for index in range(len(self._agent_ids))
+            }
+            shared_reward = team_reward
+            local_reward = 0.0
+            local_reward_terms = empty_reward_terms()
+            per_agent_reward = team_reward / num_agents
+            rewards = {agent_id: per_agent_reward for agent_id in self._agent_ids}
+
         self._episode_reward += team_reward
+        self._episode_shared_reward += shared_reward
+        self._episode_local_reward += local_reward
+        self._accumulate_reward_terms(self._episode_reward_terms, reward_terms)
+        self._accumulate_reward_terms(self._episode_shared_reward_terms, shared_reward_terms)
+        self._accumulate_reward_terms(self._episode_local_reward_terms, local_reward_terms)
 
         terminated = bool(metrics.get("all_targets_discovered", False))
         truncated = bool(metrics.get("horizon_reached", False)) and not terminated
-        rewards = {agent_id: per_agent_reward for agent_id in self._agent_ids}
         terminateds = {agent_id: terminated for agent_id in self._agent_ids}
         truncateds = {agent_id: truncated for agent_id in self._agent_ids}
         terminateds["__all__"] = terminated
@@ -136,12 +196,22 @@ class SwarmSearchEnv(MultiAgentEnv):
                 "events": events,
                 "metrics": metrics,
                 "reward_terms": reward_terms,
+                "shared_reward_terms": shared_reward_terms,
+                "local_reward_terms": local_reward_terms_by_agent[index],
+                "shared_reward": rewards[agent_id] - float(sum(local_reward_terms_by_agent[index].values())),
+                "local_reward": float(sum(local_reward_terms_by_agent[index].values())),
                 "team_reward": team_reward,
-                "per_agent_reward": per_agent_reward,
+                "per_agent_reward": rewards[agent_id],
                 "episode_reward": self._episode_reward,
+                "episode_shared_reward": self._episode_shared_reward,
+                "episode_local_reward": self._episode_local_reward,
+                "episode_reward_terms": dict(self._episode_reward_terms),
+                "episode_shared_reward_terms": dict(self._episode_shared_reward_terms),
+                "episode_local_reward_terms": dict(self._episode_local_reward_terms),
                 "episode_length": metrics["timestep"],
+                "reward_mode": self._config.reward.mode,
             }
-            for agent_id in self._agent_ids
+            for index, agent_id in enumerate(self._agent_ids)
         }
         return observations, rewards, terminateds, truncateds, infos
 
@@ -165,3 +235,9 @@ class SwarmSearchEnv(MultiAgentEnv):
                 raise ValueError(f"action for {agent_id} contains non-finite values")
             ordered_actions.append((float(action[0]), float(action[1])))
         return ordered_actions
+
+    @staticmethod
+    def _accumulate_reward_terms(total: dict[str, float], delta: Mapping[str, Any]) -> None:
+        """Mutate a reward-term accumulator in place."""
+        for key in REWARD_TERM_KEYS:
+            total[key] += float(delta.get(key, 0.0))
