@@ -17,10 +17,9 @@ from dronewatch.config.loader import (
 def test_load_config_composes_default_groups() -> None:
     config = load_config("configs/config.yaml")
 
-    assert config.project.name == "DroneWatchLSTMGeneralization"
+    assert config.project.name == "DroneWatchLSTMGeneralizationObstacles"
     assert config.env.name == "SwarmSearch2D"
     assert config.env.simulation.agents.count == 16
-    assert config.env.reward.mode == "shared"
     assert config.env.reward.success_bonus == 100.0
     assert config.env.reward.remaining_target_penalty == -0.02
     assert config.env.reward.visible_target_approach == 0.1
@@ -41,7 +40,6 @@ def test_load_config_supports_group_and_field_overrides() -> None:
             "training=debug",
             "env.simulation.agents.count=4",
             "env.simulation.max_episode_steps=12",
-            "env.reward.mode=mixed",
             "model.fcnet_hiddens=[64,64]",
             "logging.mlflow.enabled=false",
             "project.seed=7",
@@ -53,7 +51,6 @@ def test_load_config_supports_group_and_field_overrides() -> None:
     assert config.training.stop.iterations == 1
     assert config.env.simulation.agents.count == 4
     assert config.env.simulation.max_episode_steps == 12
-    assert config.env.reward.mode == "mixed"
     assert config.logging.mlflow.enabled is False
     assert config.project.seed == 7
 
@@ -124,6 +121,9 @@ def test_load_config_rejects_invalid_overrides() -> None:
 
     with pytest.raises(ValidationError):
         load_config("configs/config.yaml", ["tune.num_samples=2"])
+
+    with pytest.raises(ValidationError):
+        load_config("configs/config.yaml", ["env.reward.mode=mixed"])
 
     with pytest.raises(ValueError, match="key=value"):
         load_config("configs/config.yaml", ["training.debug"])

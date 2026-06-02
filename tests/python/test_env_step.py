@@ -19,7 +19,6 @@ def test_env_step_returns_rllib_multi_agent_payload() -> None:
     assert set(infos) == set(observations)
     assert "__all__" in terminateds
     assert "__all__" in truncateds
-    assert len(set(rewards.values())) == 1
     assert infos["agent_0"]["metrics"]["timestep"] == 1
     assert "events" in infos["agent_0"]
     assert "reward_terms" in infos["agent_0"]
@@ -37,6 +36,7 @@ def test_env_step_returns_rllib_multi_agent_payload() -> None:
         "success_bonus",
         "visible_target_approach",
     }
+    assert "reward_mode" not in infos["agent_0"]
     assert isinstance(terminateds["__all__"], bool)
     assert isinstance(truncateds["__all__"], bool)
 
@@ -54,7 +54,7 @@ def test_env_step_rejects_missing_and_non_finite_actions() -> None:
         env.step(bad_actions)
 
 
-def test_env_step_returns_agent_local_rewards_in_mixed_mode() -> None:
+def test_env_step_returns_agent_local_rewards() -> None:
     env = SwarmSearchEnv(
         env_config=SwarmSearchEnvConfig(
             simulation=EnvConfig(
@@ -70,7 +70,6 @@ def test_env_step_returns_agent_local_rewards_in_mixed_mode() -> None:
                 obstacles={"count": 0, "min_radius": 1.0, "max_radius": 1.0},
             ),
             reward=RewardWeights(
-                mode="mixed",
                 target_discovered=5.0,
                 new_coverage_cell=0.0,
                 agent_collision=0.0,
@@ -148,6 +147,6 @@ def test_env_step_returns_agent_local_rewards_in_mixed_mode() -> None:
     assert sum(rewards.values()) == pytest.approx(infos["agent_0"]["team_reward"])
     assert infos["agent_0"]["local_reward_terms"]["target_discovery"] == 5.0
     assert infos["agent_1"]["local_reward_terms"]["target_discovery"] == 0.0
-    assert infos["agent_0"]["reward_mode"] == "mixed"
+    assert "reward_mode" not in infos["agent_0"]
     assert terminateds["__all__"] is True
     assert truncateds["__all__"] is False

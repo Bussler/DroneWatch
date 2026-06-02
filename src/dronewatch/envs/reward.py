@@ -29,20 +29,13 @@ LOCAL_REWARD_TERM_KEYS = (
     "visible_target_approach",
 )
 
-SHARED_REWARD_TERM_KEYS = (
-    "coverage",
-    "step_penalty",
-    "remaining_targets",
-    "success_bonus",
-)
-
 
 def calculate_shared_reward_terms(
     events: Mapping[str, Any],
     metrics: Mapping[str, Any],
     weights: RewardWeights,
 ) -> RewardTerms:
-    """Calculate reward terms that remain team-level in mixed mode."""
+    """Calculate reward terms that are distributed equally across the team."""
     remaining_targets = max(
         float(metrics.get("target_count", 0.0)) - float(metrics.get("discovered_target_count", 0.0)),
         0.0,
@@ -53,36 +46,6 @@ def calculate_shared_reward_terms(
         "remaining_targets": remaining_targets * weights.remaining_target_penalty,
         "success_bonus": weights.success_bonus if bool(metrics.get("all_targets_discovered", False)) else 0.0,
     }
-
-
-def calculate_reward_terms(
-    events: Mapping[str, Any],
-    metrics: Mapping[str, Any],
-    visible_target_approach: float,
-    weights: RewardWeights,
-) -> RewardTerms:
-    """Calculate named shared reward terms from step events and post-step metrics."""
-    shared_terms = calculate_shared_reward_terms(events, metrics, weights)
-    return {
-        "target_discovery": float(events.get("targets_discovered", 0.0)) * weights.target_discovered,
-        "coverage": shared_terms["coverage"],
-        "agent_collision": float(events.get("agent_collisions", 0.0)) * weights.agent_collision,
-        "obstacle_collision": float(events.get("obstacle_violations", 0.0)) * weights.obstacle_collision,
-        "step_penalty": shared_terms["step_penalty"],
-        "remaining_targets": shared_terms["remaining_targets"],
-        "success_bonus": shared_terms["success_bonus"],
-        "visible_target_approach": float(visible_target_approach) * weights.visible_target_approach,
-    }
-
-
-def calculate_team_reward(
-    events: Mapping[str, Any],
-    metrics: Mapping[str, Any],
-    visible_target_approach: float,
-    weights: RewardWeights,
-) -> float:
-    """Calculate the shared cooperative reward from named reward terms."""
-    return float(sum(calculate_reward_terms(events, metrics, visible_target_approach, weights).values()))
 
 
 def calculate_agent_reward_terms(

@@ -15,7 +15,6 @@ class _FrozenModel(BaseModel):
 
 
 ModelKind = Literal["feedforward", "lstm"]
-RewardMode = Literal["shared", "mixed"]
 RolloutFragmentLength = Literal["auto"] | int
 
 
@@ -89,7 +88,6 @@ class ObservationConfig(_FrozenModel):
 class RewardWeights(_FrozenModel):
     """Cooperative reward weights for target search."""
 
-    mode: RewardMode = "shared"
     target_discovered: float = Field(default=5.0, ge=0.0)
     new_coverage_cell: float = Field(default=0.02, ge=0.0)
     agent_collision: float = Field(default=-0.25, le=0.0)

@@ -37,7 +37,6 @@ env:
     include_communication_summary: true
 
   reward:
-    mode: mixed
     target_discovered: 15.0
     new_coverage_cell: 0.02
     agent_collision: -0.25

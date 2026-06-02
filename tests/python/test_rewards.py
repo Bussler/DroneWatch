@@ -4,9 +4,7 @@ from dronewatch.config.schema import RewardWeights
 from dronewatch.envs.reward import (
     aggregate_agent_reward_terms,
     calculate_agent_reward_terms,
-    calculate_reward_terms,
     calculate_shared_reward_terms,
-    calculate_team_reward,
     calculate_visible_target_approach,
     combine_reward_terms,
 )
@@ -22,61 +20,68 @@ def _metrics(**overrides: object) -> dict[str, object]:
     return metrics
 
 
-def test_calculates_cooperative_reward_from_step_events() -> None:
-    reward = calculate_team_reward(
-        {
-            "targets_discovered": 2,
-            "new_coverage_cells": 10,
-            "agent_collisions": 1,
-            "obstacle_violations": 1,
-            "connectivity_ratio": 0.0,
-        },
+def test_combines_team_and_local_reward_terms() -> None:
+    shared_terms = calculate_shared_reward_terms(
+        {"new_coverage_cells": 10, "connectivity_ratio": 0.0},
         _metrics(),
-        0.0,
         RewardWeights(),
     )
+    local_terms = {
+        "target_discovery": 2 * 5.0,
+        "agent_collision": -0.25,
+        "obstacle_collision": -0.5,
+        "visible_target_approach": 0.0,
+    }
+    reward = sum(combine_reward_terms(shared_terms, local_terms).values())
 
     assert reward == 2 * 5.0 + 10 * 0.02 - 0.25 - 0.5 - 0.001
 
 
 def test_connectivity_is_not_a_reward_term() -> None:
     weights = RewardWeights()
-    low_connectivity = calculate_team_reward({"connectivity_ratio": 0.0}, _metrics(), 0.0, weights)
-    high_connectivity = calculate_team_reward({"connectivity_ratio": 1.0}, _metrics(), 0.0, weights)
+    low_connectivity = sum(calculate_shared_reward_terms({"connectivity_ratio": 0.0}, _metrics(), weights).values())
+    high_connectivity = sum(calculate_shared_reward_terms({"connectivity_ratio": 1.0}, _metrics(), weights).values())
 
     assert low_connectivity == high_connectivity == -0.001
 
 
-def test_reward_weights_are_configurable() -> None:
-    reward = calculate_team_reward(
-        {"targets_discovered": 1, "new_coverage_cells": 1},
-        _metrics(),
-        0.0,
-        RewardWeights(target_discovered=2.0, new_coverage_cell=0.5, step_penalty=0.0),
+def test_shared_reward_weights_are_configurable() -> None:
+    reward = sum(
+        calculate_shared_reward_terms(
+            {"new_coverage_cells": 1},
+            _metrics(),
+            RewardWeights(new_coverage_cell=0.5, step_penalty=0.0),
+        ).values()
     )
 
-    assert reward == 2.5
+    assert reward == 0.5
 
 
-def test_reward_terms_include_success_remaining_and_approach_shaping() -> None:
-    terms = calculate_reward_terms(
-        {"targets_discovered": 1},
+def test_combined_reward_terms_include_success_remaining_and_approach_shaping() -> None:
+    shared_terms = calculate_shared_reward_terms(
+        {},
         _metrics(discovered_target_count=18, all_targets_discovered=True),
-        visible_target_approach=0.5,
         weights=RewardWeights(
-            target_discovered=2.0,
             step_penalty=0.0,
             success_bonus=10.0,
             remaining_target_penalty=-0.25,
-            visible_target_approach=0.4,
         ),
+    )
+    terms = combine_reward_terms(
+        shared_terms,
+        {
+            "target_discovery": 2.0,
+            "agent_collision": 0.0,
+            "obstacle_collision": 0.0,
+            "visible_target_approach": 0.2,
+        },
     )
 
     assert terms == {
         "target_discovery": 2.0,
         "coverage": 0.0,
-        "agent_collision": -0.0,
-        "obstacle_collision": -0.0,
+        "agent_collision": 0.0,
+        "obstacle_collision": 0.0,
         "step_penalty": 0.0,
         "remaining_targets": -0.5,
         "success_bonus": 10.0,
@@ -261,7 +266,6 @@ def test_agent_reward_terms_preserve_total_reward_mass_for_mixed_attribution() -
         all_targets_discovered=True,
     )
     weights = RewardWeights(
-        mode="mixed",
         target_discovered=5.0,
         new_coverage_cell=0.1,
         agent_collision=-0.25,
@@ -285,9 +289,13 @@ def test_agent_reward_terms_preserve_total_reward_mass_for_mixed_attribution() -
         )
     )
 
-    assert combine_reward_terms(shared_terms, local_terms) == calculate_reward_terms(
-        events,
-        metrics,
-        calculate_visible_target_approach(previous_state, next_state, sensing_radius=5.0, max_displacement=1.0),
-        weights,
-    )
+    assert combine_reward_terms(shared_terms, local_terms) == {
+        "target_discovery": 5.0,
+        "coverage": 0.30000000000000004,
+        "agent_collision": 0.0,
+        "obstacle_collision": -0.5,
+        "step_penalty": -0.01,
+        "remaining_targets": -0.0,
+        "success_bonus": 1.0,
+        "visible_target_approach": 0.1,
+    }
