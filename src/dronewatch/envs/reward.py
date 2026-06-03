@@ -3,31 +3,49 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from math import hypot
-from typing import Any
+from typing import Any, Literal
 
 from dronewatch.config.schema import RewardWeights
 
 RewardTerms = dict[str, float]
 AgentRewardTerms = dict[int, RewardTerms]
 
-REWARD_TERM_KEYS = (
-    "target_discovery",
-    "coverage",
-    "agent_collision",
-    "obstacle_collision",
-    "step_penalty",
-    "remaining_targets",
-    "success_bonus",
-    "visible_target_approach",
+
+@dataclass(frozen=True)
+class RewardTermSpec:
+    """Describe one reward term and whether it comes from shared or local attribution."""
+
+    name: str
+    scope: Literal["shared", "local"]
+
+
+@dataclass(frozen=True)
+class RewardContext:
+    """Bundle geometry and weights for local reward attribution."""
+
+    sensing_radius: float
+    discovery_radius: float
+    collision_radius: float
+    max_displacement: float
+    weights: RewardWeights
+
+
+REWARD_TERMS = (
+    RewardTermSpec("target_discovery", "local"),
+    RewardTermSpec("coverage", "shared"),
+    RewardTermSpec("agent_collision", "local"),
+    RewardTermSpec("obstacle_collision", "local"),
+    RewardTermSpec("step_penalty", "shared"),
+    RewardTermSpec("remaining_targets", "shared"),
+    RewardTermSpec("success_bonus", "shared"),
+    RewardTermSpec("visible_target_approach", "local"),
 )
 
-LOCAL_REWARD_TERM_KEYS = (
-    "target_discovery",
-    "agent_collision",
-    "obstacle_collision",
-    "visible_target_approach",
-)
+REWARD_TERM_KEYS = tuple(spec.name for spec in REWARD_TERMS)
+LOCAL_REWARD_TERM_KEYS = tuple(spec.name for spec in REWARD_TERMS if spec.scope == "local")
+SHARED_REWARD_TERM_KEYS = tuple(spec.name for spec in REWARD_TERMS if spec.scope == "shared")
 
 
 def calculate_shared_reward_terms(
@@ -51,32 +69,34 @@ def calculate_shared_reward_terms(
 def calculate_agent_reward_terms(
     previous_state: Mapping[str, Any],
     next_state: Mapping[str, Any],
-    sensing_radius: float,
-    discovery_radius: float,
-    collision_radius: float,
-    max_displacement: float,
-    weights: RewardWeights,
+    context: RewardContext,
 ) -> AgentRewardTerms:
     """Attribute local reward terms to individual agents while preserving total reward mass."""
-    next_agents = {int(agent["id"]): agent for agent in next_state["agents"]}
+    next_agents = _agents_by_id(next_state)
     agent_terms = {agent_id: _empty_local_reward_terms() for agent_id in next_agents}
 
-    _attribute_target_discovery(previous_state, next_state, next_agents, discovery_radius, weights, agent_terms)
-    _attribute_agent_collisions(next_agents, collision_radius, weights, agent_terms)
-    _attribute_obstacle_violations(next_state, collision_radius, weights, agent_terms)
+    _attribute_target_discovery(
+        previous_state,
+        next_state,
+        next_agents,
+        context.discovery_radius,
+        context.weights,
+        agent_terms,
+    )
+    _attribute_agent_collisions(next_agents, context.collision_radius, context.weights, agent_terms)
+    _attribute_obstacle_violations(next_state, context.collision_radius, context.weights, agent_terms)
 
     approach_by_agent = calculate_visible_target_approach_by_agent(
         previous_state=previous_state,
         next_state=next_state,
-        sensing_radius=sensing_radius,
-        max_displacement=max_displacement,
+        context=context,
     )
     visible_agent_count = len(approach_by_agent)
     if visible_agent_count > 0:
         for agent_id, normalized_progress in approach_by_agent.items():
             agent_terms[agent_id]["visible_target_approach"] += (
                 normalized_progress / visible_agent_count
-            ) * weights.visible_target_approach
+            ) * context.weights.visible_target_approach
 
     return agent_terms
 
@@ -92,35 +112,28 @@ def aggregate_agent_reward_terms(agent_reward_terms: AgentRewardTerms) -> Reward
 
 def empty_reward_terms() -> RewardTerms:
     """Return a zero-initialized reward-term mapping covering the full reward surface."""
-    return {key: 0.0 for key in REWARD_TERM_KEYS}
+    return _empty_terms(REWARD_TERM_KEYS)
 
 
 def combine_reward_terms(shared_terms: RewardTerms, local_terms: RewardTerms) -> RewardTerms:
     """Return the full reward-term mapping in the established key order."""
-    return {
-        "target_discovery": float(local_terms.get("target_discovery", 0.0)),
-        "coverage": float(shared_terms.get("coverage", 0.0)),
-        "agent_collision": float(local_terms.get("agent_collision", 0.0)),
-        "obstacle_collision": float(local_terms.get("obstacle_collision", 0.0)),
-        "step_penalty": float(shared_terms.get("step_penalty", 0.0)),
-        "remaining_targets": float(shared_terms.get("remaining_targets", 0.0)),
-        "success_bonus": float(shared_terms.get("success_bonus", 0.0)),
-        "visible_target_approach": float(local_terms.get("visible_target_approach", 0.0)),
-    }
+    combined: RewardTerms = {}
+    for spec in REWARD_TERMS:
+        source_terms = shared_terms if spec.scope == "shared" else local_terms
+        combined[spec.name] = float(source_terms.get(spec.name, 0.0))
+    return combined
 
 
 def calculate_visible_target_approach(
     previous_state: Mapping[str, Any],
     next_state: Mapping[str, Any],
-    sensing_radius: float,
-    max_displacement: float,
+    context: RewardContext,
 ) -> float:
     """Return mean normalized progress toward each agent's nearest visible undiscovered target."""
     approach_by_agent = calculate_visible_target_approach_by_agent(
         previous_state=previous_state,
         next_state=next_state,
-        sensing_radius=sensing_radius,
-        max_displacement=max_displacement,
+        context=context,
     )
     if not approach_by_agent:
         return 0.0
@@ -130,15 +143,14 @@ def calculate_visible_target_approach(
 def calculate_visible_target_approach_by_agent(
     previous_state: Mapping[str, Any],
     next_state: Mapping[str, Any],
-    sensing_radius: float,
-    max_displacement: float,
+    context: RewardContext,
 ) -> dict[int, float]:
     """Return normalized target-approach progress for each agent with a visible undiscovered target."""
-    if max_displacement <= 0.0:
+    if context.max_displacement <= 0.0:
         raise ValueError("max_displacement must be positive")
 
-    next_agents = {int(agent["id"]): agent for agent in next_state["agents"]}
-    previous_targets = [target for target in previous_state["targets"] if not bool(target["discovered"])]
+    next_agents = _agents_by_id(next_state)
+    previous_targets = _undiscovered_targets(previous_state)
     approach_values: dict[int, float] = {}
 
     for previous_agent in previous_state["agents"]:
@@ -151,14 +163,14 @@ def calculate_visible_target_approach_by_agent(
         visible_targets = [
             (distance, int(target["id"]), target)
             for target in previous_targets
-            if (distance := _distance(previous_position, _point2(target["position"]))) <= sensing_radius
+            if (distance := _distance(previous_position, _point2(target["position"]))) <= context.sensing_radius
         ]
         if not visible_targets:
             continue
 
         previous_distance, _target_id, target = min(visible_targets, key=lambda item: (item[0], item[1]))
         next_distance = _distance(_point2(next_agent["position"]), _point2(target["position"]))
-        normalized_progress = (previous_distance - next_distance) / max_displacement
+        normalized_progress = (previous_distance - next_distance) / context.max_displacement
         approach_values[agent_id] = float(max(-1.0, min(1.0, normalized_progress)))
 
     return approach_values
@@ -172,7 +184,8 @@ def _attribute_target_discovery(
     weights: RewardWeights,
     agent_terms: AgentRewardTerms,
 ) -> None:
-    previous_targets = {int(target["id"]): target for target in previous_state["targets"]}
+    """Attribute target discovery rewards to agents within discovery radius of newly discovered targets."""
+    previous_targets = _targets_by_id(previous_state)
 
     for target in next_state["targets"]:
         target_id = int(target["id"])
@@ -201,6 +214,7 @@ def _attribute_agent_collisions(
     weights: RewardWeights,
     agent_terms: AgentRewardTerms,
 ) -> None:
+    """Attribute agent collision penalties to agents within collision radius of each other."""
     agent_items = sorted(next_agents.items())
     collision_distance = collision_radius * 2.0
     penalty_share = weights.agent_collision / 2.0
@@ -220,6 +234,7 @@ def _attribute_obstacle_violations(
     weights: RewardWeights,
     agent_terms: AgentRewardTerms,
 ) -> None:
+    """Attribute obstacle collision penalties to agents within collision radius of obstacles."""
     for agent in next_state["agents"]:
         agent_id = int(agent["id"])
         agent_position = _point2(agent["position"])
@@ -233,7 +248,23 @@ def _attribute_obstacle_violations(
 
 
 def _empty_local_reward_terms() -> RewardTerms:
-    return {key: 0.0 for key in LOCAL_REWARD_TERM_KEYS}
+    return _empty_terms(LOCAL_REWARD_TERM_KEYS)
+
+
+def _empty_terms(keys: tuple[str, ...]) -> RewardTerms:
+    return {key: 0.0 for key in keys}
+
+
+def _agents_by_id(state: Mapping[str, Any]) -> dict[int, Mapping[str, Any]]:
+    return {int(agent["id"]): agent for agent in state["agents"]}
+
+
+def _targets_by_id(state: Mapping[str, Any]) -> dict[int, Mapping[str, Any]]:
+    return {int(target["id"]): target for target in state["targets"]}
+
+
+def _undiscovered_targets(state: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [target for target in state["targets"] if not bool(target["discovered"])]
 
 
 def _point2(value: Any) -> tuple[float, float]:

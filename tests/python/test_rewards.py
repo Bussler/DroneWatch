@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dronewatch.config.schema import RewardWeights
 from dronewatch.envs.reward import (
+    RewardContext,
     aggregate_agent_reward_terms,
     calculate_agent_reward_terms,
     calculate_shared_reward_terms,
@@ -18,6 +19,18 @@ def _metrics(**overrides: object) -> dict[str, object]:
     }
     metrics.update(overrides)
     return metrics
+
+
+def _context(weights: RewardWeights | None = None, **overrides: float) -> RewardContext:
+    values: dict[str, object] = {
+        "sensing_radius": 5.0,
+        "discovery_radius": 1.0,
+        "collision_radius": 0.5,
+        "max_displacement": 1.0,
+        "weights": RewardWeights() if weights is None else weights,
+    }
+    values.update(overrides)
+    return RewardContext(**values)
 
 
 def test_combines_team_and_local_reward_terms() -> None:
@@ -102,8 +115,7 @@ def test_visible_target_approach_rewards_progress_toward_nearest_visible_target(
     approach = calculate_visible_target_approach(
         previous_state,
         next_state,
-        sensing_radius=15.0,
-        max_displacement=2.0,
+        context=_context(sensing_radius=15.0, max_displacement=2.0),
     )
 
     assert approach == 1.0
@@ -122,8 +134,7 @@ def test_visible_target_approach_penalizes_moving_away() -> None:
     approach = calculate_visible_target_approach(
         previous_state,
         next_state,
-        sensing_radius=15.0,
-        max_displacement=2.0,
+        context=_context(sensing_radius=15.0, max_displacement=2.0),
     )
 
     assert approach == -1.0
@@ -148,8 +159,7 @@ def test_visible_target_approach_ignores_invisible_and_discovered_targets() -> N
     approach = calculate_visible_target_approach(
         previous_state,
         next_state,
-        sensing_radius=15.0,
-        max_displacement=2.0,
+        context=_context(sensing_radius=15.0, max_displacement=2.0),
     )
 
     assert approach == 0.0
@@ -176,19 +186,21 @@ def test_agent_reward_terms_split_target_discovery_across_contributors() -> None
     terms = calculate_agent_reward_terms(
         previous_state=previous_state,
         next_state=next_state,
-        sensing_radius=5.0,
-        discovery_radius=2.0,
-        collision_radius=0.1,
-        max_displacement=1.0,
-        weights=RewardWeights(
-            target_discovered=6.0,
-            new_coverage_cell=0.0,
-            agent_collision=0.0,
-            obstacle_collision=0.0,
-            step_penalty=0.0,
-            success_bonus=0.0,
-            remaining_target_penalty=0.0,
-            visible_target_approach=0.0,
+        context=_context(
+            sensing_radius=5.0,
+            discovery_radius=2.0,
+            collision_radius=0.1,
+            max_displacement=1.0,
+            weights=RewardWeights(
+                target_discovered=6.0,
+                new_coverage_cell=0.0,
+                agent_collision=0.0,
+                obstacle_collision=0.0,
+                step_penalty=0.0,
+                success_bonus=0.0,
+                remaining_target_penalty=0.0,
+                visible_target_approach=0.0,
+            ),
         ),
     )
 
@@ -217,19 +229,21 @@ def test_agent_reward_terms_split_collision_penalties_per_pair() -> None:
     terms = calculate_agent_reward_terms(
         previous_state=previous_state,
         next_state=next_state,
-        sensing_radius=5.0,
-        discovery_radius=1.0,
-        collision_radius=0.5,
-        max_displacement=1.0,
-        weights=RewardWeights(
-            target_discovered=0.0,
-            new_coverage_cell=0.0,
-            agent_collision=-0.4,
-            obstacle_collision=0.0,
-            step_penalty=0.0,
-            success_bonus=0.0,
-            remaining_target_penalty=0.0,
-            visible_target_approach=0.0,
+        context=_context(
+            sensing_radius=5.0,
+            discovery_radius=1.0,
+            collision_radius=0.5,
+            max_displacement=1.0,
+            weights=RewardWeights(
+                target_discovered=0.0,
+                new_coverage_cell=0.0,
+                agent_collision=-0.4,
+                obstacle_collision=0.0,
+                step_penalty=0.0,
+                success_bonus=0.0,
+                remaining_target_penalty=0.0,
+                visible_target_approach=0.0,
+            ),
         ),
     )
 
@@ -281,11 +295,13 @@ def test_agent_reward_terms_preserve_total_reward_mass_for_mixed_attribution() -
         calculate_agent_reward_terms(
             previous_state=previous_state,
             next_state=next_state,
-            sensing_radius=5.0,
-            discovery_radius=2.0,
-            collision_radius=0.5,
-            max_displacement=1.0,
-            weights=weights,
+            context=_context(
+                sensing_radius=5.0,
+                discovery_radius=2.0,
+                collision_radius=0.5,
+                max_displacement=1.0,
+                weights=weights,
+            ),
         )
     )
 

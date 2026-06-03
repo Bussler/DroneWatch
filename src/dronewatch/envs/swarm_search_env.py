@@ -14,6 +14,7 @@ from dronewatch.sim import SwarmSimulation
 from .observation_builder import ObservationBuilder
 from .reward import (
     REWARD_TERM_KEYS,
+    RewardContext,
     aggregate_agent_reward_terms,
     calculate_agent_reward_terms,
     calculate_shared_reward_terms,
@@ -122,16 +123,19 @@ class SwarmSearchEnv(MultiAgentEnv):
         observations = self._observation_builder.build(state, metrics)
         max_displacement = self._config.simulation.agents.max_speed * self._config.simulation.world.dt
         num_agents = max(len(self._agent_ids), 1)
-
-        shared_reward_terms = calculate_shared_reward_terms(events, metrics, self._config.reward)
-        local_reward_terms_by_agent = calculate_agent_reward_terms(
-            previous_state=previous_state,
-            next_state=state,
+        reward_context = RewardContext(
             sensing_radius=self._config.simulation.agents.sensing_radius,
             discovery_radius=self._config.simulation.targets.discovery_radius,
             collision_radius=self._config.simulation.agents.collision_radius,
             max_displacement=max_displacement,
             weights=self._config.reward,
+        )
+
+        shared_reward_terms = calculate_shared_reward_terms(events, metrics, self._config.reward)
+        local_reward_terms_by_agent = calculate_agent_reward_terms(
+            previous_state=previous_state,
+            next_state=state,
+            context=reward_context,
         )
         local_reward_terms = aggregate_agent_reward_terms(local_reward_terms_by_agent)
         reward_terms = combine_reward_terms(shared_reward_terms, local_reward_terms)
