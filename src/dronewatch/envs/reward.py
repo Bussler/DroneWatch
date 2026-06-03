@@ -124,22 +124,6 @@ def combine_reward_terms(shared_terms: RewardTerms, local_terms: RewardTerms) ->
     return combined
 
 
-def calculate_visible_target_approach(
-    previous_state: Mapping[str, Any],
-    next_state: Mapping[str, Any],
-    context: RewardContext,
-) -> float:
-    """Return mean normalized progress toward each agent's nearest visible undiscovered target."""
-    approach_by_agent = calculate_visible_target_approach_by_agent(
-        previous_state=previous_state,
-        next_state=next_state,
-        context=context,
-    )
-    if not approach_by_agent:
-        return 0.0
-    return float(sum(approach_by_agent.values()) / len(approach_by_agent))
-
-
 def calculate_visible_target_approach_by_agent(
     previous_state: Mapping[str, Any],
     next_state: Mapping[str, Any],

@@ -6,7 +6,7 @@ from dronewatch.envs.reward import (
     aggregate_agent_reward_terms,
     calculate_agent_reward_terms,
     calculate_shared_reward_terms,
-    calculate_visible_target_approach,
+    calculate_visible_target_approach_by_agent,
     combine_reward_terms,
 )
 
@@ -102,7 +102,7 @@ def test_combined_reward_terms_include_success_remaining_and_approach_shaping() 
     }
 
 
-def test_visible_target_approach_rewards_progress_toward_nearest_visible_target() -> None:
+def test_visible_target_approach_by_agent_rewards_progress_toward_nearest_visible_target() -> None:
     previous_state = {
         "agents": [{"id": 0, "position": [0.0, 0.0]}],
         "targets": [{"id": 0, "position": [10.0, 0.0], "discovered": False}],
@@ -112,16 +112,16 @@ def test_visible_target_approach_rewards_progress_toward_nearest_visible_target(
         "targets": [{"id": 0, "position": [10.0, 0.0], "discovered": False}],
     }
 
-    approach = calculate_visible_target_approach(
-        previous_state,
-        next_state,
+    approach_by_agent = calculate_visible_target_approach_by_agent(
+        previous_state=previous_state,
+        next_state=next_state,
         context=_context(sensing_radius=15.0, max_displacement=2.0),
     )
 
-    assert approach == 1.0
+    assert approach_by_agent[0] == 1.0
 
 
-def test_visible_target_approach_penalizes_moving_away() -> None:
+def test_visible_target_approach_by_agent_penalizes_moving_away() -> None:
     previous_state = {
         "agents": [{"id": 0, "position": [2.0, 0.0]}],
         "targets": [{"id": 0, "position": [10.0, 0.0], "discovered": False}],
@@ -131,16 +131,16 @@ def test_visible_target_approach_penalizes_moving_away() -> None:
         "targets": [{"id": 0, "position": [10.0, 0.0], "discovered": False}],
     }
 
-    approach = calculate_visible_target_approach(
-        previous_state,
-        next_state,
+    approach_by_agent = calculate_visible_target_approach_by_agent(
+        previous_state=previous_state,
+        next_state=next_state,
         context=_context(sensing_radius=15.0, max_displacement=2.0),
     )
 
-    assert approach == -1.0
+    assert approach_by_agent[0] == -1.0
 
 
-def test_visible_target_approach_ignores_invisible_and_discovered_targets() -> None:
+def test_visible_target_approach_by_agent_ignores_invisible_and_discovered_targets() -> None:
     previous_state = {
         "agents": [{"id": 0, "position": [0.0, 0.0]}],
         "targets": [
@@ -156,13 +156,13 @@ def test_visible_target_approach_ignores_invisible_and_discovered_targets() -> N
         ],
     }
 
-    approach = calculate_visible_target_approach(
-        previous_state,
-        next_state,
+    approach_by_agent = calculate_visible_target_approach_by_agent(
+        previous_state=previous_state,
+        next_state=next_state,
         context=_context(sensing_radius=15.0, max_displacement=2.0),
     )
 
-    assert approach == 0.0
+    assert approach_by_agent == {}
 
 
 def test_agent_reward_terms_split_target_discovery_across_contributors() -> None:
