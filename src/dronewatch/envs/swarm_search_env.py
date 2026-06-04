@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+from dataclasses import dataclass, field
 from typing import Any
 
 import numpy as np
@@ -26,6 +27,34 @@ from .spaces import (
     agent_ids,
     observation_space,
 )
+
+
+@dataclass
+class EpisodeRewardTracker:
+    """Track episode-level reward totals and combined reward terms."""
+
+    shared_reward: float = 0.0
+    local_reward: float = 0.0
+    reward_terms: dict[str, float] = field(default_factory=empty_reward_terms)
+
+    def reset(self) -> None:
+        """Reset all episode accumulators."""
+        self.shared_reward = 0.0
+        self.local_reward = 0.0
+        self.reward_terms = empty_reward_terms()
+
+    def record_step(
+        self,
+        *,
+        shared_reward: float,
+        local_reward: float,
+        reward_terms: Mapping[str, Any],
+    ) -> None:
+        """Accumulate one environment step into the episode totals."""
+        self.shared_reward += shared_reward
+        self.local_reward += local_reward
+        for key in REWARD_TERM_KEYS:
+            self.reward_terms[key] += float(reward_terms.get(key, 0.0))
 
 
 class SwarmSearchEnv(MultiAgentEnv):
@@ -63,12 +92,7 @@ class SwarmSearchEnv(MultiAgentEnv):
         self.observation_space = observation_space(self._config.observation)
         self.action_spaces = {agent_id: self.action_space for agent_id in self._agent_ids}
         self.observation_spaces = {agent_id: self.observation_space for agent_id in self._agent_ids}
-        self._episode_reward = 0.0
-        self._episode_shared_reward = 0.0
-        self._episode_local_reward = 0.0
-        self._episode_reward_terms = empty_reward_terms()
-        self._episode_shared_reward_terms = empty_reward_terms()
-        self._episode_local_reward_terms = empty_reward_terms()
+        self._episode_rewards = EpisodeRewardTracker()
 
     def reset(
         self,
@@ -87,12 +111,7 @@ class SwarmSearchEnv(MultiAgentEnv):
         metrics = self._simulation.reset(seed=reset_seed)
         state = self._simulation.state()
         self.agents = list(self._agent_ids)
-        self._episode_reward = 0.0
-        self._episode_shared_reward = 0.0
-        self._episode_local_reward = 0.0
-        self._episode_reward_terms = empty_reward_terms()
-        self._episode_shared_reward_terms = empty_reward_terms()
-        self._episode_local_reward_terms = empty_reward_terms()
+        self._episode_rewards.reset()
         observations = self._observation_builder.build(state, metrics)
         infos = {agent_id: {"metrics": dict(metrics)} for agent_id in self._agent_ids}
         return observations, infos
@@ -143,17 +162,19 @@ class SwarmSearchEnv(MultiAgentEnv):
         local_reward = float(sum(local_reward_terms.values()))
         team_reward = float(sum(reward_terms.values()))
         shared_reward_per_agent = shared_reward / num_agents
-        rewards = {
-            agent_id: shared_reward_per_agent + float(sum(local_reward_terms_by_agent.get(index, {}).values()))
-            for index, agent_id in enumerate(self._agent_ids)
+        agent_local_reward_terms = {
+            agent_id: local_reward_terms_by_agent[index] for index, agent_id in enumerate(self._agent_ids)
         }
+        agent_local_rewards = {
+            agent_id: float(sum(agent_terms.values())) for agent_id, agent_terms in agent_local_reward_terms.items()
+        }
+        rewards = {agent_id: shared_reward_per_agent + agent_local_rewards[agent_id] for agent_id in self._agent_ids}
 
-        self._episode_reward += team_reward
-        self._episode_shared_reward += shared_reward
-        self._episode_local_reward += local_reward
-        self._accumulate_reward_terms(self._episode_reward_terms, reward_terms)
-        self._accumulate_reward_terms(self._episode_shared_reward_terms, shared_reward_terms)
-        self._accumulate_reward_terms(self._episode_local_reward_terms, local_reward_terms)
+        self._episode_rewards.record_step(
+            shared_reward=shared_reward,
+            local_reward=local_reward,
+            reward_terms=reward_terms,
+        )
 
         terminated = bool(metrics.get("all_targets_discovered", False))
         truncated = bool(metrics.get("horizon_reached", False)) and not terminated
@@ -167,26 +188,22 @@ class SwarmSearchEnv(MultiAgentEnv):
         else:
             self.agents = list(self._agent_ids)
 
+        episode_info = {
+            "episode_shared_reward": self._episode_rewards.shared_reward,
+            "episode_local_reward": self._episode_rewards.local_reward,
+            "episode_reward_terms": dict(self._episode_rewards.reward_terms),
+        }
         infos = {
             agent_id: {
                 "events": events,
                 "metrics": metrics,
                 "reward_terms": reward_terms,
-                "shared_reward_terms": shared_reward_terms,
-                "local_reward_terms": local_reward_terms_by_agent[index],
-                "shared_reward": rewards[agent_id] - float(sum(local_reward_terms_by_agent[index].values())),
-                "local_reward": float(sum(local_reward_terms_by_agent[index].values())),
+                "local_reward_terms": agent_local_reward_terms[agent_id],
                 "team_reward": team_reward,
                 "per_agent_reward": rewards[agent_id],
-                "episode_reward": self._episode_reward,
-                "episode_shared_reward": self._episode_shared_reward,
-                "episode_local_reward": self._episode_local_reward,
-                "episode_reward_terms": dict(self._episode_reward_terms),
-                "episode_shared_reward_terms": dict(self._episode_shared_reward_terms),
-                "episode_local_reward_terms": dict(self._episode_local_reward_terms),
-                "episode_length": metrics["timestep"],
+                **episode_info,
             }
-            for index, agent_id in enumerate(self._agent_ids)
+            for agent_id in self._agent_ids
         }
         return observations, rewards, terminateds, truncateds, infos
 
@@ -210,9 +227,3 @@ class SwarmSearchEnv(MultiAgentEnv):
                 raise ValueError(f"action for {agent_id} contains non-finite values")
             ordered_actions.append((float(action[0]), float(action[1])))
         return ordered_actions
-
-    @staticmethod
-    def _accumulate_reward_terms(total: dict[str, float], delta: Mapping[str, Any]) -> None:
-        """Mutate a reward-term accumulator in place."""
-        for key in REWARD_TERM_KEYS:
-            total[key] += float(delta.get(key, 0.0))

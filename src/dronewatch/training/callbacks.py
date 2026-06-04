@@ -6,6 +6,8 @@ from typing import Any
 
 from ray.rllib.callbacks.callbacks import RLlibCallback
 
+from dronewatch.envs.reward import REWARD_TERM_METRIC_NAMES
+
 TASK_METRIC_KEYS = {
     "target_discovery_rate": "target_discovery_rate",
     "discovered_target_count": "discovered_target_count",
@@ -17,30 +19,23 @@ TASK_METRIC_KEYS = {
     "episode_length": "timestep",
 }
 
-REWARD_METRIC_KEYS = (
-    "shared_reward",
-    "local_reward",
-    "reward_term_target_discovery",
-    "reward_term_coverage",
-    "reward_term_agent_collision",
-    "reward_term_obstacle_collision",
-    "reward_term_step_penalty",
-    "reward_term_remaining_targets",
-    "reward_term_success_bonus",
-    "reward_term_visible_target_approach",
-)
+REWARD_METRIC_KEYS = {
+    "shared_reward": "shared_reward",
+    "local_reward": "local_reward",
+    **{metric_name: metric_name for metric_name in REWARD_TERM_METRIC_NAMES.values()},
+}
 
-LEARNER_METRIC_KEYS = (
-    "policy_loss",
-    "vf_loss",
-    "vf_loss_unclipped",
-    "total_loss",
-    "entropy",
-    "mean_kl_loss",
-    "vf_explained_var",
-    "curr_entropy_coeff",
-    "curr_kl_coeff",
-)
+LEARNER_METRIC_KEYS = {
+    "policy_loss": "policy_loss",
+    "vf_loss": "vf_loss",
+    "vf_loss_unclipped": "vf_loss_unclipped",
+    "total_loss": "total_loss",
+    "entropy": "entropy",
+    "mean_kl_loss": "mean_kl_loss",
+    "vf_explained_var": "vf_explained_var",
+    "curr_entropy_coeff": "curr_entropy_coeff",
+    "curr_kl_coeff": "curr_kl_coeff",
+}
 
 
 class SwarmSearchMetricsCallback(RLlibCallback):
@@ -78,17 +73,7 @@ class SwarmSearchMetricsCallback(RLlibCallback):
             metrics_logger.log_value("dronewatch/local_reward", float(episode_local_reward), reduce="mean")
 
         reward_terms = first_info.get("episode_reward_terms", {})
-        reward_term_metric_names = {
-            "target_discovery": "reward_term_target_discovery",
-            "coverage": "reward_term_coverage",
-            "agent_collision": "reward_term_agent_collision",
-            "obstacle_collision": "reward_term_obstacle_collision",
-            "step_penalty": "reward_term_step_penalty",
-            "remaining_targets": "reward_term_remaining_targets",
-            "success_bonus": "reward_term_success_bonus",
-            "visible_target_approach": "reward_term_visible_target_approach",
-        }
-        for source_name, output_name in reward_term_metric_names.items():
+        for source_name, output_name in REWARD_TERM_METRIC_NAMES.items():
             if source_name in reward_terms:
                 metrics_logger.log_value(f"dronewatch/{output_name}", float(reward_terms[source_name]), reduce="mean")
 

@@ -46,6 +46,7 @@ REWARD_TERMS = (
 REWARD_TERM_KEYS = tuple(spec.name for spec in REWARD_TERMS)
 LOCAL_REWARD_TERM_KEYS = tuple(spec.name for spec in REWARD_TERMS if spec.scope == "local")
 SHARED_REWARD_TERM_KEYS = tuple(spec.name for spec in REWARD_TERMS if spec.scope == "shared")
+REWARD_TERM_METRIC_NAMES = {name: f"reward_term_{name}" for name in REWARD_TERM_KEYS}
 
 
 def calculate_shared_reward_terms(

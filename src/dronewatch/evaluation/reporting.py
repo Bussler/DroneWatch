@@ -8,16 +8,7 @@ from typing import Any
 
 import numpy as np
 
-REWARD_TERM_REPORT_NAMES = {
-    "target_discovery": "reward_term_target_discovery",
-    "coverage": "reward_term_coverage",
-    "agent_collision": "reward_term_agent_collision",
-    "obstacle_collision": "reward_term_obstacle_collision",
-    "step_penalty": "reward_term_step_penalty",
-    "remaining_targets": "reward_term_remaining_targets",
-    "success_bonus": "reward_term_success_bonus",
-    "visible_target_approach": "reward_term_visible_target_approach",
-}
+from dronewatch.envs.reward import REWARD_TERM_METRIC_NAMES
 
 
 def episode_summary(
@@ -41,7 +32,7 @@ def episode_summary(
         "success": 1.0 if bool(metrics["all_targets_discovered"]) else 0.0,
         "episode_length": float(metrics["timestep"]),
     }
-    for source_name, output_name in REWARD_TERM_REPORT_NAMES.items():
+    for source_name, output_name in REWARD_TERM_METRIC_NAMES.items():
         summary[output_name] = float(reward_terms.get(source_name, 0.0))
     return summary
 
@@ -74,7 +65,7 @@ def aggregate_report(
         "mean_episode_length": mean("episode_length"),
         "episodes": episode_summaries,
     }
-    for output_name in REWARD_TERM_REPORT_NAMES.values():
+    for output_name in REWARD_TERM_METRIC_NAMES.values():
         report[f"mean_{output_name}"] = mean(output_name)
     if extra is not None:
         report.update(extra)
