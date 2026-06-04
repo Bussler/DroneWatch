@@ -162,6 +162,8 @@ class SwarmSearchEnv(MultiAgentEnv):
         local_reward = float(sum(local_reward_terms.values()))
         team_reward = float(sum(reward_terms.values()))
         shared_reward_per_agent = shared_reward / num_agents
+
+        # Translate from simulator agent id to rllib agent id
         agent_local_reward_terms = {
             agent_id: local_reward_terms_by_agent[index] for index, agent_id in enumerate(self._agent_ids)
         }
