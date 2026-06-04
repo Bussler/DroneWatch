@@ -6,7 +6,11 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
-from dronewatch.training.callbacks import LEARNER_METRIC_KEYS, TASK_METRIC_KEYS
+from dronewatch.training.callbacks import (
+    LEARNER_METRIC_KEYS,
+    REWARD_METRIC_KEYS,
+    TASK_METRIC_KEYS,
+)
 from dronewatch.training.rllib_config import SHARED_POLICY_ID
 
 
@@ -32,7 +36,7 @@ def training_progress(iteration: int, result: dict[str, Any]) -> dict[str, Any]:
     }
 
     # RLlib's new API stack exposes callback metrics under env_runners
-    for metric_name in (*TASK_METRIC_KEYS, "success_rate"):
+    for metric_name in (*TASK_METRIC_KEYS, *REWARD_METRIC_KEYS, "success_rate"):
         value = env_runners.get(
             f"dronewatch/{metric_name}",
             custom_metrics.get(f"dronewatch/{metric_name}_mean"),

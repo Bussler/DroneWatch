@@ -20,8 +20,11 @@ class _FakeAlgorithm:
         return object()
 
 
-def test_evaluate_algorithm_renders_first_episode_only(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    rendered: dict[str, Any] = {}
+def test_evaluate_algorithm_renders_each_episode_to_gif_directory(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    rendered: list[dict[str, Any]] = []
 
     def fake_initial_module_state(_module: object) -> dict[str, Any]:
         return {}
@@ -34,14 +37,13 @@ def test_evaluate_algorithm_renders_first_episode_only(monkeypatch: pytest.Monke
         return np.zeros((2,), dtype=np.float32), state
 
     def fake_render_episode_gif(frames: list[SimulationFrame], path: str | Path, **_kwargs: Any) -> None:
-        rendered["frames"] = list(frames)
-        rendered["path"] = Path(path)
+        rendered.append({"frames": list(frames), "path": Path(path)})
 
     monkeypatch.setattr(evaluate_module, "_initial_module_state", fake_initial_module_state)
     monkeypatch.setattr(evaluate_module, "_compute_action", fake_compute_action)
     monkeypatch.setattr(evaluate_module, "render_episode_gif", fake_render_episode_gif)
 
-    gif_path = tmp_path / "ppo_eval.gif"
+    gif_path = tmp_path / "ppo_eval"
     report = evaluate_algorithm(
         algorithm=_FakeAlgorithm(),  # type: ignore[arg-type]
         episodes=2,
@@ -53,8 +55,13 @@ def test_evaluate_algorithm_renders_first_episode_only(monkeypatch: pytest.Monke
 
     assert report["policy"] == "ppo"
     assert report["num_episodes"] == 2
-    assert rendered["path"] == gif_path
-    frames = rendered["frames"]
-    assert len(frames) == 2
-    assert frames[0].simulation_metrics["timestep"] == 0
-    assert frames[-1].simulation_metrics["timestep"] == 200
+    assert [item["path"] for item in rendered] == [
+        gif_path / "episode_01.gif",
+        gif_path / "episode_02.gif",
+    ]
+    assert len(rendered) == 2
+    for item in rendered:
+        frames = item["frames"]
+        assert len(frames) == 2
+        assert frames[0].simulation_metrics["timestep"] == 0
+        assert frames[-1].simulation_metrics["timestep"] == 200

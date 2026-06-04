@@ -17,14 +17,14 @@ from dronewatch.config.loader import (
 def test_load_config_composes_default_groups() -> None:
     config = load_config("configs/config.yaml")
 
-    assert config.project.name == "DroneWatch"
+    assert config.project.name == "DroneWatchLSTMGeneralizationObstacles"
     assert config.env.name == "SwarmSearch2D"
     assert config.env.simulation.agents.count == 16
-    assert config.env.reward.success_bonus == 50.0
+    assert config.env.reward.success_bonus == 100.0
     assert config.env.reward.remaining_target_penalty == -0.02
-    assert config.env.reward.visible_target_approach == 0.05
-    assert config.model.kind == "feedforward"
-    assert config.training.stop.iterations == 5000
+    assert config.env.reward.visible_target_approach == 0.1
+    assert config.model.kind == "lstm"
+    assert config.training.stop.iterations == 700
     assert config.logging.mlflow.enabled is True
     assert config.logging.mlflow.tracking_uri == "file:./outputs/mlruns"
     assert not hasattr(config, "tune")
@@ -111,7 +111,7 @@ def test_load_random_policy_config_composes_standalone_groups() -> None:
 
 def test_load_config_rejects_invalid_overrides() -> None:
     with pytest.raises(ValidationError):
-        load_config("configs/config.yaml", ["training.ppo.minibatch_size=2048"])
+        load_config("configs/config.yaml", ["training.ppo.minibatch_size=8192"])
 
     with pytest.raises(ValidationError):
         load_config("configs/config.yaml", ["baseline.random.render=true"])
@@ -121,6 +121,9 @@ def test_load_config_rejects_invalid_overrides() -> None:
 
     with pytest.raises(ValidationError):
         load_config("configs/config.yaml", ["tune.num_samples=2"])
+
+    with pytest.raises(ValidationError):
+        load_config("configs/config.yaml", ["env.reward.mode=mixed"])
 
     with pytest.raises(ValueError, match="key=value"):
         load_config("configs/config.yaml", ["training.debug"])

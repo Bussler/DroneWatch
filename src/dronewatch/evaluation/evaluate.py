@@ -105,6 +105,7 @@ def evaluate_algorithm(
         done = False
         episode_reward = 0.0
         final_metrics: dict[str, Any] = {}
+        final_info: dict[str, Any] = {}
 
         if render:
             episode_frames.append([])
@@ -120,13 +121,14 @@ def evaluate_algorithm(
             observations, rewards, terminateds, truncateds, infos = env.step(actions)
             episode_reward += float(sum(rewards.values()))
             done = bool(terminateds["__all__"] or truncateds["__all__"])
-            final_metrics = dict(next(iter(infos.values()))["metrics"])
+            final_info = dict(next(iter(infos.values())))
+            final_metrics = dict(final_info["metrics"])
 
             should_capture = render and (done or int(final_metrics["timestep"]) % render_stride == 0)
             if should_capture:
                 episode_frames[-1].append(_capture_frame(env, final_metrics))
 
-        episode_summaries.append(episode_summary(episode_reward, final_metrics))
+        episode_summaries.append(episode_summary(episode_reward, final_metrics, final_info))
 
     extra: dict[str, Any] = {}
     if checkpoint is not None:
@@ -138,7 +140,7 @@ def evaluate_algorithm(
         for episode_index, episode_frames in enumerate(episode_frames):
             render_episode_gif(
                 episode_frames,
-                gif_path.with_name(f"{gif_path.stem}_episode_{episode_index + 1:02d}.gif"),
+                gif_path / f"episode_{episode_index + 1:02d}.gif",
                 fps=render_fps,
                 env_config=env_config.simulation,
             )

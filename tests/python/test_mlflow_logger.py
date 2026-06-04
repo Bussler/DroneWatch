@@ -51,6 +51,9 @@ def test_mlflow_logger_records_params_metrics_and_artifacts(tmp_path: Path) -> N
                 "policy": "ppo",
                 "num_episodes": 2,
                 "mean_reward": 1.25,
+                "mean_shared_reward": 0.75,
+                "mean_local_reward": 0.5,
+                "mean_reward_term_target_discovery": 1.0,
                 "mean_target_discovery_rate": 0.5,
                 "episodes": [{"reward": 1.0}, {"reward": 1.5}],
             },
@@ -68,6 +71,9 @@ def test_mlflow_logger_records_params_metrics_and_artifacts(tmp_path: Path) -> N
     assert run_data.metrics["train/iteration"] == 1.0
     assert run_data.metrics["train/nested/value"] == 2.5
     assert run_data.metrics["eval/mean_reward"] == 1.25
+    assert run_data.metrics["eval/mean_shared_reward"] == 0.75
+    assert run_data.metrics["eval/mean_local_reward"] == 0.5
+    assert run_data.metrics["eval/mean_reward_term_target_discovery"] == 1.0
     assert run_data.metrics["eval/mean_target_discovery_rate"] == 0.5
     assert [artifact.path for artifact in artifacts] == ["config/resolved_config.yaml"]
 

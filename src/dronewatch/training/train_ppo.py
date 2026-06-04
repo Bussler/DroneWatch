@@ -16,7 +16,7 @@ from dronewatch.config.loader import (
     save_resolved_config,
 )
 from dronewatch.config.schema import DroneWatchConfig
-from dronewatch.evaluation.evaluate import evaluate_algorithm, evaluate_checkpoint
+from dronewatch.evaluation.evaluate import evaluate_algorithm
 from dronewatch.evaluation.reporting import write_json_report
 from dronewatch.logging import (
     log_artifact,
