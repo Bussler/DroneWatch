@@ -5,7 +5,7 @@
 DroneWatch currently assumes:
 
 - Python 3.11 or newer
-- `uv`
+- `uv` for package management
 - Rust and Cargo
 - Docker only if you want the validation image or MLflow service through Compose
 
@@ -17,35 +17,16 @@ The main local setup command is:
 make install
 ```
 
-This performs two steps:
+This performs the python and rust project installation:
 
 ```bash
 uv sync --dev
 uv run maturin develop -m rust/swarm_sim/Cargo.toml
 ```
 
-## Fast Smoke Path
-
-Use this path to confirm that Python, Rust, RLlib, and the core CLIs all work before starting a longer training run.
-
-```bash
-uv run python -c "import dronewatch; print(dronewatch.__version__)"
-uv run python -c "from dronewatch.sim import rust_version; print(rust_version())"
-make rollout-rust
-make rollout-random
-make render-random
-make ppo-smoke
-make tune-ppo-smoke
-```
-
-Expected outputs:
-
-- `make rollout-random` writes `artifacts/reports/random_policy_report.json`
-- `make render-random` also writes `artifacts/gifs/random_policy_episode.gif`
-- `make ppo-smoke` writes `artifacts/reports/ppo_smoke_report.json`
-- `make tune-ppo-smoke` writes a Tune search summary under `artifacts/reports/`
-
 ## Main Workflows
+Most commands can be run efficiently via a makefile.  
+See all available commands with `make help`
 
 ### Train PPO
 
@@ -53,11 +34,18 @@ Expected outputs:
 make train-ppo
 ```
 
+The training prints the results of each training iteration to the command line and logs out to mlflow.  
+Periodic evaluations are run during training.  
+Artifacts of these evaluations (checkpoints, gifs, reports) are stored in `/artifacts/`.  
+If not configured otherwise, mlflow logs are stored in `/outputs/mlruns/`.
+
 ### Evaluate a checkpoint
 
 ```bash
 make evaluate-ppo CHECKPOINT=artifacts/checkpoints/ppo/path-to-checkpoint
 ```
+
+Similar to the training script, logging and evaluations outputs are stored in `/outputs/mlruns/` and `/artifacts`.
 
 ### Run Ray Tune search
 
@@ -65,16 +53,12 @@ make evaluate-ppo CHECKPOINT=artifacts/checkpoints/ppo/path-to-checkpoint
 make tune-ppo
 ```
 
+Similar to the training script, logging and evaluations outputs are stored in `/outputs/mlruns/` and `/artifacts`.
+
 ### View MLflow runs
 
 ```bash
 make mlflow-up
-```
-
-Or run the UI directly:
-
-```bash
-make mlflow-ui
 ```
 
 ### Run tests
@@ -83,12 +67,8 @@ make mlflow-ui
 make test
 ```
 
-## Recommended Reviewer Path
+### Run a baseline random policy
 
-If you are reading the repository to understand the project rather than to modify it, this sequence is usually enough:
-
-1. Install with `make install`.
-2. Run `make rollout-random`.
-3. Run `make ppo-smoke`.
-4. Open the report artifacts in `artifacts/reports/`.
-5. Read the Results guide to interpret the output.
+```bash
+make rollout-random
+```

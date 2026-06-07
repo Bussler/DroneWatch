@@ -2,20 +2,16 @@
 
 help:
 	@echo "Available targets:"
-	@echo "  sync          Install Python dependencies with uv"
 	@echo "  install       Sync Python deps and build the Rust extension in-place"
-	@echo "  develop-rust  Build/install the PyO3 extension with maturin"
-	@echo "  rollout-rust   Run a deterministic scripted Rust simulation rollout"
-	@echo "  rollout-random Run a random policy rollout and write a JSON report"
-	@echo "  render-random  Run a random policy rollout and write a report plus GIF"
 	@echo "  train-ppo      Train shared-policy PPO locally"
 	@echo "  tune-ppo       Run a local Ray Tune PPO hyperparameter search"
-	@echo "  tune-ppo-smoke Run a tiny Ray Tune PPO smoke check"
+	@echo "  sync          Install Python dependencies with uv"
 	@echo "  evaluate-ppo   Evaluate PPO checkpoint; pass CHECKPOINT=path"
-	@echo "  ppo-smoke      Run one tiny PPO training/evaluation smoke check"
 	@echo "  mlflow-up      Start the MLflow tracking UI with Docker Compose"
 	@echo "  mlflow-down    Stop the Docker Compose MLflow service"
-	@echo "  mlflow-ui      Start a local MLflow UI without Docker"
+	@echo "  develop-rust  Build/install the PyO3 extension with maturin"
+	@echo "  rollout-rust   Run a deterministic scripted Rust simulation rollout"
+	@echo "  rollout-random Run a random policy rollout and write a JSON report and GIF animation"
 	@echo "  docs-serve     Start a local MkDocs preview server"
 	@echo "  docs-build     Build the MkDocs site in strict mode"
 	@echo "  test-rust     Run Rust tests"
@@ -38,17 +34,11 @@ rollout-rust:
 rollout-random:
 	uv run python -m scripts.random_policy --config configs/random_policy.yaml
 
-render-random:
-	uv run python -m scripts.random_policy --config configs/random_policy.yaml random_policy.render=true
-
 train-ppo:
 	uv run python -m dronewatch.training.train_ppo --config configs/config.yaml
 
 tune-ppo:
 	uv run python -m dronewatch.training.tune_ppo --config configs/tune_ppo.yaml
-
-tune-ppo-smoke:
-	uv run python -m dronewatch.training.tune_ppo --config configs/tune_ppo.yaml tune.num_samples=2 training.stop.iterations=1 training.evaluation.enabled=false logging.mlflow.enabled=false
 
 evaluate-ppo:
 ifndef CHECKPOINT
@@ -56,17 +46,11 @@ ifndef CHECKPOINT
 endif
 	uv run python -m dronewatch.evaluation.evaluate --config configs/evaluate.yaml evaluation.checkpoint=$(CHECKPOINT)
 
-ppo-smoke:
-	uv run python -m dronewatch.training.train_ppo --config configs/debug.yaml
-
 mlflow-up:
 	docker compose up mlflow
 
 mlflow-down:
 	docker compose down
-
-mlflow-ui:
-	uv run mlflow ui --backend-store-uri outputs/mlruns
 
 docs-serve:
 	uv run mkdocs serve

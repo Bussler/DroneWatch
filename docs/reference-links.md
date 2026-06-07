@@ -29,9 +29,3 @@ These are the main implementation anchors for the current documentation.
 - `src/dronewatch/evaluation/reporting.py`
 - `src/dronewatch/logging/mlflow_logger.py`
 
-## Example artifacts
-
-- `artifacts/reports/ppo_smoke_report.json`
-- `artifacts/reports/ppo_eval_report.json`
-- `artifacts/reports/DroneWatchLSTMGeneralizationObstacles/iteration_0500.json`
-- `outputs/mlruns/`

@@ -1,6 +1,6 @@
 # Training Pipeline
 
-This page explains the important Python-side control flow for PPO training and checkpoint evaluation.
+This page explains the Python-side control flow for PPO training and checkpoint evaluation.
 
 ## Pipeline Overview
 

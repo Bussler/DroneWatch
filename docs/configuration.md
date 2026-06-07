@@ -12,10 +12,52 @@ This means the YAML structure is flexible enough for grouped presets, while the 
 The repository currently uses different root configs for different workflows:
 
 - `configs/config.yaml` for normal PPO training
-- `configs/debug.yaml` for the PPO smoke path
 - `configs/evaluate.yaml` for standalone checkpoint evaluation
-- `configs/random_policy.yaml` for the random baseline
+- `configs/random_policy.yaml` for the random policy baseline
 - `configs/tune_ppo.yaml` for Ray Tune sweeps
+
+### Group Config Files
+
+Group config files define parameters of a configuration subgroup, e.g. for logging or network definitions.
+
+- `configs/env/` for environment and reward weight definitions
+- `configs/evaluation/` for evaluation specifications
+- `configs/logging/` for logging (mlflow) specifications
+- `configs/model/` for specifying the network of the trained agent (feedforward or lstm)
+- `configs/random_policy/` for specifying the random policy rollout
+- `configs/rendering/` for rendering/ gif creation specifications
+- `configs/training/` for ray rllib training configurations
+- `configs/tune/` for ray rllib tune configuarions
+
+
+## Group Overrides vs Field Overrides
+
+You can specify which root config to use, overwrite the group configs or overwrite singular fields of the group configs.
+
+### Group override
+
+A group override replaces one preset from a config group.
+
+```bash
+uv run python -m dronewatch.training.train_ppo \
+  --config configs/config.yaml \
+  model=ppo_feedforward
+```
+
+Here `model=ppo_feedforward` switches the selected model file that will be used under `configs/model/` to the feedforward one.
+
+### Field override
+
+A field override changes a specific value inside the composed config.
+
+```bash
+uv run python -m dronewatch.training.train_ppo \
+  --config configs/config.yaml \
+  training.stop.iterations=1 \
+  training.ppo.minibatch_size=64
+```
+
+Here the selected config groups stay the same, but the final values (stop.iterations and ppo.minibatch_size) change before validation.
 
 ## How Composition Works
 
@@ -36,63 +78,7 @@ The main entrypoints are:
 - `load_evaluation_config()` for checkpoint evaluation
 - `load_random_policy_config()` for the random baseline
 
-## Group Overrides vs Field Overrides
 
-This distinction is the most important part of the config system.
-
-### Group override
-
-A group override replaces one preset from a config group.
-
-```bash
-uv run python -m dronewatch.training.train_ppo \
-  --config configs/config.yaml \
-  model=ppo_feedforward
-```
-
-Here `model=ppo_feedforward` switches the selected file under `configs/model/`.
-
-### Field override
-
-A field override changes a specific value inside the composed config.
-
-```bash
-uv run python -m dronewatch.training.train_ppo \
-  --config configs/config.yaml \
-  training.stop.iterations=1 \
-  training.ppo.minibatch_size=64
-```
-
-Here the selected config groups stay the same, but the final values change before validation.
-
-## Current Training Default
-
-At the time of writing, `configs/config.yaml` selects:
-
-- `env: swarm_search_v2`
-- `model: ppo_lstm`
-- `training: local_ppo`
-- `logging: mlflow_local`
-- `rendering: default`
-
-That makes the obstacle-aware LSTM path the main training default.
-
-## Where Resolved Configs Go
+## Resolved Configs
 
 Each run writes a resolved YAML snapshot named `resolved_config.yaml` beside the artifact directory for that run. This is the best source of truth when you need to know what actually ran after group selection and CLI overrides were applied.
-
-## What the Schema Owns
-
-The typed models in `src/dronewatch/config/schema.py` define:
-
-- project metadata and artifact locations
-- environment and simulator settings
-- observation limits
-- reward weights
-- PPO hyperparameters
-- Ray worker allocation
-- evaluation settings
-- MLflow logging settings
-- Tune search-space metadata
-
-When a YAML field does not match this schema, validation fails before training or evaluation starts.
