@@ -23,7 +23,9 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Configuration: configuration.md
+  - Rust Environment: rust-environment.md
   - Training Pipeline: training-pipeline.md
   - Results: results.md
   - Troubleshooting: troubleshooting.md
   - Reference Links: reference-links.md
+

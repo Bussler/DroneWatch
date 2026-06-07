@@ -29,3 +29,13 @@ These are the main implementation anchors for the current documentation.
 - `src/dronewatch/evaluation/reporting.py`
 - `src/dronewatch/logging/mlflow_logger.py`
 
+## Rust simulator core
+
+- `rust/swarm_sim/src/lib.rs`
+- `rust/swarm_sim/src/world.rs`
+- `rust/swarm_sim/src/config.rs`
+- `rust/swarm_sim/src/metrics.rs`
+- `rust/swarm_sim/src/scenario.rs`
+- `rust/swarm_sim/src/geometry.rs`
+- `rust/swarm_sim/src/coverage.rs`
+

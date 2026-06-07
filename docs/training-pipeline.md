@@ -48,6 +48,8 @@ The environment registration step matters because checkpoint loading and fresh a
 
 `src/dronewatch/envs/swarm_search_env.py` is the Python wrapper around the Rust simulator.
 
+For the Rust-side simulator API and module structure, see the Rust Environment page.
+
 Important behavior:
 
 - `reset()` resets the simulator, rebuilds fixed-size observations, and returns initial metrics in `infos`
