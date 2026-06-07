@@ -1,0 +1,29 @@
+site_name: DroneWatch
+site_description: Documentation for setup, configuration, training, and evaluation in DroneWatch.
+docs_dir: docs
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+plugins:
+  - search
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Configuration: configuration.md
+  - Training Pipeline: training-pipeline.md
+  - Results: results.md
+  - Troubleshooting: troubleshooting.md
+  - Reference Links: reference-links.md

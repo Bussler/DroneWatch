@@ -1,4 +1,4 @@
-.PHONY: help sync install develop-rust rollout-rust rollout-random render-random train-ppo tune-ppo tune-ppo-smoke evaluate-ppo render-ppo ppo-smoke mlflow-up mlflow-down mlflow-ui test-rust test-python test clean docker-build
+.PHONY: help sync install develop-rust rollout-rust rollout-random render-random train-ppo tune-ppo tune-ppo-smoke evaluate-ppo render-ppo ppo-smoke mlflow-up mlflow-down mlflow-ui docs-serve docs-build test-rust test-python test clean docker-build
 
 help:
 	@echo "Available targets:"
@@ -16,6 +16,8 @@ help:
 	@echo "  mlflow-up      Start the MLflow tracking UI with Docker Compose"
 	@echo "  mlflow-down    Stop the Docker Compose MLflow service"
 	@echo "  mlflow-ui      Start a local MLflow UI without Docker"
+	@echo "  docs-serve     Start a local MkDocs preview server"
+	@echo "  docs-build     Build the MkDocs site in strict mode"
 	@echo "  test-rust     Run Rust tests"
 	@echo "  test-python   Run Python tests"
 	@echo "  test          Run Rust and Python tests"
@@ -65,6 +67,12 @@ mlflow-down:
 
 mlflow-ui:
 	uv run mlflow ui --backend-store-uri outputs/mlruns
+
+docs-serve:
+	uv run mkdocs serve
+
+docs-build:
+	uv run mkdocs build --strict
 
 test-rust:
 	cargo test --manifest-path rust/swarm_sim/Cargo.toml

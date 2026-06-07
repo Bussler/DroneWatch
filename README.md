@@ -73,6 +73,22 @@ uv sync --dev
 uv run maturin develop -m rust/swarm_sim/Cargo.toml
 ```
 
+## Documentation
+
+The MkDocs site lives under `docs/` and covers setup, configuration, the Python training pipeline, and result interpretation.
+
+Preview it locally with:
+
+```bash
+make docs-serve
+```
+
+Build it in strict mode with:
+
+```bash
+make docs-build
+```
+
 ## Smoke Check
 
 Verify that Python can import the package, call into Rust, run a scripted simulator rollout, and run the random policy baseline:
