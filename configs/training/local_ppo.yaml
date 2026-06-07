@@ -12,7 +12,7 @@ training:
     lr: 0.0001
     clip_param: 0.1
     grad_clip: 0.5
-    entropy_coeff: 0.002
+    entropy_coeff: 0.0005
     vf_loss_coeff: 1.0
     train_batch_size_per_learner: 4096
     minibatch_size: 512
