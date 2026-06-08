@@ -59,6 +59,37 @@ Key responsibilities:
 
 The environment registration step matters because checkpoint loading and fresh algorithm creation both depend on the registered environment name.
 
+### Shared-policy training
+
+DroneWatch uses parameter sharing for the homogeneous swarm. In practice, RLlib is configured with a single policy ID, `shared_policy`, and `shared_policy_mapping_fn()` returns that same policy for every agent.
+
+The agents are homogeneous and receive the same observation structure and action space. The policy can still produce different behavior per drone because each agent sees a different local observation, even though the weights are shared.
+
+### Network structure
+
+The model definition comes from `ModelConfig` in `src/dronewatch/config/schema.py` and is translated into RLlib's `DefaultModelConfig` by `_model_config()`.
+
+The current presets are simple on purpose:
+
+- feedforward PPO uses a multilayer perceptron with `fcnet_hiddens`, `activation`, and `log_std_clip_param`
+- LSTM PPO uses the same feedforward front-end, then adds `use_lstm`, `lstm_cell_size`, and `max_seq_len`
+
+Conceptually, the network looks like this:
+
+```mermaid
+flowchart LR
+  obs["Observation vector"] --> enc["Encoder: Feedforward layers"]
+  enc -->|feedforward preset| shared["Latent Vector: Features"]
+  enc -->|lstm preset| mem["Optional LSTM memory"]
+  mem --> shared
+  shared --> policy_head["Policy head"]
+  shared --> value_head["Value head"]
+  policy_head --> action_dist["Action distribution"]
+  value_head --> value_estimate["Value estimate"]
+```
+
+The feedforward preset uses the direct encoder path, while the LSTM preset inserts recurrent memory between the shared encoder and the PPO heads.
+
 ## Environment Wrapper
 
 `src/dronewatch/envs/swarm_search_env.py` is the Python wrapper around the Rust simulator.
@@ -78,6 +109,8 @@ This is the main Python orchetration layer between RLlib and the Rust simulation
 
 `src/dronewatch/envs/reward.py` defines the reward surface.
 
+Rust returns raw step events and cumulative metrics, and Python converts those into reward terms.
+
 The current reward terms are:
 
 - `target_discovery`
@@ -89,7 +122,48 @@ The current reward terms are:
 - `success_bonus`
 - `visible_target_approach`
 
-Some terms are shared across the team, while others are attributed to specific agents. That split is important when you interpret episode rewards and when you compare total reward against collisions or obstacle violations.
+### Shared versus local reward
+
+The reward is split into two pieces.
+
+Shared terms are computed once for the whole team:
+
+- `coverage`
+- `step_penalty`
+- `remaining_targets`
+- `success_bonus`
+
+These terms reflect global task progress. In `SwarmSearchEnv.step()`, the sum of these shared terms is divided evenly across all agents.
+
+Local terms are attributed to specific agents:
+
+- `target_discovery`
+- `agent_collision`
+- `obstacle_collision`
+- `visible_target_approach`
+
+These terms reflect which agents actually caused a useful event or constraint violation.
+
+### How local attribution works
+
+- target discovery reward is split across all agents that are within discovery radius of a newly discovered target
+- agent collision penalty is split across the two colliding agents
+- obstacle collision penalty is assigned to each agent overlapping an obstacle
+- visible target approach reward is based on normalized progress toward the nearest visible undiscovered target
+
+This keeps the cooperative team objective while still giving RLlib a more informative credit signal than a purely global reward would provide.
+
+### Final per-agent reward
+
+Inside `SwarmSearchEnv.step()`, the final reward given to each RLlib agent is:
+
+```text
+per_agent_reward = shared_reward / num_agents + local_reward_for_that_agent
+```
+
+So every drone shares the global task signal, but only the agent that contributed to a local event receives the corresponding local credit or penalty.
+
+The environment also stores episode-level reward breakdowns in `infos`, in order expose both total reward and per-term reward metrics to the evaluation reports.
 
 ## Training Metrics
 
