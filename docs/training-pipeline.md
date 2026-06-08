@@ -15,6 +15,21 @@ CLI
   -> checkpoints, JSON reports, MLflow logs
 ```
 
+### Drone Watch Training step:
+```mermaid
+flowchart LR
+  obs["Observations"] --> policy["Shared PPO policy"]
+  policy -->|actions| pyenv["Python env step"]
+  pyenv -->|ordered actions| rust["Rust world step"]
+  rust -->|step result| post["Reward, next obs, done"]
+  post -->|next observations| obs
+  post -->|training batch| learner["PPO update"]
+  learner -->|updated weights| policy
+```
+
+Each training step follows the same loop: RLlib produces an action for each agent, the Python environment orders those actions for the simulator, the Rust world advances one timestep, and Python turns the returned `events`, `metrics`, and `state` into rewards, next observations, done flags, and logging signals.
+
+
 ## Training Entry Point
 
 The main training entrypoint is `src/dronewatch/training/train_ppo.py`.

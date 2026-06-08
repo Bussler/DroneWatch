@@ -1,6 +1,9 @@
 site_name: DroneWatch
 site_description: Documentation for setup, configuration, training, and evaluation in DroneWatch.
 docs_dir: docs
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+  - javascripts/mermaid.js
 theme:
   name: material
   features:
@@ -16,7 +19,11 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
 plugins:
   - search
 nav:
