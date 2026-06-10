@@ -18,8 +18,6 @@ The current implementation combines:
 
 ## Key Findings
 
-The current experiments in [docs/results.md](docs/results.md) support a few clear conclusions.
-
 - Feedforward PPO was useful for validating the training stack, but it did not solve the full search problem. LSTM memory was necessary for robust search behavior.
 - Reward rebalance and PPO stabilization mattered as much as model choice. Lower entropy, tighter action-noise clipping, smaller PPO updates, and reward rescaling materially improved training.
 - The trained agent solves the final obstacle-heavy task and generalizes well to new scenarios with randomized positions of targets, drones and obstacles.
