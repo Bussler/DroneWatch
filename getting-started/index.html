@@ -391,6 +391,67 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#build-and-run-with-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Run with Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Run with Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-the-default-training-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the default training config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choose-a-different-experiment-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose a different experiment file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-additional-config-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pass additional config overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persist-checkpoints-reports-and-mlflow-outputs-on-the-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persist checkpoints, reports, and MLflow outputs on the host
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -692,6 +753,67 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#build-and-run-with-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build and Run with Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Build and Run with Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#run-the-default-training-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the default training config
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choose-a-different-experiment-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choose a different experiment file
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-additional-config-overrides" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pass additional config overrides
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persist-checkpoints-reports-and-mlflow-outputs-on-the-host" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persist checkpoints, reports, and MLflow outputs on the host
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -753,6 +875,36 @@ If not configured otherwise, mlflow logs are stored in <code>/outputs/mlruns/</c
 <h3 id="run-a-baseline-random-policy">Run a baseline random policy<a class="headerlink" href="#run-a-baseline-random-policy" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>make<span class="w"> </span>rollout-random
 </code></pre></div>
+<h2 id="build-and-run-with-docker">Build and Run with Docker<a class="headerlink" href="#build-and-run-with-docker" title="Permanent link">&para;</a></h2>
+<p>The repository includes a Docker image that starts PPO training directly.</p>
+<p>Build it from the repository root:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>dronewatch:train-entrypoint<span class="w"> </span>.
+</code></pre></div>
+<p>The image copies the repository into <code>/app</code> and uses this entrypoint:</p>
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>dronewatch.training.train_ppo
+</code></pre></div>
+<p>That means arguments added after the image name in <code>docker run</code> are passed straight to the training script.</p>
+<h3 id="run-the-default-training-config">Run the default training config<a class="headerlink" href="#run-the-default-training-config" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>dronewatch:train-entrypoint
+</code></pre></div>
+<h3 id="choose-a-different-experiment-file">Choose a different experiment file<a class="headerlink" href="#choose-a-different-experiment-file" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>dronewatch:train-entrypoint<span class="w"> </span>--config<span class="w"> </span>configs/debug.yaml
+</code></pre></div>
+<h3 id="pass-additional-config-overrides">Pass additional config overrides<a class="headerlink" href="#pass-additional-config-overrides" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>dronewatch:train-entrypoint<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>configs/config.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>training.stop.iterations<span class="o">=</span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="nv">model</span><span class="o">=</span>ppo_feedforward
+</code></pre></div>
+<h3 id="persist-checkpoints-reports-and-mlflow-outputs-on-the-host">Persist checkpoints, reports, and MLflow outputs on the host<a class="headerlink" href="#persist-checkpoints-reports-and-mlflow-outputs-on-the-host" title="Permanent link">&para;</a></h3>
+<p>By default, container-local outputs disappear when the container is removed. Mount the output directories if you want to keep them:</p>
+<div class="highlight"><pre><span></span><code>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/artifacts:/app/artifacts&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-v<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">/outputs:/app/outputs&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>dronewatch:train-entrypoint<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--config<span class="w"> </span>configs/debug.yaml
+</code></pre></div>
+<p>This keeps checkpoint, report, GIF, and MLflow output files in the local repository directories.</p>
 
 
 
