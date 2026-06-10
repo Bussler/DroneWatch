@@ -1,7 +1,0 @@
-evaluation:
-  checkpoint: null
-  episodes: 1
-  report_path: reports/eval
-  render: true
-  gif_path: gifs/eval
-  render_stride: 4

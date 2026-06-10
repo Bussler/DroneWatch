@@ -1,0 +1,1220 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for setup, configuration, training, and evaluation in DroneWatch.">
+      
+      
+      
+        <link rel="canonical" href="https://Bussler.github.io/DroneWatch/results/">
+      
+      
+        <link rel="prev" href="../training-pipeline/">
+      
+      
+        <link rel="next" href="../troubleshooting/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Results - DroneWatch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#results" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="DroneWatch" class="md-header__button md-logo" aria-label="DroneWatch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DroneWatch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Results
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="DroneWatch" class="md-nav__button md-logo" aria-label="DroneWatch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    DroneWatch
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust-environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rust Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../training-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-training-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary of training results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablation-axes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ablation Axes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Ablation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reward-and-stability-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward and Stability Ablation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reward and Stability Ablation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reward-rebalance-that-changed-the-search-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward Rebalance That Changed the Search Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ppo-stability-changes-that-matter-most" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PPO Stability Changes That Matter Most
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chronology-of-major-experiment-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chronology of Major Experiment Updates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chronology of Major Experiment Updates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-feedforward-baseline-valid-training-wrong-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Feedforward baseline: valid training, wrong behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-first-lstm-pass-better-discovery-still-unstable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. First LSTM pass: better discovery, still unstable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-smaller-environment-curriculum-prove-that-the-policy-can-solve-the-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Smaller environment curriculum: prove that the policy can solve the task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-lower-entropy-and-reward-scaling-the-first-clear-stabilization-win" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Lower entropy and reward scaling: the first clear stabilization win
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-randomized-maps-better-generalization-signal-new-collapse-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Randomized maps: better generalization signal, new collapse mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-rescaled-reward-plus-collapse-countermeasures-larger-improvement-on-open-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Rescaled reward plus collapse countermeasures: larger improvement on open maps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-larger-world-without-obstacles-task-nearly-solved-coordination-still-weak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Larger world without obstacles: task nearly solved, coordination still weak
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-mixed-reward-reporting-success-with-lower-collision-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Mixed reward reporting: success with lower collision cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-obstacle-heavy-regime-task-solved-before-safety-is-solved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Obstacle-heavy regime: task solved before safety is solved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-longer-obstacle-training-with-stronger-penalties-better-not-perfect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Longer obstacle training with stronger penalties: better, not perfect
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-reports-and-runs-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where Reports and Runs Live
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference Links
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#summary-of-training-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary of training results
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablation-axes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ablation Axes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture Ablation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reward-and-stability-ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward and Stability Ablation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reward and Stability Ablation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#reward-rebalance-that-changed-the-search-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward Rebalance That Changed the Search Behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ppo-stability-changes-that-matter-most" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PPO Stability Changes That Matter Most
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#chronology-of-major-experiment-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Chronology of Major Experiment Updates
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Chronology of Major Experiment Updates">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-feedforward-baseline-valid-training-wrong-behavior" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Feedforward baseline: valid training, wrong behavior
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-first-lstm-pass-better-discovery-still-unstable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. First LSTM pass: better discovery, still unstable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-smaller-environment-curriculum-prove-that-the-policy-can-solve-the-task" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Smaller environment curriculum: prove that the policy can solve the task
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-lower-entropy-and-reward-scaling-the-first-clear-stabilization-win" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Lower entropy and reward scaling: the first clear stabilization win
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-randomized-maps-better-generalization-signal-new-collapse-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Randomized maps: better generalization signal, new collapse mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-rescaled-reward-plus-collapse-countermeasures-larger-improvement-on-open-maps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Rescaled reward plus collapse countermeasures: larger improvement on open maps
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#7-larger-world-without-obstacles-task-nearly-solved-coordination-still-weak" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Larger world without obstacles: task nearly solved, coordination still weak
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#8-mixed-reward-reporting-success-with-lower-collision-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Mixed reward reporting: success with lower collision cost
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#9-obstacle-heavy-regime-task-solved-before-safety-is-solved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Obstacle-heavy regime: task solved before safety is solved
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#10-longer-obstacle-training-with-stronger-penalties-better-not-perfect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Longer obstacle training with stronger penalties: better, not perfect
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-reports-and-runs-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where Reports and Runs Live
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h1>
+<p>This page now DroneWatch as an ablation study.</p>
+<p>Example rendering of the final agent:</p>
+<p><img alt="Obstacle avoidance rollout" src="../assets/gifs/obstacle_avoidance_2.gif" width="50%" /></p>
+<p>Each rendered GIF is a time series of simulator snapshots.
+Each frame is drawn from the simulator state after a reset or step. Blue filled circles are drones. Their positions are the current agent locations in the 2D world. 
+Orange translucent circles are obstacles or no-fly zones.
+Purple x markers are targets that have not been discovered yet. Green filled circles are targets that have already been discovered. This shows progress over time.
+Thin gray lines between drones are communication links. A line is drawn only when two drones are within the configured communication radius, so the line network visualizes who can currently talk to whom.</p>
+<h3 id="summary-of-training-results">Summary of training results<a class="headerlink" href="#summary-of-training-results" title="Permanent link">&para;</a></h3>
+<p>The current agent training supports the following conclusions.</p>
+<ol>
+<li>LSTM was necessary. Feedforward PPO was sufficient for smoke-testing the stack, but not for robust search behavior.</li>
+<li>Curriculum and easier scenarios were useful as proof-of-learnability, not as an end state. The easy environment showed that the policy class could solve the task at all.</li>
+<li>Reward rebalancing and PPO stabilization mattered as much as architecture choice. Lower entropy, tighter action noise, smaller PPO updates, and reward rescaling changed the training dynamics materially.</li>
+<li>Large no-obstacle search can now be solved reliably in the mixed-reward family.</li>
+<li>Obstacle-heavy search is solved in the task-completion sense, but still not solved in the safety sense. The agent finishes the mission while accepting a non-zero rate of obstacle violations and collisions. This could be further enforced by longer training, early termination on obstacle entry or masking of illegal actions.</li>
+</ol>
+<h2 id="ablation-axes">Ablation Axes<a class="headerlink" href="#ablation-axes" title="Permanent link">&para;</a></h2>
+<p>The experiments in this repository vary four main dimensions.</p>
+<table>
+<thead>
+<tr>
+<th>Axis</th>
+<th>Variants</th>
+<th>Why it mattered</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Scenario</td>
+<td><code>swarm_search_easy</code>, <code>swarm_search_v1</code>, <code>swarm_search_v2</code></td>
+<td>Controls world size, target count, and obstacle pressure.</td>
+</tr>
+<tr>
+<td>Architecture</td>
+<td><code>ppo_feedforward</code>, <code>ppo_lstm</code></td>
+<td>Tests whether memory is needed to avoid repeatedly searching the same regions and to finish the last targets.</td>
+</tr>
+<tr>
+<td>Reward regime</td>
+<td>default, rescaled, mixed/custom, stronger obstacle penalties</td>
+<td>Tests whether the discovery objective dominates coverage, collisions, and exploration side effects.</td>
+</tr>
+<tr>
+<td>PPO stability settings</td>
+<td>entropy coefficient, <code>log_std_clip_param</code>, <code>clip_param</code>, gradient clipping, learning rate, sequence length</td>
+<td>Tests whether promising policies remain stable instead of collapsing late in training.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="architecture-ablation">Architecture Ablation<a class="headerlink" href="#architecture-ablation" title="Permanent link">&para;</a></h2>
+<p>The most important architecture lesson is that feedforward control was not enough for the full search problem.</p>
+<table>
+<thead>
+<tr>
+<th>Architecture</th>
+<th>Expected benefit</th>
+<th>What happened</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feedforward</td>
+<td>Simpler baseline, cheaper training, enough capacity for local obstacle avoidance</td>
+<td>The smoke baseline stayed far from solving the task and produced a pathological high-collision policy</td>
+<td>Memory matters. A purely feedforward policy can pick up local heuristics while still failing to coordinate long-horizon search.</td>
+</tr>
+<tr>
+<td>LSTM</td>
+<td>Retain short-term search history, reduce repeated coverage, improve the chance of finding the last targets</td>
+<td>LSTM unlocks strong performance on the easy scenario and can nearly solve the larger scenario, but still needs reward and PPO stabilization work</td>
+<td>The recurrent policy was necessary but not sufficient. It solved the memory bottleneck, then exposed the reward-design and stability bottlenecks.</td>
+</tr>
+</tbody>
+</table>
+<p>The early feedforward policy learned a shallow local optimum, often drifting to a boundary and staying there, while the LSTM variants improved target discovery but still needed reward and hyperparameter changes to avoid collapse.</p>
+<h2 id="reward-and-stability-ablation">Reward and Stability Ablation<a class="headerlink" href="#reward-and-stability-ablation" title="Permanent link">&para;</a></h2>
+<p>The major training turn was not just switching to LSTM, but rebalancing the objective so task completion dominated coverage farming and unstable exploration.</p>
+<h3 id="reward-rebalance-that-changed-the-search-behavior">Reward Rebalance That Changed the Search Behavior<a class="headerlink" href="#reward-rebalance-that-changed-the-search-behavior" title="Permanent link">&para;</a></h3>
+<p>One of the decisive reward updates moved from:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">reward</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">target_discovered</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15.0</span>
+<span class="w">    </span><span class="nt">new_coverage_cell</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span>
+<span class="w">    </span><span class="nt">agent_collision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.05</span>
+<span class="w">    </span><span class="nt">obstacle_collision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.2</span>
+<span class="w">    </span><span class="nt">step_penalty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="w">    </span><span class="nt">success_bonus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">remaining_target_penalty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.005</span>
+<span class="w">    </span><span class="nt">visible_target_approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</code></pre></div>
+<p>to:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">reward</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">target_discovered</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">15.0</span>
+<span class="w">    </span><span class="nt">new_coverage_cell</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.02</span>
+<span class="w">    </span><span class="nt">agent_collision</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.25</span>
+<span class="w">    </span><span class="nt">step_penalty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.001</span>
+<span class="w">    </span><span class="nt">success_bonus</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">    </span><span class="nt">remaining_target_penalty</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-0.02</span>
+<span class="w">    </span><span class="nt">visible_target_approach</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</code></pre></div>
+<p>Coverage had become too easy to exploit, collisions were too cheap, and failing to find the last targets was not punished strongly enough. Lowering coverage reward, increasing collision cost, and increasing the penalty for unfinished targets moved the policy away from shallow coverage-heavy behavior.</p>
+<h3 id="ppo-stability-changes-that-matter-most">PPO Stability Changes That Matter Most<a class="headerlink" href="#ppo-stability-changes-that-matter-most" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Change</th>
+<th>Why it was introduced</th>
+<th>Observed effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lower <code>entropy_coeff</code></td>
+<td>High entropy was rewarding memorization-resistant random behavior on fixed maps and later caused policy collapse on randomized maps</td>
+<td>Helped the policy commit to successful search behavior instead of drifting back into exploration-heavy modes</td>
+</tr>
+<tr>
+<td>Lower <code>log_std_clip_param</code></td>
+<td>The action space is bounded in <code>[-1, 1]</code>, so a very loose action standard deviation cap was too permissive</td>
+<td>Reduced action noise and made trained policies more deterministic</td>
+</tr>
+<tr>
+<td>Lower <code>clip_param</code> and learning rate</td>
+<td>Promising policies were collapsing late in training</td>
+<td>Made policy updates less destructive and improved stability on randomized scenarios</td>
+</tr>
+<tr>
+<td>Reward rescaling</td>
+<td>Very large aggregate shared rewards made value prediction harder</td>
+<td>Helped training stabilize and improved the link between reward and task completion</td>
+</tr>
+<tr>
+<td>Longer <code>max_seq_len</code></td>
+<td>Short recurrent windows were likely truncating useful history</td>
+<td>The committed LSTM config now uses <code>max_seq_len: 100</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="chronology-of-major-experiment-updates">Chronology of Major Experiment Updates<a class="headerlink" href="#chronology-of-major-experiment-updates" title="Permanent link">&para;</a></h2>
+<p>Documentation of the ablation experiments, and how they are interpreted.</p>
+<p>Random Policy for comparison:</p>
+<p><img alt="Random rollout" src="../assets/gifs/random_policy_episode.gif" width="50%" /></p>
+<h3 id="1-feedforward-baseline-valid-training-wrong-behavior">1. Feedforward baseline: valid training, wrong behavior<a class="headerlink" href="#1-feedforward-baseline-valid-training-wrong-behavior" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: 5k-step feedforward PPO run with default settings and fixed seed.</li>
+<li>Motivation: start with the simplest architecture and confirm that the training stack works.</li>
+<li>Observation: collisions and connectivity metrics changed during training, but target discovery did not improve enough; rendered rollouts showed drones drifting toward a boundary and staying there.</li>
+<li>Interpretation: the agent found a shallow local optimum. Coverage and survival-like behavior were easier to learn than systematic search.</li>
+<li>Next idea: strengthen completion incentives, add visible-target shaping, and try an LSTM.</li>
+</ul>
+<p><img alt="Smoke rollout" src="../assets/gifs/ppo_smoke_episode.gif" width="50%" /></p>
+<h3 id="2-first-lstm-pass-better-discovery-still-unstable">2. First LSTM pass: better discovery, still unstable<a class="headerlink" href="#2-first-lstm-pass-better-discovery-still-unstable" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: switch to LSTM and add stronger task-shaping terms such as <code>success_bonus</code>, <code>remaining_target_penalty</code>, and <code>visible_target_approach</code>.</li>
+<li>Motivation: improve memory and make the final targets matter more.</li>
+<li>Observation: discovered target count improved, but later regressed; obstacle-violation behavior improved more cleanly than full task completion.</li>
+<li>Interpretation: memory helped, but the reward balance and PPO update dynamics were still not stable enough.</li>
+<li>Next idea: simplify the task with a smaller environment, add agent identity to break symmetry, and revisit rollout and clipping choices.</li>
+</ul>
+<h3 id="3-smaller-environment-curriculum-prove-that-the-policy-can-solve-the-task">3. Smaller environment curriculum: prove that the policy can solve the task<a class="headerlink" href="#3-smaller-environment-curriculum-prove-that-the-policy-can-solve-the-task" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: move to the easy scenario with fewer targets and a smaller world, then continue with LSTM and richer observations.</li>
+<li>Motivation: the agent needed more complete episodes where it actually collected the full success signal.</li>
+<li>Observation: success rose into the <code>0.6</code> to <code>0.7</code> range before plateauing. Longer training looked promising.</li>
+<li>Interpretation: the curriculum was valuable, but fixed-map learning still let entropy stay too high and did not guarantee a stable deterministic policy.</li>
+</ul>
+<h3 id="4-lower-entropy-and-reward-scaling-the-first-clear-stabilization-win">4. Lower entropy and reward scaling: the first clear stabilization win<a class="headerlink" href="#4-lower-entropy-and-reward-scaling-the-first-clear-stabilization-win" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: lower entropy pressure, tighten action standard deviation clipping, and rescale rewards.</li>
+<li>Motivation: fixed maps allowed the agent to get rewarded while remaining too random, and the value function had trouble with oversized aggregate rewards.</li>
+<li>Observation: training on the fixed easy environment became more stable and converged quickly.</li>
+<li>Interpretation: the policy collapse problem was not just an exploration problem or just a reward problem. It was the interaction between noisy exploration, oversized returns, and weak completion pressure.</li>
+<li>Next idea: turn randomization back on and test whether the same recipe survives outside memorization-friendly maps.</li>
+</ul>
+<h3 id="5-randomized-maps-better-generalization-signal-new-collapse-mode">5. Randomized maps: better generalization signal, new collapse mode<a class="headerlink" href="#5-randomized-maps-better-generalization-signal-new-collapse-mode" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: run the same LSTM recipe on randomized maps.</li>
+<li>Motivation: make sure success is not just memorization of one map layout.</li>
+<li>Observation: training looked promising early, then collapsed after roughly 200 episodes and started missing the final targets again.</li>
+<li>Interpretation: the recipe had enough capacity to learn the problem, but PPO still could not preserve the good policy once updates became too aggressive.</li>
+<li>Next idea: reduce learning rate and clipping range further and continue refining reward balance.</li>
+</ul>
+<h3 id="6-rescaled-reward-plus-collapse-countermeasures-larger-improvement-on-open-maps">6. Rescaled reward plus collapse countermeasures: larger improvement on open maps<a class="headerlink" href="#6-rescaled-reward-plus-collapse-countermeasures-larger-improvement-on-open-maps" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: combine reward rescaling with smaller learning rate and narrower clip range.</li>
+<li>Motivation: stabilize the promising randomized-map regime instead of letting it overshoot.</li>
+<li>Observation: This worked better and produced the first robust large-world learning behavior.</li>
+<li>Repository evidence: <code>DroneWatchLSTMGeneralization/iteration_0700.json</code> shows the remaining gap clearly. The agent now finds almost all targets (<code>18.2/20</code> on average) but still finishes only <code>10%</code> of evaluation episodes and pays very high collision cost.</li>
+<li>Interpretation: the search signal improved before the coordination signal did.</li>
+</ul>
+<p><img alt="Small rollout" src="../assets/gifs/solve_easy_generalized.gif" width="50%" /></p>
+<h3 id="7-larger-world-without-obstacles-task-nearly-solved-coordination-still-weak">7. Larger world without obstacles: task nearly solved, coordination still weak<a class="headerlink" href="#7-larger-world-without-obstacles-task-nearly-solved-coordination-still-weak" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: move from the small curriculum world to the larger no-obstacle environment.</li>
+<li>Motivation: test whether the improved recipe transfers once coverage and final-target search become harder again.</li>
+<li>Observation: target discovery stayed high, but collisions and episode length remained poor and final completion was inconsistent.</li>
+<li>Interpretation: this is where credit assignment and anti-crowding limitations became impossible to ignore.</li>
+<li>Next idea: add custom or mixed rewards and report shared and local reward separately.</li>
+</ul>
+<h3 id="8-mixed-reward-reporting-success-with-lower-collision-cost">8. Mixed reward reporting: success with lower collision cost<a class="headerlink" href="#8-mixed-reward-reporting-success-with-lower-collision-cost" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: introduce mixed or custom reward accounting and additional logging for shared versus local reward.</li>
+<li>Motivation: distinguish between team-level completion incentives and per-agent shaping so that failure modes become diagnosable.</li>
+<li>Observation: the mixed-reward solves the large no-obstacle task cleanly. At <code>iteration_0150</code>, the policy reaches <code>success_rate = 1.0</code>, <code>mean_episode_length = 36.8</code>, and <code>mean_collision_count = 6.7</code>.</li>
+<li>Interpretation: once discovery and completion stay dominant and PPO updates remain stable, the LSTM policy can solve the larger scenario without obstacle pressure.</li>
+</ul>
+<p><img alt="Generalization rollout" src="../assets/gifs/solve_generalized.gif" width="50%" /></p>
+<h3 id="9-obstacle-heavy-regime-task-solved-before-safety-is-solved">9. Obstacle-heavy regime: task solved before safety is solved<a class="headerlink" href="#9-obstacle-heavy-regime-task-solved-before-safety-is-solved" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: reintroduce obstacles and strengthen obstacle penalties.</li>
+<li>Motivation: test whether the now-stable search policy can also learn no-fly-zone avoidance.</li>
+<li>Observation: the obstacle family reaches <code>success_rate = 1.0</code> very early, but obstacle violations remain stubborn. At <code>iteration_0500</code>, the policy still averages <code>3.9</code> obstacle violations and <code>9.0</code> collisions.</li>
+<li>Interpretation: reward can look strong in obstacle-heavy runs because the positive discovery and success terms dominate the penalty terms. This is exactly why the reward breakdown has to be read after the task metrics.</li>
+<li>Next idea: lower entropy further, keep standard deviation tight, and raise obstacle penalties again.</li>
+</ul>
+<h3 id="10-longer-obstacle-training-with-stronger-penalties-better-not-perfect">10. Longer obstacle training with stronger penalties: better, not perfect<a class="headerlink" href="#10-longer-obstacle-training-with-stronger-penalties-better-not-perfect" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Change: train longer with stronger obstacle punishment.</li>
+<li>Motivation: reduce the remaining no-fly-zone violations that survived the first obstacle-success recipe.</li>
+<li>Observation: <code>iteration_1400</code> still solves every evaluation episode, reduces mean obstacle violations to <code>3.1</code>, and cuts mean episode length to <code>29.0</code>, but collisions remain non-trivial at <code>10.3</code>.</li>
+<li>Interpretation: the repository now demonstrates obstacle-capable task completion, but not hard constraint satisfaction.</li>
+</ul>
+<p><img alt="Obstacle avoidance rollout 1" src="../assets/gifs/obstacle_avoidance.gif" width="50%" /></p>
+<h2 id="where-reports-and-runs-live">Where Reports and Runs Live<a class="headerlink" href="#where-reports-and-runs-live" title="Permanent link">&para;</a></h2>
+<ul>
+<li>JSON reports: <code>artifacts/reports/</code></li>
+<li>GIFs: <code>artifacts/gifs/</code></li>
+<li>Checkpoints: <code>artifacts/checkpoints/ppo/</code></li>
+<li>MLflow runs: <code>outputs/mlruns/</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+        <script src="../javascripts/mermaid.js"></script>
+      
+    
+  </body>
+</html>

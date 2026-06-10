@@ -1,0 +1,1104 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Documentation for setup, configuration, training, and evaluation in DroneWatch.">
+      
+      
+      
+        <link rel="canonical" href="https://Bussler.github.io/DroneWatch/training-pipeline/">
+      
+      
+        <link rel="prev" href="../rust-environment/">
+      
+      
+        <link rel="next" href="../results/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Training Pipeline - DroneWatch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#training-pipeline" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="DroneWatch" class="md-header__button md-logo" aria-label="DroneWatch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DroneWatch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Training Pipeline
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="DroneWatch" class="md-nav__button md-logo" aria-label="DroneWatch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    DroneWatch
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rust-environment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Rust Environment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Pipeline
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Training Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drone-watch-training-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drone Watch Training step:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Entry Point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rllib-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RLlib Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RLlib Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shared-policy-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared-policy training
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Wrapper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observation-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observation Logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reward-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward Logic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reward Logic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shared-versus-local-reward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared versus local reward
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-local-attribution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How local attribution works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-per-agent-reward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final per-agent reward
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation Path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mlflow-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MLflow Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../results/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Results
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference-links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference Links
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#drone-watch-training-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Drone Watch Training step:
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Entry Point
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rllib-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RLlib Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RLlib Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shared-policy-training" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared-policy training
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Network structure
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment Wrapper
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observation-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observation Logic
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reward-logic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reward Logic
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reward Logic">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#shared-versus-local-reward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared versus local reward
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-local-attribution-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How local attribution works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-per-agent-reward" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final per-agent reward
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#training-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Training Metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#evaluation-path" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluation Path
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mlflow-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MLflow Integration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="training-pipeline">Training Pipeline<a class="headerlink" href="#training-pipeline" title="Permanent link">&para;</a></h1>
+<p>This page explains the Python-side control flow for PPO training and checkpoint evaluation.</p>
+<h2 id="pipeline-overview">Pipeline Overview<a class="headerlink" href="#pipeline-overview" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>CLI
+  -&gt; config loader
+  -&gt; typed config object
+  -&gt; RLlib PPOConfig builder
+  -&gt; RLlib env registration
+  -&gt; SwarmSearchEnv reset/step loop
+  -&gt; reward attribution and task metrics
+  -&gt; checkpoints, JSON reports, MLflow logs
+</code></pre></div>
+<h3 id="drone-watch-training-step">Drone Watch Training step:<a class="headerlink" href="#drone-watch-training-step" title="Permanent link">&para;</a></h3>
+<pre class="mermaid"><code>flowchart LR
+  obs["Observations"] --&gt; policy["Shared PPO policy"]
+  policy --&gt;|actions| pyenv["Python env step"]
+  pyenv --&gt;|ordered actions| rust["Rust world step"]
+  rust --&gt;|step result| post["Reward, next obs, done"]
+  post --&gt;|next observations| obs
+  post --&gt;|training batch| learner["PPO update"]
+  learner --&gt;|updated weights| policy</code></pre>
+<p>Each training step follows the same loop: RLlib produces an action for each agent, the Python environment orders those actions for the simulator, the Rust world advances one timestep, and Python turns the returned <code>events</code>, <code>metrics</code>, and <code>state</code> into rewards, next observations, done flags, and logging signals.</p>
+<h2 id="training-entry-point">Training Entry Point<a class="headerlink" href="#training-entry-point" title="Permanent link">&para;</a></h2>
+<p>The main training entrypoint is <code>src/dronewatch/training/train_ppo.py</code>.</p>
+<p><code>main()</code> parses <code>--config</code> plus CLI overrides, then calls <code>load_config()</code>. The resulting <code>DroneWatchConfig</code> is passed to <code>train_ppo()</code>.</p>
+<p>Inside <code>train_ppo()</code> the important steps are:</p>
+<ol>
+<li>Create the run artifact directory</li>
+<li>Save <code>resolved_config.yaml</code></li>
+<li>Start the MLflow run if logging is enabled</li>
+<li>Build the PPO algorithm from <code>build_ppo_config()</code></li>
+<li>Train for <code>training.stop.iterations</code></li>
+<li>Save checkpoints at <code>training.checkpoint.frequency_iters</code></li>
+<li>Optionally run periodic evaluation and write JSON reports</li>
+<li>Save the final checkpoint and return a compact run summary</li>
+</ol>
+<h2 id="rllib-configuration">RLlib Configuration<a class="headerlink" href="#rllib-configuration" title="Permanent link">&para;</a></h2>
+<p><code>src/dronewatch/training/rllib_config.py</code> owns the RLlib-specific setup.</p>
+<p>Key responsibilities:</p>
+<ul>
+<li><code>register_swarm_search_env()</code> registers the RLlib environment name</li>
+<li><code>shared_policy_mapping_fn()</code> maps every agent to the same PPO policy</li>
+<li><code>build_ppo_config()</code> turns the typed config models into an RLlib <code>PPOConfig</code></li>
+</ul>
+<p>The environment registration step matters because checkpoint loading and fresh algorithm creation both depend on the registered environment name.</p>
+<h3 id="shared-policy-training">Shared-policy training<a class="headerlink" href="#shared-policy-training" title="Permanent link">&para;</a></h3>
+<p>DroneWatch uses parameter sharing for the homogeneous swarm. In practice, RLlib is configured with a single policy ID, <code>shared_policy</code>, and <code>shared_policy_mapping_fn()</code> returns that same policy for every agent.</p>
+<p>The agents are homogeneous and receive the same observation structure and action space. The policy can still produce different behavior per drone because each agent sees a different local observation, even though the weights are shared.</p>
+<h3 id="network-structure">Network structure<a class="headerlink" href="#network-structure" title="Permanent link">&para;</a></h3>
+<p>The model definition comes from <code>ModelConfig</code> in <code>src/dronewatch/config/schema.py</code> and is translated into RLlib's <code>DefaultModelConfig</code> by <code>_model_config()</code>.</p>
+<p>The current presets are simple on purpose:</p>
+<ul>
+<li>feedforward PPO uses a multilayer perceptron with <code>fcnet_hiddens</code>, <code>activation</code>, and <code>log_std_clip_param</code></li>
+<li>LSTM PPO uses the same feedforward front-end, then adds <code>use_lstm</code>, <code>lstm_cell_size</code>, and <code>max_seq_len</code></li>
+</ul>
+<p>Conceptually, the network looks like this:</p>
+<pre class="mermaid"><code>flowchart LR
+  obs["Observation vector"] --&gt; enc["Encoder: Feedforward layers"]
+  enc --&gt;|feedforward preset| shared["Latent Vector: Features"]
+  enc --&gt;|lstm preset| mem["Optional LSTM memory"]
+  mem --&gt; shared
+  shared --&gt; policy_head["Policy head"]
+  shared --&gt; value_head["Value head"]
+  policy_head --&gt; action_dist["Action distribution"]
+  value_head --&gt; value_estimate["Value estimate"]</code></pre>
+<p>The feedforward preset uses the direct encoder path, while the LSTM preset inserts recurrent memory between the shared encoder and the PPO heads.</p>
+<h2 id="environment-wrapper">Environment Wrapper<a class="headerlink" href="#environment-wrapper" title="Permanent link">&para;</a></h2>
+<p><code>src/dronewatch/envs/swarm_search_env.py</code> is the Python wrapper around the Rust simulator.</p>
+<p>For the Rust-side simulator API and module structure, see the Rust Environment page.</p>
+<p>Important behavior:</p>
+<ul>
+<li><code>reset()</code> resets the simulator, rebuilds fixed-size observations, and returns initial metrics in <code>infos</code></li>
+<li><code>step()</code> converts RLlib's action dictionary into ordered simulator actions</li>
+<li>reward terms are split between shared team reward and locally attributed agent reward</li>
+<li>final <code>infos</code> include simulator metrics plus episode reward breakdown</li>
+</ul>
+<p>This is the main Python orchetration layer between RLlib and the Rust simulation state.</p>
+<h2 id="observation-logic">Observation Logic<a class="headerlink" href="#observation-logic" title="Permanent link">&para;</a></h2>
+<p>Each drone receives a fixed-size, local observation built in <code>src/dronewatch/envs/observation_builder.py</code>: </p>
+<ul>
+<li>The observation always includes the drone's own normalized ID, position, velocity, and episode progress, then appends padded slots for the nearest visible agents, targets, and obstacles.</li>
+<li>Nearby agents are represented by relative position, relative velocity, and distance, but only if they fall within the sensing radius.</li>
+<li>Nearby targets contribute relative position, distance, and whether each target has already been discovered.</li>
+<li>Nearby obstacles contribute relative position, obstacle radius, and distance for any obstacle whose boundary is close enough to be sensed.</li>
+<li>Communication is modeled as local proximity rather than explicit message passing. When <code>include_communication_summary</code> is enabled, each drone gets an extra summary over neighbors inside the communication radius: normalized neighbor count plus the mean relative position and mean relative velocity of those neighbors as well as sensed targets or obstacles.</li>
+</ul>
+<p>Because RLlib expects a constant observation shape, each of these lists is sorted by distance and zero-padded up to the configured maximum counts.</p>
+<h2 id="reward-logic">Reward Logic<a class="headerlink" href="#reward-logic" title="Permanent link">&para;</a></h2>
+<p><code>src/dronewatch/envs/reward.py</code> defines the reward surface.</p>
+<p>Rust returns raw step events and cumulative metrics, and Python converts those into reward terms.</p>
+<p>The current reward terms are:</p>
+<ul>
+<li><code>target_discovery</code></li>
+<li><code>coverage</code></li>
+<li><code>agent_collision</code></li>
+<li><code>obstacle_collision</code></li>
+<li><code>step_penalty</code></li>
+<li><code>remaining_targets</code></li>
+<li><code>success_bonus</code></li>
+<li><code>visible_target_approach</code></li>
+</ul>
+<h3 id="shared-versus-local-reward">Shared versus local reward<a class="headerlink" href="#shared-versus-local-reward" title="Permanent link">&para;</a></h3>
+<p>The reward is split into two pieces.</p>
+<p>Shared terms are computed once for the whole team:</p>
+<ul>
+<li><code>coverage</code></li>
+<li><code>step_penalty</code></li>
+<li><code>remaining_targets</code></li>
+<li><code>success_bonus</code></li>
+</ul>
+<p>These terms reflect global task progress. In <code>SwarmSearchEnv.step()</code>, the sum of these shared terms is divided evenly across all agents.</p>
+<p>Local terms are attributed to specific agents:</p>
+<ul>
+<li><code>target_discovery</code></li>
+<li><code>agent_collision</code></li>
+<li><code>obstacle_collision</code></li>
+<li><code>visible_target_approach</code></li>
+</ul>
+<p>These terms reflect which agents actually caused a useful event or constraint violation.</p>
+<h3 id="how-local-attribution-works">How local attribution works<a class="headerlink" href="#how-local-attribution-works" title="Permanent link">&para;</a></h3>
+<ul>
+<li>target discovery reward is split across all agents that are within discovery radius of a newly discovered target</li>
+<li>agent collision penalty is split across the two colliding agents</li>
+<li>obstacle collision penalty is assigned to each agent overlapping an obstacle</li>
+<li>visible target approach reward is based on normalized progress toward the nearest visible undiscovered target</li>
+</ul>
+<p>This keeps the cooperative team objective while still giving RLlib a more informative credit signal than a purely global reward would provide.</p>
+<h3 id="final-per-agent-reward">Final per-agent reward<a class="headerlink" href="#final-per-agent-reward" title="Permanent link">&para;</a></h3>
+<p>Inside <code>SwarmSearchEnv.step()</code>, the final reward given to each RLlib agent is:</p>
+<div class="highlight"><pre><span></span><code>per_agent_reward = shared_reward / num_agents + local_reward_for_that_agent
+</code></pre></div>
+<p>So every drone shares the global task signal, but only the agent that contributed to a local event receives the corresponding local credit or penalty.</p>
+<p>The environment also stores episode-level reward breakdowns in <code>infos</code>, in order expose both total reward and per-term reward metrics to the evaluation reports.</p>
+<h2 id="training-metrics">Training Metrics<a class="headerlink" href="#training-metrics" title="Permanent link">&para;</a></h2>
+<p><code>src/dronewatch/training/callbacks.py</code> pushes task metrics into RLlib at episode end. These include:</p>
+<ul>
+<li>target discovery rate</li>
+<li>discovered target count</li>
+<li>coverage ratio</li>
+<li>collision count</li>
+<li>obstacle violation count</li>
+<li>connectivity ratio</li>
+<li>average communication neighbors</li>
+<li>success rate</li>
+</ul>
+<p>These metrics are more informative than reward alone when you are deciding whether a policy is actually improving.</p>
+<h2 id="evaluation-path">Evaluation Path<a class="headerlink" href="#evaluation-path" title="Permanent link">&para;</a></h2>
+<p><code>src/dronewatch/evaluation/evaluate.py</code> provides two main layers:</p>
+<ul>
+<li><code>evaluate_checkpoint()</code> loads an algorithm from a saved checkpoint</li>
+<li><code>evaluate_algorithm()</code> runs fresh episodes, optionally renders GIFs, and returns a structured report</li>
+</ul>
+<p>The report format itself is defined in <code>src/dronewatch/evaluation/reporting.py</code> through:</p>
+<ul>
+<li><code>episode_summary()</code></li>
+<li><code>aggregate_report()</code></li>
+<li><code>write_json_report()</code></li>
+</ul>
+<p>That report schema is shared across PPO evaluation and the random baseline so the outputs stay comparable.</p>
+<h2 id="mlflow-integration">MLflow Integration<a class="headerlink" href="#mlflow-integration" title="Permanent link">&para;</a></h2>
+<p><code>src/dronewatch/logging/mlflow_logger.py</code> is intentionally small and explicit.</p>
+<p>It handles:</p>
+<ul>
+<li>starting runs and nested child runs</li>
+<li>flattening config parameters</li>
+<li>logging numeric metrics</li>
+<li>logging evaluation summary metrics</li>
+<li>logging resolved configs and reports as artifacts</li>
+</ul>
+<p>The local store is <code>outputs/mlruns/</code> unless overridden.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.top", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@11/dist/mermaid.min.js"></script>
+      
+        <script src="../javascripts/mermaid.js"></script>
+      
+    
+  </body>
+</html>

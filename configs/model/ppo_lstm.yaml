@@ -1,7 +1,0 @@
-model:
-  kind: lstm
-  lstm_cell_size: 128
-  max_seq_len: 100
-  fcnet_hiddens: [256, 256]
-  activation: tanh
-  log_std_clip_param: 0.5

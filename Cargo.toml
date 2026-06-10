@@ -1,3 +1,0 @@
-[workspace]
-members = ["rust/swarm_sim"]
-resolver = "2"
