@@ -6,6 +6,13 @@ Example rendering of the final agent:
 
 ![Obstacle avoidance rollout](assets/gifs/obstacle_avoidance_2.gif){ width="50%" }
 
+Each rendered GIF is a time series of simulator snapshots.
+Each frame is drawn from the simulator state after a reset or step. Blue filled circles are drones. Their positions are the current agent locations in the 2D world. 
+Orange translucent circles are obstacles or no-fly zones.
+Purple x markers are targets that have not been discovered yet. Green filled circles are targets that have already been discovered. This shows progress over time.
+Thin gray lines between drones are communication links. A line is drawn only when two drones are within the configured communication radius, so the line network visualizes who can currently talk to whom.
+
+
 ### Summary of training results
 
 The current agent training supports the following conclusions.
@@ -88,6 +95,10 @@ Coverage had become too easy to exploit, collisions were too cheap, and failing 
 ## Chronology of Major Experiment Updates
 
 Documentation of the ablation experiments, and how they are interpreted.
+
+Random Policy for comparison:
+
+![Random rollout](assets/gifs/random_policy_episode.gif){ width="50%" }
 
 ### 1. Feedforward baseline: valid training, wrong behavior
 
