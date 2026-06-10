@@ -1,5 +1,6 @@
 site_name: DroneWatch
 site_description: Documentation for setup, configuration, training, and evaluation in DroneWatch.
+site_url: https://Bussler.github.io/DroneWatch/
 docs_dir: docs
 extra_javascript:
   - https://unpkg.com/mermaid@11/dist/mermaid.min.js
