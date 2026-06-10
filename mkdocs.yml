@@ -1,0 +1,38 @@
+site_name: DroneWatch
+site_description: Documentation for setup, configuration, training, and evaluation in DroneWatch.
+docs_dir: docs
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+  - javascripts/mermaid.js
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+plugins:
+  - search
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Configuration: configuration.md
+  - Rust Environment: rust-environment.md
+  - Training Pipeline: training-pipeline.md
+  - Results: results.md
+  - Troubleshooting: troubleshooting.md
+  - Reference Links: reference-links.md
+

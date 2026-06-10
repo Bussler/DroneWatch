@@ -1,6 +1,6 @@
 random_policy:
   episodes: 1
   report_path: reports/random_policy_report.json
-  render: false
+  render: true
   gif_path: gifs/random_policy_episode.gif
   render_stride: 4
