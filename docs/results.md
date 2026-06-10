@@ -1,81 +1,166 @@
 # Results
 
-DroneWatch writes JSON reports that are designed to answer a practical question: did the trained policy actually solve the task, and did it do so cleanly?
+This page now DroneWatch as an ablation study.
 
-## Read These Metrics First
+### Summary of training results
 
-When you inspect a checkpoint report, start with:
+The current agent training supports the following conclusions.
 
-1. `success_rate`
-2. `mean_discovered_target_count`
-3. `mean_target_discovery_rate`
-4. `mean_episode_length`
+1. LSTM was necessary. Feedforward PPO was sufficient for smoke-testing the stack, but not for robust search behavior.
+2. Curriculum and easier scenarios were useful as proof-of-learnability, not as an end state. The easy environment showed that the policy class could solve the task at all.
+3. Reward rebalancing and PPO stabilization mattered as much as architecture choice. Lower entropy, tighter action noise, smaller PPO updates, and reward rescaling changed the training dynamics materially.
+4. Large no-obstacle search can now be solved reliably in the mixed-reward family.
+5. Obstacle-heavy search is solved in the task-completion sense, but still not solved in the safety sense. The agent finishes the mission while accepting a non-zero rate of obstacle violations and collisions. This could be further enforced by longer training, early termination on obstacle entry or masking of illegal actions.
 
-These metrics answer whether the agent reliably finishes the task and how quickly it does so.
 
-Then inspect:
+## Ablation Axes
 
-- `mean_collision_count`
-- `mean_obstacle_violation_count`
-- `mean_connectivity_ratio`
-- `mean_coverage_ratio`
+The experiments in this repository vary four main dimensions.
 
-Finally, if total reward looks surprising, inspect the reward-term breakdown.
+| Axis | Variants | Why it mattered |
+| --- | --- | --- |
+| Scenario | `swarm_search_easy`, `swarm_search_v1`, `swarm_search_v2` | Controls world size, target count, and obstacle pressure. |
+| Architecture | `ppo_feedforward`, `ppo_lstm` | Tests whether memory is needed to avoid repeatedly searching the same regions and to finish the last targets. |
+| Reward regime | default, rescaled, mixed/custom, stronger obstacle penalties | Tests whether the discovery objective dominates coverage, collisions, and exploration side effects. |
+| PPO stability settings | entropy coefficient, `log_std_clip_param`, `clip_param`, gradient clipping, learning rate, sequence length | Tests whether promising policies remain stable instead of collapsing late in training. |
 
-## Example: PPO Smoke Failure
+## Architecture Ablation
 
-`artifacts/reports/ppo_smoke_report.json` is a useful example of a run that is valid but not good.
+The most important architecture lesson is that feedforward control was not enough for the full search problem.
 
-It currently shows:
+| Architecture | Expected benefit | What happened | Interpretation |
+| --- | --- | --- | --- |
+| Feedforward | Simpler baseline, cheaper training, enough capacity for local obstacle avoidance | The smoke baseline stayed far from solving the task and produced a pathological high-collision policy | Memory matters. A purely feedforward policy can pick up local heuristics while still failing to coordinate long-horizon search. |
+| LSTM | Retain short-term search history, reduce repeated coverage, improve the chance of finding the last targets | LSTM unlocks strong performance on the easy scenario and can nearly solve the larger scenario, but still needs reward and PPO stabilization work | The recurrent policy was necessary but not sufficient. It solved the memory bottleneck, then exposed the reward-design and stability bottlenecks. |
 
-- `success_rate = 0.0`
-- `mean_discovered_target_count = 3.0`
-- `mean_target_discovery_rate = 0.375`
-- `mean_episode_length = 200.0`
-- `mean_collision_count = 900.0`
+The early feedforward policy learned a shallow local optimum, often drifting to a boundary and staying there, while the LSTM variants improved target discovery but still needed reward and hyperparameter changes to avoid collapse.
 
-This is a good example of why a successful training command is not the same thing as a good policy.
+## Reward and Stability Ablation
 
-## Example: Successful Trained Policy
+The major training turn was not just switching to LSTM, but rebalancing the objective so task completion dominated coverage farming and unstable exploration.
 
-`artifacts/reports/ppo_eval_report.json` is the main example of a good checkpoint.
+### Reward Rebalance That Changed the Search Behavior
 
-It currently shows:
+One of the decisive reward updates moved from:
 
-- `success_rate = 1.0`
-- `mean_discovered_target_count = 8.0`
-- `mean_target_discovery_rate = 1.0`
-- `mean_episode_length = 17.4`
-- `mean_obstacle_violation_count = 0.0`
+```yaml
+reward:
+	target_discovered: 15.0
+	new_coverage_cell: 0.05
+	agent_collision: -0.05
+	obstacle_collision: -0.2
+	step_penalty: 0.0
+	success_bonus: 100.0
+	remaining_target_penalty: -0.005
+	visible_target_approach: 0.1
+```
 
-The same report also shows non-zero collisions, which means a successful policy can still leave room for improvement in swarm coordination.
+to:
 
-## Example: Obstacle Run Tradeoffs
+```yaml
+reward:
+	target_discovered: 15.0
+	new_coverage_cell: 0.02
+	agent_collision: -0.25
+	step_penalty: -0.001
+	success_bonus: 100.0
+	remaining_target_penalty: -0.02
+	visible_target_approach: 0.1
+```
 
-`artifacts/reports/DroneWatchLSTMGeneralizationObstacles/iteration_0500.json` is the right example when you want to understand obstacle-heavy training.
+Coverage had become too easy to exploit, collisions were too cheap, and failing to find the last targets was not punished strongly enough. Lowering coverage reward, increasing collision cost, and increasing the penalty for unfinished targets moved the policy away from shallow coverage-heavy behavior.
 
-It currently shows a policy that consistently succeeds:
+### PPO Stability Changes That Matter Most
 
-- `success_rate = 1.0`
-- `mean_discovered_target_count = 20.0`
-- `mean_target_discovery_rate = 1.0`
+| Change | Why it was introduced | Observed effect |
+| --- | --- | --- |
+| Lower `entropy_coeff` | High entropy was rewarding memorization-resistant random behavior on fixed maps and later caused policy collapse on randomized maps | Helped the policy commit to successful search behavior instead of drifting back into exploration-heavy modes |
+| Lower `log_std_clip_param` | The action space is bounded in `[-1, 1]`, so a very loose action standard deviation cap was too permissive | Reduced action noise and made trained policies more deterministic |
+| Lower `clip_param` and learning rate | Promising policies were collapsing late in training | Made policy updates less destructive and improved stability on randomized scenarios |
+| Reward rescaling | Very large aggregate shared rewards made value prediction harder | Helped training stabilize and improved the link between reward and task completion |
+| Longer `max_seq_len` | Short recurrent windows were likely truncating useful history | The committed LSTM config now uses `max_seq_len: 100`, which matches the direction suggested by the training notes |
 
-But it also shows non-trivial constraint costs:
 
-- `mean_collision_count = 9.0`
-- `mean_obstacle_violation_count = 3.9`
-- `mean_connectivity_ratio = 0.275`
+## Chronology of Major Experiment Updates
 
-The reward-term breakdown explains why reward can still look strong in this situation. Large positive terms from target discovery and success can dominate the negative terms from collisions and obstacle violations.
+Documentation of the ablation experiments, and how they are interpreted.
 
-## Practical Interpretation Rules
+### 1. Feedforward baseline: valid training, wrong behavior
 
-Use these rules when comparing checkpoints:
+- Change: 5k-step feedforward PPO run with default settings and fixed seed.
+- Motivation: start with the simplest architecture and confirm that the training stack works.
+- Observation: collisions and connectivity metrics changed during training, but target discovery did not improve enough; rendered rollouts showed drones drifting toward a boundary and staying there.
+- Interpretation: the agent found a shallow local optimum. Coverage and survival-like behavior were easier to learn than systematic search.
+- Next idea: strengthen completion incentives, add visible-target shaping, and try an LSTM.
 
-1. Prefer checkpoints with higher `success_rate` before looking at reward.
-2. If success is tied, prefer fewer collisions and obstacle violations.
-3. Use reward to compare efficient policies, not to decide whether the task was solved.
-4. Treat connectivity as a diagnostic metric in v1, not as a failure condition by itself.
+### 2. First LSTM pass: better discovery, still unstable
+
+- Change: switch to LSTM and add stronger task-shaping terms such as `success_bonus`, `remaining_target_penalty`, and `visible_target_approach`.
+- Motivation: improve memory and make the final targets matter more.
+- Observation: discovered target count improved, but later regressed; obstacle-violation behavior improved more cleanly than full task completion.
+- Interpretation: memory helped, but the reward balance and PPO update dynamics were still not stable enough.
+- Next idea: simplify the task with a smaller environment, add agent identity to break symmetry, and revisit rollout and clipping choices.
+
+### 3. Smaller environment curriculum: prove that the policy can solve the task
+
+- Change: move to the easy scenario with fewer targets and a smaller world, then continue with LSTM and richer observations.
+- Motivation: the agent needed more complete episodes where it actually collected the full success signal.
+- Observation: success rose into the `0.6` to `0.7` range before plateauing. Longer training looked promising.
+- Interpretation: the curriculum was valuable, but fixed-map learning still let entropy stay too high and did not guarantee a stable deterministic policy.
+
+### 4. Lower entropy and reward scaling: the first clear stabilization win
+
+- Change: lower entropy pressure, tighten action standard deviation clipping, and rescale rewards.
+- Motivation: fixed maps allowed the agent to get rewarded while remaining too random, and the value function had trouble with oversized aggregate rewards.
+- Observation: training on the fixed easy environment became much more stable and converged quickly.
+- Interpretation: the policy collapse problem was not just an exploration problem or just a reward problem. It was the interaction between noisy exploration, oversized returns, and weak completion pressure.
+- Next idea: turn randomization back on and test whether the same recipe survives outside memorization-friendly maps.
+
+### 5. Randomized maps: better generalization signal, new collapse mode
+
+- Change: run the same LSTM recipe on randomized maps.
+- Motivation: make sure success is not just memorization of one map layout.
+- Observation: training looked promising early, then collapsed after roughly 200 episodes and started missing the final targets again.
+- Interpretation: the recipe had enough capacity to learn the problem, but PPO still could not preserve the good policy once updates became too aggressive.
+- Next idea: reduce learning rate and clipping range further and continue refining reward balance.
+
+### 6. Rescaled reward plus collapse countermeasures: larger improvement on open maps
+
+- Change: combine reward rescaling with smaller learning rate and narrower clip range.
+- Motivation: stabilize the promising randomized-map regime instead of letting it overshoot.
+- Observation: according to the notes, this worked much better and produced the first robust large-world learning behavior.
+- Repository evidence: `DroneWatchLSTMGeneralization/iteration_0700.json` shows the remaining gap clearly. The agent now finds almost all targets (`18.2/20` on average) but still finishes only `10%` of evaluation episodes and pays very high collision cost.
+- Interpretation: the search signal improved before the coordination signal did.
+
+### 7. Larger world without obstacles: task nearly solved, coordination still weak
+
+- Change: move from the small curriculum world to the larger no-obstacle environment.
+- Motivation: test whether the improved recipe transfers once coverage and final-target search become harder again.
+- Observation: target discovery stayed high, but collisions and episode length remained poor and final completion was inconsistent.
+- Interpretation: this is where credit assignment and anti-crowding limitations became impossible to ignore.
+- Next idea: add custom or mixed rewards and report shared and local reward separately.
+
+### 8. Mixed reward reporting: success with much lower collision cost
+
+- Change: introduce mixed or custom reward accounting and additional logging for shared versus local reward.
+- Motivation: distinguish between team-level completion incentives and per-agent shaping so that failure modes become diagnosable.
+- Observation: the mixed-reward solves the large no-obstacle task cleanly. At `iteration_0150`, the policy reaches `success_rate = 1.0`, `mean_episode_length = 36.8`, and `mean_collision_count = 6.7`.
+- Interpretation: once discovery and completion stay dominant and PPO updates remain stable, the LSTM policy can solve the larger scenario without obstacle pressure.
+
+### 9. Obstacle-heavy regime: task solved before safety is solved
+
+- Change: reintroduce obstacles and strengthen obstacle penalties.
+- Motivation: test whether the now-stable search policy can also learn no-fly-zone avoidance.
+- Observation: the obstacle family reaches `success_rate = 1.0` very early, but obstacle violations remain stubborn. At `iteration_0500`, the policy still averages `3.9` obstacle violations and `9.0` collisions.
+- Interpretation: reward can look strong in obstacle-heavy runs because the positive discovery and success terms dominate the penalty terms. This is exactly why the reward breakdown has to be read after the task metrics.
+- Next idea: lower entropy further, keep standard deviation tight, and raise obstacle penalties again.
+
+### 10. Longer obstacle training with stronger penalties: better, not perfect
+
+- Change: train longer with stronger obstacle punishment.
+- Motivation: reduce the remaining no-fly-zone violations that survived the first obstacle-success recipe.
+- Observation: `iteration_1400` still solves every evaluation episode, reduces mean obstacle violations to `3.1`, and cuts mean episode length to `29.0`, but collisions remain non-trivial at `10.3`.
+- Interpretation: the repository now demonstrates obstacle-capable task completion, but not hard constraint satisfaction.
 
 ## Where Reports and Runs Live
 
