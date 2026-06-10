@@ -1,4 +1,4 @@
-FROM python:3.12-slim AS phase0
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -24,4 +24,4 @@ COPY . .
 
 RUN make install
 
-CMD ["make", "test"]
+ENTRYPOINT ["uv", "run", "python", "-m", "dronewatch.training.train_ppo"]

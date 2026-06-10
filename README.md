@@ -123,6 +123,47 @@ By default, DroneWatch writes outputs to:
 - `artifacts/checkpoints/ppo/` for PPO checkpoints
 - `outputs/mlruns/` for MLflow runs
 
+## Build and run with Docker
+
+Build the training image:
+
+```bash
+docker build -t dronewatch:train-entrypoint .
+```
+
+The container entrypoint is the PPO trainer, so arguments passed to `docker run` are forwarded directly to `python -m dronewatch.training.train_ppo`.
+
+Run training with the default config inside the image:
+
+```bash
+docker run --rm dronewatch:train-entrypoint
+```
+
+Select a different experiment config:
+
+```bash
+docker run --rm dronewatch:train-entrypoint --config configs/debug.yaml
+```
+
+Pass extra OmegaConf overrides:
+
+```bash
+docker run --rm dronewatch:train-entrypoint \
+	--config configs/config.yaml \
+	training.stop.iterations=10 \
+	project.seed=7
+```
+
+If you want training artifacts on the host, mount the artifact directories:
+
+```bash
+docker run --rm \
+	-v "$(pwd)/artifacts:/app/artifacts" \
+	-v "$(pwd)/outputs:/app/outputs" \
+	dronewatch:train-entrypoint \
+	--config configs/debug.yaml
+```
+
 ## Documentation
 
 The [MkDocs](https://bussler.github.io/DroneWatch/) site covers setup, configuration, the training pipeline, Rust environment details, troubleshooting, and result interpretation.

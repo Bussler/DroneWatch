@@ -72,3 +72,56 @@ make test
 ```bash
 make rollout-random
 ```
+
+## Build and Run with Docker
+
+The repository includes a Docker image that starts PPO training directly.
+
+Build it from the repository root:
+
+```bash
+docker build -t dronewatch:train-entrypoint .
+```
+
+The image copies the repository into `/app` and uses this entrypoint:
+
+```bash
+uv run python -m dronewatch.training.train_ppo
+```
+
+That means arguments added after the image name in `docker run` are passed straight to the training script.
+
+### Run the default training config
+
+```bash
+docker run --rm dronewatch:train-entrypoint
+```
+
+### Choose a different experiment file
+
+```bash
+docker run --rm dronewatch:train-entrypoint --config configs/debug.yaml
+```
+
+### Pass additional config overrides
+
+```bash
+docker run --rm dronewatch:train-entrypoint \
+	--config configs/config.yaml \
+	training.stop.iterations=10 \
+	model=ppo_feedforward
+```
+
+### Persist checkpoints, reports, and MLflow outputs on the host
+
+By default, container-local outputs disappear when the container is removed. Mount the output directories if you want to keep them:
+
+```bash
+docker run --rm \
+	-v "$(pwd)/artifacts:/app/artifacts" \
+	-v "$(pwd)/outputs:/app/outputs" \
+	dronewatch:train-entrypoint \
+	--config configs/debug.yaml
+```
+
+This keeps checkpoint, report, GIF, and MLflow output files in the local repository directories.

@@ -5,20 +5,20 @@ help:
 	@echo "  install       Sync Python deps and build the Rust extension in-place"
 	@echo "  train-ppo      Train shared-policy PPO locally"
 	@echo "  tune-ppo       Run a local Ray Tune PPO hyperparameter search"
-	@echo "  sync          Install Python dependencies with uv"
 	@echo "  evaluate-ppo   Evaluate PPO checkpoint; pass CHECKPOINT=path"
 	@echo "  mlflow-up      Start the MLflow tracking UI with Docker Compose"
 	@echo "  mlflow-down    Stop the Docker Compose MLflow service"
+	@echo "  sync          Install Python dependencies with uv"
 	@echo "  develop-rust  Build/install the PyO3 extension with maturin"
 	@echo "  rollout-rust   Run a deterministic scripted Rust simulation rollout"
 	@echo "  rollout-random Run a random policy rollout and write a JSON report and GIF animation"
 	@echo "  docs-serve     Start a local MkDocs preview server"
-	@echo "  docs-build     Build the MkDocs site in strict mode"
+	@echo "  docs-build     Build and deploy the MkDocs site to the gh-pages branch"
 	@echo "  test-rust     Run Rust tests"
 	@echo "  test-python   Run Python tests"
 	@echo "  test          Run Rust and Python tests"
 	@echo "  clean         Remove generated build/test artifacts"
-	@echo "  docker-build  Build the Phase 0 validation image"
+	@echo "  docker-build  Build the training image"
 
 sync:
 	uv sync --dev
@@ -56,7 +56,7 @@ docs-serve:
 	uv run mkdocs serve
 
 docs-build:
-	uv run mkdocs build --strict
+	uv run mkdocs gh-deploy --clean
 
 test-rust:
 	cargo test --manifest-path rust/swarm_sim/Cargo.toml
@@ -72,4 +72,4 @@ clean:
 	rm -rf target rust/swarm_sim/target
 
 docker-build:
-	docker build -t dronewatch:phase0 .
+	docker build -t dronewatch:train-entrypoint .
