@@ -89,7 +89,7 @@ def test_evaluate_main_uses_standalone_config(
     assert captured["checkpoint"] == checkpoint_path
     assert captured["episodes"] == 3
     assert captured["seed"] == 123
-    assert captured["report_path"] == report_path / "EvalDroneWatchMixedReward" / "evaluation_report.json"
+    assert captured["report_path"] == report_path / "EvalDroneWatchObstacleAvoidance" / "evaluation_report.json"
     assert captured["model"] == "lstm"
     assert captured["render"] is False
     assert captured["env_config"].name == "SwarmSearch2D"
