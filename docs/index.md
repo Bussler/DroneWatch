@@ -4,6 +4,7 @@ DroneWatch is a multi-agent reinforcement learning project that combines a Rust 
 
 The project trains multiple cooperative drones to discover targets in a partially observable continuous 2D environment with obstacles, collisions, local sensing, and short-range communication.
 
+![Obstacle avoidance rollout](assets/gifs/obstacle_avoidance_2.gif)
 
 ## Implemetation
 

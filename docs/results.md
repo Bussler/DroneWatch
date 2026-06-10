@@ -2,6 +2,10 @@
 
 This page now DroneWatch as an ablation study.
 
+Example rendering of the final agent:
+
+![Obstacle avoidance rollout](assets/gifs/obstacle_avoidance_2.gif){ width="50%" }
+
 ### Summary of training results
 
 The current agent training supports the following conclusions.
@@ -78,7 +82,7 @@ Coverage had become too easy to exploit, collisions were too cheap, and failing 
 | Lower `log_std_clip_param` | The action space is bounded in `[-1, 1]`, so a very loose action standard deviation cap was too permissive | Reduced action noise and made trained policies more deterministic |
 | Lower `clip_param` and learning rate | Promising policies were collapsing late in training | Made policy updates less destructive and improved stability on randomized scenarios |
 | Reward rescaling | Very large aggregate shared rewards made value prediction harder | Helped training stabilize and improved the link between reward and task completion |
-| Longer `max_seq_len` | Short recurrent windows were likely truncating useful history | The committed LSTM config now uses `max_seq_len: 100`, which matches the direction suggested by the training notes |
+| Longer `max_seq_len` | Short recurrent windows were likely truncating useful history | The committed LSTM config now uses `max_seq_len: 100`|
 
 
 ## Chronology of Major Experiment Updates
@@ -92,6 +96,8 @@ Documentation of the ablation experiments, and how they are interpreted.
 - Observation: collisions and connectivity metrics changed during training, but target discovery did not improve enough; rendered rollouts showed drones drifting toward a boundary and staying there.
 - Interpretation: the agent found a shallow local optimum. Coverage and survival-like behavior were easier to learn than systematic search.
 - Next idea: strengthen completion incentives, add visible-target shaping, and try an LSTM.
+
+![Smoke rollout](assets/gifs/ppo_smoke_episode.gif){ width="50%" }
 
 ### 2. First LSTM pass: better discovery, still unstable
 
@@ -112,7 +118,7 @@ Documentation of the ablation experiments, and how they are interpreted.
 
 - Change: lower entropy pressure, tighten action standard deviation clipping, and rescale rewards.
 - Motivation: fixed maps allowed the agent to get rewarded while remaining too random, and the value function had trouble with oversized aggregate rewards.
-- Observation: training on the fixed easy environment became much more stable and converged quickly.
+- Observation: training on the fixed easy environment became more stable and converged quickly.
 - Interpretation: the policy collapse problem was not just an exploration problem or just a reward problem. It was the interaction between noisy exploration, oversized returns, and weak completion pressure.
 - Next idea: turn randomization back on and test whether the same recipe survives outside memorization-friendly maps.
 
@@ -128,9 +134,11 @@ Documentation of the ablation experiments, and how they are interpreted.
 
 - Change: combine reward rescaling with smaller learning rate and narrower clip range.
 - Motivation: stabilize the promising randomized-map regime instead of letting it overshoot.
-- Observation: according to the notes, this worked much better and produced the first robust large-world learning behavior.
+- Observation: This worked better and produced the first robust large-world learning behavior.
 - Repository evidence: `DroneWatchLSTMGeneralization/iteration_0700.json` shows the remaining gap clearly. The agent now finds almost all targets (`18.2/20` on average) but still finishes only `10%` of evaluation episodes and pays very high collision cost.
 - Interpretation: the search signal improved before the coordination signal did.
+
+![Small rollout](assets/gifs/solve_easy_generalized.gif){ width="50%" }
 
 ### 7. Larger world without obstacles: task nearly solved, coordination still weak
 
@@ -140,12 +148,14 @@ Documentation of the ablation experiments, and how they are interpreted.
 - Interpretation: this is where credit assignment and anti-crowding limitations became impossible to ignore.
 - Next idea: add custom or mixed rewards and report shared and local reward separately.
 
-### 8. Mixed reward reporting: success with much lower collision cost
+### 8. Mixed reward reporting: success with lower collision cost
 
 - Change: introduce mixed or custom reward accounting and additional logging for shared versus local reward.
 - Motivation: distinguish between team-level completion incentives and per-agent shaping so that failure modes become diagnosable.
 - Observation: the mixed-reward solves the large no-obstacle task cleanly. At `iteration_0150`, the policy reaches `success_rate = 1.0`, `mean_episode_length = 36.8`, and `mean_collision_count = 6.7`.
 - Interpretation: once discovery and completion stay dominant and PPO updates remain stable, the LSTM policy can solve the larger scenario without obstacle pressure.
+
+![Generalization rollout](assets/gifs/solve_generalized.gif){ width="50%" }
 
 ### 9. Obstacle-heavy regime: task solved before safety is solved
 
@@ -161,6 +171,8 @@ Documentation of the ablation experiments, and how they are interpreted.
 - Motivation: reduce the remaining no-fly-zone violations that survived the first obstacle-success recipe.
 - Observation: `iteration_1400` still solves every evaluation episode, reduces mean obstacle violations to `3.1`, and cuts mean episode length to `29.0`, but collisions remain non-trivial at `10.3`.
 - Interpretation: the repository now demonstrates obstacle-capable task completion, but not hard constraint satisfaction.
+
+![Obstacle avoidance rollout 1](assets/gifs/obstacle_avoidance.gif){ width="50%" }
 
 ## Where Reports and Runs Live
 
