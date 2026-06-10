@@ -105,6 +105,18 @@ Important behavior:
 
 This is the main Python orchetration layer between RLlib and the Rust simulation state.
 
+## Observation Logic
+
+Each drone receives a fixed-size, local observation built in `src/dronewatch/envs/observation_builder.py`: 
+
+- The observation always includes the drone's own normalized ID, position, velocity, and episode progress, then appends padded slots for the nearest visible agents, targets, and obstacles.
+- Nearby agents are represented by relative position, relative velocity, and distance, but only if they fall within the sensing radius.
+- Nearby targets contribute relative position, distance, and whether each target has already been discovered.
+- Nearby obstacles contribute relative position, obstacle radius, and distance for any obstacle whose boundary is close enough to be sensed.
+- Communication is modeled as local proximity rather than explicit message passing. When `include_communication_summary` is enabled, each drone gets an extra summary over neighbors inside the communication radius: normalized neighbor count plus the mean relative position and mean relative velocity of those neighbors as well as sensed targets or obstacles.
+
+Because RLlib expects a constant observation shape, each of these lists is sorted by distance and zero-padded up to the configured maximum counts.
+
 ## Reward Logic
 
 `src/dronewatch/envs/reward.py` defines the reward surface.
