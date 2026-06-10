@@ -1,4 +1,6 @@
 # DroneWatch
+[Documentation](https://bussler.github.io/DroneWatch/) |
+
 
 DroneWatch is a multi-agent reinforcement learning project for cooperative 2D search. A shared-policy PPO controller learns to coordinate drones that must discover targets in a partially observable continuous world with local sensing, short-range communication, collisions, and circular no-fly obstacles.
 
@@ -24,7 +26,7 @@ The current experiments in [docs/results.md](docs/results.md) support a few clea
 
 This makes DroneWatch a useful reference for how recurrent policies, reward shaping, and PPO stabilization interact in partially observable cooperative search.
 
-For a more thorough ablation study and summarization, look at TODO
+For a more thorough ablation study and summarization, look at [Documentation Results](https://bussler.github.io/DroneWatch/results/).
 
 ## Quick Start
 
@@ -125,9 +127,9 @@ By default, DroneWatch writes outputs to:
 
 ## Documentation
 
-The MkDocs site under `docs/` covers setup, configuration, the training pipeline, Rust environment details, troubleshooting, and result interpretation.
+The [MkDocs](https://bussler.github.io/DroneWatch/) site covers setup, configuration, the training pipeline, Rust environment details, troubleshooting, and result interpretation.
 
-Preview it locally with:
+Build it locally with:
 
 ```bash
 make docs-serve
@@ -135,7 +137,13 @@ make docs-serve
 
 For more detail, start with:
 
-- [docs/getting-started.md](docs/getting-started.md)
-- [docs/configuration.md](docs/configuration.md)
-- [docs/training-pipeline.md](docs/training-pipeline.md)
-- [docs/results.md](docs/results.md)
+- [getting-started](https://bussler.github.io/DroneWatch/getting-started/)
+- [configuration](https://bussler.github.io/DroneWatch/configuration/)
+- [training-pipeline](https://bussler.github.io/DroneWatch/training-pipeline/)
+- [results](https://bussler.github.io/DroneWatch/results/)
+
+Publish new documentation with
+```
+make docs-build
+uv run mkdocs gh-deploy --clean
+```
