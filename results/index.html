@@ -934,9 +934,9 @@ Thin gray lines between drones are communication links. A line is drawn only whe
 <li>LSTM was necessary. Feedforward PPO was sufficient for smoke-testing the stack, but not for robust search behavior.</li>
 <li>Curriculum and easier scenarios were useful as proof-of-learnability, not as an end state. The easy environment showed that the policy class could solve the task at all.</li>
 <li>Reward rebalancing and PPO stabilization mattered as much as architecture choice. Lower entropy, tighter action noise, smaller PPO updates, and reward rescaling changed the training dynamics materially.</li>
-<li>Large no-obstacle search can now be solved reliably in the mixed-reward family.</li>
-<li>Obstacle-heavy search is solved in the task-completion sense, but still not solved in the safety sense. The agent finishes the mission while accepting a non-zero rate of obstacle violations and collisions. This could be further enforced by longer training, early termination on obstacle entry or masking of illegal actions.</li>
+<li>Mixed rewards worked best: global terms promoted mission success and coverage, while local terms gave each drone clearer credit for discoveries, collisions, and obstacle violations.</li>
 </ol>
+<p>Obstacle-heavy search is solved in the task-completion sense and generalizes well to new scenarios, but still not solved in the safety sense. The agent finishes the mission while accepting a non-zero rate of obstacle violations and collisions. This could be further enforced by longer training, early termination on obstacle entry or masking of illegal actions.</p>
 <h2 id="ablation-axes">Ablation Axes<a class="headerlink" href="#ablation-axes" title="Permanent link">&para;</a></h2>
 <p>The experiments in this repository vary four main dimensions.</p>
 <table>
