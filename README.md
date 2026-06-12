@@ -20,8 +20,9 @@ The current implementation combines:
 
 - Feedforward PPO was useful for validating the training stack, but it did not solve the full search problem. LSTM memory was necessary for robust search behavior.
 - Reward rebalance and PPO stabilization mattered as much as model choice. Lower entropy, tighter action-noise clipping, smaller PPO updates, and reward rescaling materially improved training.
-- The trained agent solves the final obstacle-heavy task and generalizes well to new scenarios with randomized positions of targets, drones and obstacles.
+- Mixed rewards worked best: global terms promoted mission success and coverage, while local terms gave each drone clearer credit for discoveries, collisions, and obstacle violations.
 
+The trained agent solves the final obstacle-heavy task and generalizes well to new scenarios with randomized positions of targets, drones and obstacles.
 This makes DroneWatch a useful reference for how recurrent policies, reward shaping, and PPO stabilization interact in partially observable cooperative search.
 
 For a more thorough ablation study and summarization, look at [Documentation Results](https://bussler.github.io/DroneWatch/results/).

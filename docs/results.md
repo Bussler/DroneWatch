@@ -20,8 +20,9 @@ The current agent training supports the following conclusions.
 1. LSTM was necessary. Feedforward PPO was sufficient for smoke-testing the stack, but not for robust search behavior.
 2. Curriculum and easier scenarios were useful as proof-of-learnability, not as an end state. The easy environment showed that the policy class could solve the task at all.
 3. Reward rebalancing and PPO stabilization mattered as much as architecture choice. Lower entropy, tighter action noise, smaller PPO updates, and reward rescaling changed the training dynamics materially.
-4. Large no-obstacle search can now be solved reliably in the mixed-reward family.
-5. Obstacle-heavy search is solved in the task-completion sense, but still not solved in the safety sense. The agent finishes the mission while accepting a non-zero rate of obstacle violations and collisions. This could be further enforced by longer training, early termination on obstacle entry or masking of illegal actions.
+4. Mixed rewards worked best: global terms promoted mission success and coverage, while local terms gave each drone clearer credit for discoveries, collisions, and obstacle violations.
+
+Obstacle-heavy search is solved in the task-completion sense and generalizes well to new scenarios, but still not solved in the safety sense. The agent finishes the mission while accepting a non-zero rate of obstacle violations and collisions. This could be further enforced by longer training, early termination on obstacle entry or masking of illegal actions.
 
 
 ## Ablation Axes
